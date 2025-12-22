@@ -13,30 +13,30 @@
       --text:#0b1c2d;
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing:border-box; }
 
     body {
       margin:0;
       height:100dvh;
-      overflow:hidden;
       display:flex;
       flex-direction:column;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       background:#fff;
       color:var(--text);
+      overflow:hidden;
     }
 
     /* HEADER */
     .top {
-      background: var(--blue);
+      background:var(--blue);
       padding-bottom:8px;
     }
 
     .top img {
+      display:block;
       width:100%;
       max-height:26vh;
       object-fit:contain;
-      display:block;
     }
 
     /* TITRE */
@@ -59,9 +59,9 @@
 
     .brand66 .reg {
       position:absolute;
-      top:-0.25em;
-      right:-0.45em;
-      font-size:0.95em;
+      top:-0.2em;
+      right:-0.4em;
+      font-size:1em;
       font-weight:800;
     }
 
@@ -76,7 +76,7 @@
     .bottleWrap {
       position:relative;
       width:min(520px,96vw);
-      min-height:60vh; /* 🔥 FIX MAGIQUE */
+      min-height:60vh;
       display:flex;
       justify-content:center;
       align-items:flex-start;
@@ -85,6 +85,8 @@
     .bottleWrap img {
       position:absolute;
       max-height:56vh;
+      max-width:100%;
+      width:auto;
       opacity:0;
       transition:opacity .4s ease;
     }
@@ -96,7 +98,7 @@
     /* BOUTONS */
     .btnStack {
       position:absolute;
-      bottom:9vh;
+      bottom:11vh;
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
@@ -113,57 +115,85 @@
       cursor:pointer;
     }
 
-    .btn + .btn { margin-top:10px; }
+    .btn + .btn {
+      margin-top:10px;
+    }
 
     .btn.primary {
-      background: var(--sky);
+      background:var(--sky);
       color:#fff;
     }
 
     .btn.secondary {
-      background: rgba(255,255,255,0.75);
+      background:rgba(255,255,255,0.85);
       color:#0b1c2d;
-      border:1px solid rgba(11,28,45,.2);
+      border:1px solid rgba(11,28,45,.25);
     }
   </style>
 </head>
 
 <body>
 
+  <!-- HEADER -->
   <header class="top">
-    <img src="assets/logo-header.png" alt="">
+    <img src="assets/logo-header.png" alt="Apéro de Nuit">
   </header>
 
+  <!-- TITRE -->
   <section class="mid">
-    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
+    <h1>
+      APÉRO DE NUIT
+      <span class="brand66">66<span class="reg">®</span></span>
+    </h1>
   </section>
 
+  <!-- BOUTEILLES -->
   <main class="stage">
     <div class="bottleWrap" id="bottles">
-      <img src="assets/bouteille1.png" class="active">
-      <img src="assets/bouteille2.png">
-      <img src="assets/bouteille3.png">
-      <img src="assets/bouteille4.png">
-      <img src="assets/bouteille5.png">
-      <img src="assets/bouteille6.png">
-      <img src="assets/bouteille7.png">
+
+      <img src="assets/bottle1.png" class="active" alt="">
+      <img src="assets/bottle2.png" alt="">
+      <img src="assets/bottle3.png" alt="">
+      <img src="assets/bottle4.png" alt="">
+      <img src="assets/bottle5.png" alt="">
+      <img src="assets/bottle6.png" alt="">
+      <img src="assets/bottle7.png" alt="">
 
       <div class="btnStack">
-        <button class="btn primary">Commander</button>
-        <button class="btn secondary">Ajouter l’app</button>
+        <button class="btn primary" id="goBtn">Commander</button>
+        <button class="btn secondary" id="installBtn">Ajouter l’app</button>
       </div>
+
     </div>
   </main>
 
+  <!-- SCRIPT -->
   <script>
-    const bottles = document.querySelectorAll('#bottles img');
-    let i = 0;
+    /* Commander */
+    document.getElementById("goBtn").addEventListener("click", () => {
+      window.location.href = "https://aperodenuit.com/commander";
+    });
 
-    setInterval(() => {
-      bottles[i].classList.remove('active');
-      i = (i + 1) % bottles.length;
-      bottles[i].classList.add('active');
-    }, 2000);
+    /* Défilement bouteilles – 2 secondes */
+    const bottles = document.querySelectorAll("#bottles img");
+    let index = 0;
+
+    if (bottles.length > 1) {
+      setInterval(() => {
+        bottles[index].classList.remove("active");
+        index = (index + 1) % bottles.length;
+        bottles[index].classList.add("active");
+      }, 2000);
+    }
+
+    /* Ajouter l’app – fallback simple */
+    document.getElementById("installBtn").addEventListener("click", () => {
+      alert(
+        "📱 Ajouter l’app :\n\n" +
+        "• iPhone : bouton Partager → Sur l’écran d’accueil\n" +
+        "• Android : menu ⋮ → Installer l’application"
+      );
+    });
   </script>
 
 </body>
