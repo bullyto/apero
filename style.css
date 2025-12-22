@@ -52,7 +52,7 @@ html, body {
 /* ===== BOUTONS (ICI ON REMONTE) ===== */
 .actions {
   position: fixed;
-  top: 20px;
+  top: 400px;
 bottom: auto;
   left: 0;
   right: 0;
