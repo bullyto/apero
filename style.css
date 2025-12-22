@@ -1,84 +1,80 @@
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  overflow: hidden;
+  background: #0b1c2d;
+  color: #fff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .header {
-  background: #0b2a3a;
+  background: #0b1c2d;
+  padding: 18px 0 16px;
   text-align: center;
-  padding: 24px 0;
 }
 
 .header img {
-  max-height: 100px;
+  max-width: 92%;
+  max-height: 120px;
 }
 
-.main-container {
-  height: 100vh;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.title {
-  color: #63b2e3;
-  margin: 20px 0;
-}
-
-.reg {
-  font-size: 0.45em;
-  vertical-align: super;
-  margin-left: 2px;
-}
-
-.bottle-zone {
+.stage {
   position: relative;
-  height: 62vh;
-  width: 100%;
+  height: calc(100vh - 220px);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-.bottle {
+.bottles {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottles img {
   position: absolute;
-  max-height: 62vh;
+  max-height: 70vh;
   opacity: 0;
-  transition: opacity 0.6s ease-in-out;
+  transition: opacity .4s ease, transform .4s ease;
+  transform: scale(.98);
 }
 
-.bottle.active {
+.bottles img.active {
   opacity: 1;
+  transform: scale(1);
 }
 
-.buttons {
-  position: absolute;
-  bottom: 40px;
+.actions {
+  position: fixed;
+  bottom: 22px;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  align-items: center;
 }
 
-.order-btn {
-  background: #4fa3d1;
-  color: #fff;
+.btn {
+  width: min(560px, 92vw);
   border: none;
-  padding: 14px 32px;
-  border-radius: 30px;
+  border-radius: 22px;
+  padding: 15px 18px;
   font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(0,0,0,.28);
 }
 
-.install-btn {
-  background: rgba(255,255,255,0.95);
-  color: #0b3a5a;
-  border: 1px solid #0b3a5a;
-  padding: 12px 28px;
-  border-radius: 30px;
-  font-size: 16px;
-  opacity: 0.9;
+.btn.commander {
+  background: #4da3d9;
+  color: #fff;
+}
+
+.btn.install {
+  background: rgba(255,255,255,.25);
+  color: #fff;
 }

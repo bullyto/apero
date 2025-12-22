@@ -1,46 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>APÉRO DE NUIT – Livraison d’alcool de nuit</title>
+  <meta charset="utf-8">
+  <title>APERO DE NUIT – Livraison d’alcool de nuit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="APERO DE NUIT – Livraison d’alcool de nuit. Installe l’app ou commande en un clic.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="header">
-    <img src="assets/logo.png" alt="APÉRO DE NUIT">
-  </header>
 
-  <main class="main-container">
-    <h1 class="title">APÉRO DE NUIT <span class="brand-66">66<sup class="reg">®</sup></span></h1>
+<header class="header">
+  <img src="assets/logo.png" alt="APERO DE NUIT">
+</header>
 
-    <div class="bottle-zone">
-      <img class="bottle active" src="assets/bottle1.png" alt="Bouteille alcool">
-      <img class="bottle" src="assets/bottle2.png" alt="Bouteille alcool">
-      <img class="bottle" src="assets/bottle3.png" alt="Bouteille alcool">
-    </div>
+<main class="stage">
+  <div class="bottles">
+    <img src="assets/bottle1.png" class="active" alt="">
+    <img src="assets/bottle2.png" alt="">
+    <img src="assets/bottle3.png" alt="">
+    <img src="assets/bottle4.png" alt="">
+    <img src="assets/bottle5.png" alt="">
+  </div>
+</main>
 
-    <div class="buttons">
-      <button class="order-btn" onclick="location.href='https://www.aperodenuit.com/commander'">
-        Commander
-      </button>
-      <button class="install-btn" id="installBtn">
-        Ajouter l’app
-      </button>
-    </div>
-  </main>
+<div class="actions">
+  <button class="btn commander" onclick="location.href='https://www.aperodenuit.com/commander'">
+    🍾 Commander
+  </button>
+  <button class="btn install" id="installBtn">
+    ⬇️ Installer l’app
+  </button>
+</div>
 
-  <script>
-    const bottles = document.querySelectorAll('.bottle');
-    let index = 0;
+<script>
+  const imgs = document.querySelectorAll('.bottles img');
+  let i = 0;
+  setInterval(() => {
+    imgs[i].classList.remove('active');
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add('active');
+  }, 1000);
+</script>
 
-    function nextBottle() {
-      bottles[index].classList.remove('active');
-      index = (index + 1) % bottles.length;
-      bottles[index].classList.add('active');
-    }
-
-    setInterval(nextBottle, 2000);
-  </script>
 </body>
 </html>
