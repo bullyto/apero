@@ -39,6 +39,35 @@
       box-shadow:0 10px 30px rgba(0,0,0,.35);
     }
     .muted { opacity:.78; }
+
+    .actions {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+    .btn {
+      width: min(420px, 100%);
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.92);
+      color: #0A121C;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow:0 10px 24px rgba(0,0,0,.25);
+    }
+    .btn.ghost {
+      background: transparent;
+      color: rgba(245,248,255,.88);
+      border: 1px solid rgba(255,255,255,.16);
+      font-weight: 700;
+      font-size: 14px;
+      padding: 12px 16px;
+      box-shadow:none;
+    }
+
     /* Install pill */
     #installPWA {
       position: fixed;
@@ -75,6 +104,7 @@
       padding: 2px 8px;
       cursor: pointer;
     }
+
     /* iOS help modal */
     #iosHelp {
       position: fixed; inset: 0;
@@ -91,7 +121,7 @@
     }
     #iosHelp .sheet h3 { margin: 6px 0 8px; font-size: 18px; }
     #iosHelp .sheet p { margin: 0 0 10px; opacity: .85; }
-    #iosHelp .sheet .steps { display:grid; gap: 8px; }
+    #iosHelp .sheet .steps { display:grid; gap: 8px; text-align:left; }
     #iosHelp .sheet .step {
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.10);
@@ -114,8 +144,14 @@
   <div class="wrap">
     <img class="logo" src="assets/icon-192.png" alt="Apéro de Nuit" />
     <h1 style="margin:16px 0 6px;font-size:22px;">Apéro de Nuit</h1>
-    <p class="muted" style="margin:0 0 14px;">Ouverture…</p>
-    <p class="muted" style="margin:0;font-size:13px;">
+    <p class="muted" style="margin:0 0 8px;">Installe l’app (icône écran d’accueil) ou commande direct.</p>
+
+    <div class="actions">
+      <button class="btn" id="goBtn">🍾 Commander (ouvrir le site)</button>
+      <button class="btn ghost" id="laterBtn">Plus tard</button>
+    </div>
+
+    <p class="muted" style="margin:14px 0 0;font-size:13px;">
       Si rien ne se passe, <a href="https://www.aperodenuit.com/" style="color:#8fd3ff;">clique ici</a>.
     </p>
   </div>
@@ -142,6 +178,17 @@
   </div>
 
   <script>
+    const TARGET_URL = "https://www.aperodenuit.com/";
+
+    // Boutons "aller au site"
+    const goBtn = document.getElementById("goBtn");
+    const laterBtn = document.getElementById("laterBtn");
+    goBtn.addEventListener("click", () => window.location.href = TARGET_URL);
+    laterBtn.addEventListener("click", () => {
+      localStorage.setItem("pwa_install_dismissed", "1");
+      window.location.href = TARGET_URL;
+    });
+
     // ---- PWA install button (Android) ----
     let deferredPrompt = null;
     const pill = document.getElementById("installPWA");
@@ -149,7 +196,9 @@
     const dismissBtn = document.getElementById("dismissBtn");
 
     const dismissed = localStorage.getItem("pwa_install_dismissed") === "1";
-    const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    const isStandalone =
+      (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+      (window.navigator.standalone === true);
 
     function showPill() {
       if (dismissed || isStandalone) return;
@@ -171,6 +220,7 @@
     });
 
     installBtn.addEventListener("click", async () => {
+      // iOS: on gère plus bas
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
       await deferredPrompt.userChoice;
@@ -185,17 +235,15 @@
     // ---- iOS helper ----
     const ua = navigator.userAgent || "";
     const isIOS = /iphone|ipad|ipod/i.test(ua);
-    const iosStandalone = window.navigator.standalone === true;
     const iosHelp = document.getElementById("iosHelp");
     const closeIos = document.getElementById("closeIos");
 
-    if (isIOS && !iosStandalone && !dismissed) {
-      // Show the same pill, but open instructions
+    if (isIOS && !isStandalone && !dismissed) {
       showPill();
       installBtn.textContent = "Comment faire";
-      installBtn.addEventListener("click", () => {
+      installBtn.onclick = () => {
         iosHelp.style.display = "flex";
-      }, { once: true });
+      };
       closeIos.addEventListener("click", () => {
         iosHelp.style.display = "none";
       });
@@ -205,9 +253,6 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./service-worker.js").catch(() => {});
     }
-
-    // Redirect to your real site
-    window.location.replace("https://www.aperodenuit.com/");
   </script>
 </body>
 </html>
