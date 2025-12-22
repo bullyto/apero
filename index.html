@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
+  <!-- ✅ PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b1c2d">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
   <!-- Préchargement (fluidité du défilement) -->
   <link rel="preload" as="image" href="assets/logo-header.png">
   <link rel="preload" as="image" href="assets/bottle1.png">
@@ -193,6 +198,13 @@
   </div>
 
   <script>
+    // ✅ PWA: register service worker (nécessaire pour que Chrome propose l’installation)
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
     // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
       window.location.href = "https://aperodenuit.com/commander";
@@ -231,24 +243,20 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
 
-    // ✅ Masquer badge/pulse/bouton si déjà installé / en mode "app"
+    // ✅ Masquer badge/pulse ET le bouton si déjà installé / en mode "app"
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
     }
-
-    // ✅ MODIF UNIQUE ICI : on enlève aussi le bouton "Ajouter l’app"
     function removeInstallHints(){
       const b = document.getElementById("newBadge");
       if (b) b.remove();
-
-      const installBtn = document.getElementById("installBtn");
-      if (installBtn) {
-        installBtn.classList.remove("pulse");
-        installBtn.remove(); // ✅ le bouton disparaît complètement
+      const btn = document.getElementById("installBtn");
+      if (btn) {
+        btn.classList.remove("pulse");
+        btn.style.display = "none"; // ✅ LE POINT IMPORTANT: on cache le bouton entier
       }
     }
-
     if (isStandalone()) removeInstallHints();
 
     // Quand l'app est installée (Android/Chrome)
