@@ -3,9 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Apéro de Nuit 66">
 
   <title>Apéro de Nuit 66</title>
 
@@ -32,14 +29,14 @@
     /* HEADER */
     .top {
       background: var(--blue);
-      padding: 0 0 8px 0;
+      padding-bottom:8px;
     }
 
     .top img {
-      display:block;
       width:100%;
       max-height:26vh;
       object-fit:contain;
+      display:block;
     }
 
     /* TITRE */
@@ -49,7 +46,7 @@
     }
 
     .mid h1 {
-      margin:6px 0 0;
+      margin:0;
       font-size:clamp(26px,6vw,40px);
       color:var(--sky);
       font-weight:900;
@@ -68,9 +65,8 @@
       font-weight:800;
     }
 
-    /* CONTENU */
+    /* ZONE BOUTEILLES */
     .stage {
-      position:relative;
       flex:1;
       display:flex;
       justify-content:center;
@@ -80,7 +76,7 @@
     .bottleWrap {
       position:relative;
       width:min(520px,96vw);
-      height:100%;
+      min-height:60vh; /* 🔥 FIX MAGIQUE */
       display:flex;
       justify-content:center;
       align-items:flex-start;
@@ -104,6 +100,7 @@
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
+      z-index:5;
     }
 
     .btn {
@@ -116,9 +113,7 @@
       cursor:pointer;
     }
 
-    .btn + .btn {
-      margin-top:10px;
-    }
+    .btn + .btn { margin-top:10px; }
 
     .btn.primary {
       background: var(--sky);
@@ -126,42 +121,32 @@
     }
 
     .btn.secondary {
-      background: linear-gradient(
-        rgba(255,255,255,0.72),
-        rgba(255,255,255,0.72)
-      ),
-      rgba(0,0,0,.08);
+      background: rgba(255,255,255,0.75);
       color:#0b1c2d;
-      border:1px solid rgba(11,28,45,.18);
+      border:1px solid rgba(11,28,45,.2);
     }
   </style>
 </head>
 
 <body>
 
-  <!-- HEADER -->
   <header class="top">
-    <img src="assets/logo-header.png" alt="Apéro de Nuit">
+    <img src="assets/logo-header.png" alt="">
   </header>
 
-  <!-- TITRE -->
   <section class="mid">
-    <h1>
-      APÉRO DE NUIT
-      <span class="brand66">66<span class="reg">®</span></span>
-    </h1>
+    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
   </section>
 
-  <!-- BOUTEILLES -->
   <main class="stage">
     <div class="bottleWrap" id="bottles">
-      <img src="assets/bouteille1.png" class="active" alt="">
-      <img src="assets/bouteille2.png" alt="">
-      <img src="assets/bouteille3.png" alt="">
-      <img src="assets/bouteille4.png" alt="">
-      <img src="assets/bouteille5.png" alt="">
-      <img src="assets/bouteille6.png" alt="">
-      <img src="assets/bouteille7.png" alt="">
+      <img src="assets/bouteille1.png" class="active">
+      <img src="assets/bouteille2.png">
+      <img src="assets/bouteille3.png">
+      <img src="assets/bouteille4.png">
+      <img src="assets/bouteille5.png">
+      <img src="assets/bouteille6.png">
+      <img src="assets/bouteille7.png">
 
       <div class="btnStack">
         <button class="btn primary">Commander</button>
@@ -170,16 +155,15 @@
     </div>
   </main>
 
-  <!-- SCRIPT DÉFILEMENT -->
   <script>
     const bottles = document.querySelectorAll('#bottles img');
-    let index = 0;
+    let i = 0;
 
     setInterval(() => {
-      bottles[index].classList.remove('active');
-      index = (index + 1) % bottles.length;
-      bottles[index].classList.add('active');
-    }, 2000); // 2 secondes
+      bottles[i].classList.remove('active');
+      i = (i + 1) % bottles.length;
+      bottles[i].classList.add('active');
+    }, 2000);
   </script>
 
 </body>
