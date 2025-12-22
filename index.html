@@ -6,9 +6,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Apéro de Nuit 66" />
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0b1c2d" />
 
   <title>Apéro de Nuit 66</title>
 
@@ -17,11 +14,10 @@
       --blue:#0b1c2d;
       --sky:#5db7ee;
       --text:#0b1c2d;
-      --btn:#0b1c2d;
-      --btnText:#fff;
     }
 
     *{box-sizing:border-box}
+
     body {
       margin:0;
       height:100dvh;
@@ -33,10 +29,25 @@
       color:var(--text);
     }
 
-    .top { background: var(--blue); padding: 0 0 8px 0; }
-    .top img { display:block; width:100%; max-height:26vh; object-fit:contain; }
+    /* ===== HEADER ===== */
+    .top {
+      background: var(--blue);
+      padding: 0 0 8px 0;
+    }
 
-    .mid { text-align:center; padding:18px 14px 6px; }
+    .top img {
+      display:block;
+      width:100%;
+      max-height:26vh;
+      object-fit:contain;
+    }
+
+    /* ===== TITRE ===== */
+    .mid {
+      text-align:center;
+      padding:18px 14px 6px;
+    }
+
     .mid h1 {
       margin:6px 0 0;
       font-size:clamp(26px,6vw,40px);
@@ -48,20 +59,22 @@
       position:relative;
       display:inline-block;
     }
+
     .brand66 .reg {
       position:absolute;
-      top:-0.6em;
-      right:-0.7em;
-      font-size:0.85em;
+      top:-0.25em;
+      right:-0.45em;
+      font-size:0.95em;
       font-weight:800;
     }
 
+    /* ===== CONTENU ===== */
     .stage {
       position:relative;
-      padding:12px 12px 24px;
       flex:1;
       display:flex;
       justify-content:center;
+      padding:12px;
     }
 
     .bottleWrap {
@@ -70,19 +83,24 @@
       height:100%;
       display:flex;
       justify-content:center;
+      align-items:flex-start;
     }
 
     .bottleWrap img {
       position:absolute;
       max-height:56vh;
       opacity:0;
-      transition:.35s;
+      transition:opacity .35s;
     }
-    .bottleWrap img.active { opacity:1; }
 
+    .bottleWrap img.active {
+      opacity:1;
+    }
+
+    /* ===== BOUTONS ===== */
     .btnStack {
       position:absolute;
-      bottom:6vh;
+      bottom:9vh; /* ⬆️ légèrement remonté */
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
@@ -97,19 +115,22 @@
       font-weight:900;
       cursor:pointer;
     }
-    .btn + .btn { margin-top:10px; }
 
-    /* 🔵 BLEU CLAIR ORIGINAL */
-    .btn.primary {
-      background: var(--sky);
-      color:#ffffff;
+    .btn + .btn {
+      margin-top:10px;
     }
 
-    /* ⚪ BLANC TRÈS VISIBLE */
+    /* 🔵 COMMANDER — BLEU CLAIR */
+    .btn.primary {
+      background: var(--sky);
+      color:#fff;
+    }
+
+    /* ⚪ AJOUTER L’APP — BLANC BIEN VISIBLE */
     .btn.secondary {
       background: linear-gradient(
-        rgba(255,255,255,0.65),
-        rgba(255,255,255,0.65)
+        rgba(255,255,255,0.72),
+        rgba(255,255,255,0.72)
       ),
       rgba(0,0,0,.08);
       color:#0b1c2d;
@@ -119,8 +140,9 @@
 </head>
 
 <body>
+
   <header class="top">
-    <img src="assets/logo-header.png" alt="">
+    <img src="assets/logo-header.png" alt="Apéro de Nuit">
   </header>
 
   <section class="mid">
@@ -132,9 +154,9 @@
 
   <main class="stage">
     <div class="bottleWrap">
-      <img src="assets/bottle1.png" class="active">
-      <img src="assets/bottle2.png">
-      <img src="assets/bottle3.png">
+      <img src="assets/bottle1.png" class="active" alt="">
+      <img src="assets/bottle2.png" alt="">
+      <img src="assets/bottle3.png" alt="">
 
       <div class="btnStack">
         <button class="btn primary">Commander</button>
@@ -142,5 +164,6 @@
       </div>
     </div>
   </main>
+
 </body>
 </html>
