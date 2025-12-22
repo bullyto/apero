@@ -12,10 +12,9 @@
       --sky:#5db7ee;
       --text:#0b1c2d;
     }
+    *{box-sizing:border-box}
 
-    * { box-sizing:border-box; }
-
-    body {
+    body{
       margin:0;
       height:100dvh;
       display:flex;
@@ -27,19 +26,19 @@
     }
 
     /* HEADER */
-    .top { background:var(--blue); padding-bottom:8px; }
-    .top img { display:block; width:100%; max-height:26vh; object-fit:contain; }
+    .top{ background:var(--blue); padding-bottom:8px; }
+    .top img{ display:block; width:100%; max-height:26vh; object-fit:contain; }
 
     /* TITRE */
-    .mid { text-align:center; padding:18px 14px 6px; }
-    .mid h1 {
+    .mid{ text-align:center; padding:18px 14px 6px; }
+    .mid h1{
       margin:0;
       font-size:clamp(26px,6vw,40px);
       color:var(--sky);
       font-weight:900;
     }
-    .brand66 { position:relative; display:inline-block; }
-    .brand66 .reg {
+    .brand66{ position:relative; display:inline-block; }
+    .brand66 .reg{
       position:absolute;
       top:-0.2em;
       right:-0.4em;
@@ -48,8 +47,8 @@
     }
 
     /* ZONE BOUTEILLES */
-    .stage { flex:1; display:flex; justify-content:center; padding:12px; }
-    .bottleWrap {
+    .stage{ flex:1; display:flex; justify-content:center; padding:12px; }
+    .bottleWrap{
       position:relative;
       width:min(520px,96vw);
       min-height:60vh;
@@ -57,7 +56,7 @@
       justify-content:center;
       align-items:flex-start;
     }
-    .bottleWrap img {
+    .bottleWrap img{
       position:absolute;
       max-height:56vh;
       max-width:100%;
@@ -65,10 +64,10 @@
       opacity:0;
       transition:opacity .4s ease;
     }
-    .bottleWrap img.active { opacity:1; }
+    .bottleWrap img.active{ opacity:1; }
 
     /* BOUTONS */
-    .btnStack {
+    .btnStack{
       position:absolute;
       bottom:14vh;
       left:50%;
@@ -76,7 +75,7 @@
       width:min(420px,86vw);
       z-index:5;
     }
-    .btn {
+    .btn{
       width:100%;
       border:none;
       border-radius:16px;
@@ -85,16 +84,17 @@
       font-weight:900;
       cursor:pointer;
     }
-    .btn + .btn { margin-top:10px; }
-    .btn.primary { background:var(--sky); color:#fff; }
-    .btn.secondary {
+    .btn + .btn{ margin-top:10px; }
+
+    .btn.primary{ background:var(--sky); color:#fff; }
+    .btn.secondary{
       background:rgba(255,255,255,0.85);
       color:#0b1c2d;
       border:1px solid rgba(11,28,45,.25);
     }
 
-    /* ===== MODALE DESIGN (à la place du alert) ===== */
-    .modal {
+    /* MODALE (uniquement pour Facebook in-app ou iPhone Safari) */
+    .modal{
       position:fixed;
       inset:0;
       display:none;
@@ -104,51 +104,42 @@
       background:rgba(0,0,0,.55);
       z-index:999;
     }
-    .modal.open { display:flex; }
+    .modal.open{ display:flex; }
 
-    .sheet {
+    .sheet{
       width:min(520px, 94vw);
       background:#fff;
       border-radius:22px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      box-shadow:0 18px 60px rgba(0,0,0,.25);
       padding:18px 16px 14px;
     }
-
     .sheetHead{
       display:flex;
       align-items:flex-start;
       gap:12px;
       margin-bottom:10px;
     }
-
     .sheetIcon{
-      flex:0 0 auto;
-      width:40px;
-      height:40px;
+      width:40px; height:40px;
       border-radius:14px;
       display:flex;
       align-items:center;
       justify-content:center;
       background:rgba(93,183,238,.18);
-      color:var(--blue);
       font-size:20px;
-      font-weight:900;
     }
-
     .sheet h3{
       margin:0;
       font-size:18px;
       color:var(--blue);
       line-height:1.2;
     }
-
     .sheet p{
       margin:10px 0;
       color:rgba(0,0,0,.75);
       line-height:1.35;
       font-size:14px;
     }
-
     .step{
       background:rgba(11,28,45,.06);
       border:1px solid rgba(11,28,45,.08);
@@ -156,15 +147,11 @@
       padding:10px 12px;
       margin:10px 0;
     }
-
-    .step strong{ color:var(--blue); }
-
     .modalActions{
       display:flex;
       justify-content:flex-end;
       margin-top:12px;
     }
-
     .okBtn{
       border:none;
       border-radius:14px;
@@ -185,15 +172,11 @@
   </header>
 
   <section class="mid">
-    <h1>
-      APÉRO DE NUIT
-      <span class="brand66">66<span class="reg">®</span></span>
-    </h1>
+    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
   </section>
 
   <main class="stage">
     <div class="bottleWrap" id="bottles">
-
       <img src="assets/bottle1.png" class="active" alt="">
       <img src="assets/bottle2.png" alt="">
       <img src="assets/bottle3.png" alt="">
@@ -206,32 +189,21 @@
         <button class="btn primary" id="goBtn">Commander</button>
         <button class="btn secondary" id="installBtn">Ajouter l’app</button>
       </div>
-
     </div>
   </main>
 
-  <!-- MODALE INSTALL (design) -->
+  <!-- Modale (Facebook in-app OU iPhone Safari uniquement) -->
   <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="sheet">
       <div class="sheetHead">
-        <div class="sheetIcon">📱</div>
+        <div class="sheetIcon">📲</div>
         <div>
-          <h3 id="helpTitle">Ajouter l’app</h3>
-          <p>Installe Apéro de Nuit 66 sur ton écran d’accueil en 2 secondes :</p>
+          <h3 id="helpTitle">Installer l’app</h3>
+          <p id="helpIntro"> </p>
         </div>
       </div>
 
-      <div class="step">
-        <p><strong>iPhone (Safari)</strong><br>
-          Bouton <em>Partager</em> → <em>Sur l’écran d’accueil</em>
-        </p>
-      </div>
-
-      <div class="step">
-        <p><strong>Android (Chrome)</strong><br>
-          Menu ⋮ → <em>Installer l’application</em> / <em>Ajouter à l’écran d’accueil</em>
-        </p>
-      </div>
+      <div class="step" id="helpSteps"></div>
 
       <div class="modalActions">
         <button class="okBtn" id="closeHelp">OK</button>
@@ -240,12 +212,12 @@
   </div>
 
   <script>
-    // Commander
+    // ===== Commander =====
     document.getElementById("goBtn").addEventListener("click", () => {
       window.location.href = "https://aperodenuit.com/commander";
     });
 
-    // Défilement bouteilles (2 secondes)
+    // ===== Défilement bouteilles (2s) =====
     const bottles = document.querySelectorAll("#bottles img");
     let index = 0;
     if (bottles.length > 1) {
@@ -256,22 +228,76 @@
       }, 2000);
     }
 
-    // Modale "Ajouter l’app"
-    const installBtn = document.getElementById("installBtn");
+    // ===== Détection Facebook / Instagram in-app =====
+    const ua = navigator.userAgent || "";
+    const isFacebookInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
+
+    // ===== iOS Safari (pas de vraie popup install) =====
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+
+    // ===== PWA install prompt (Android/Chrome etc.) =====
+    let deferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e; // -> popup native dispo
+    });
+
+    // ===== Modale helpers =====
     const helpModal = document.getElementById("helpModal");
     const closeHelp = document.getElementById("closeHelp");
+    const helpIntro = document.getElementById("helpIntro");
+    const helpSteps = document.getElementById("helpSteps");
 
-    installBtn.addEventListener("click", () => {
+    function openModal(introHtml, stepsHtml){
+      helpIntro.innerHTML = introHtml;
+      helpSteps.innerHTML = stepsHtml;
       helpModal.classList.add("open");
-    });
+    }
 
-    closeHelp.addEventListener("click", () => {
-      helpModal.classList.remove("open");
-    });
+    closeHelp.addEventListener("click", () => helpModal.classList.remove("open"));
+    helpModal.addEventListener("click", (e) => { if(e.target === helpModal) helpModal.classList.remove("open"); });
 
-    // fermer si on clique en dehors de la carte
-    helpModal.addEventListener("click", (e) => {
-      if (e.target === helpModal) helpModal.classList.remove("open");
+    // ===== Click "Ajouter l’app" =====
+    document.getElementById("installBtn").addEventListener("click", async () => {
+
+      // 1) Facebook/Instagram in-app => UNIQUEMENT la modale "ouvrir dans Chrome/Safari"
+      if (isFacebookInApp) {
+        openModal(
+          "Facebook/Instagram ne permet pas l’installation.",
+          "<strong>Ouvre dans un vrai navigateur :</strong><br><br>" +
+          "• Appuie sur <strong>⋯</strong> (menu) en haut à droite<br>" +
+          "• Choisis <strong>Ouvrir dans Chrome</strong> (Android) ou <strong>Ouvrir dans Safari</strong> (iPhone)<br>" +
+          "• Reviens ici et clique sur <strong>Ajouter l’app</strong>"
+        );
+        return;
+      }
+
+      // 2) Si la popup native est dispo => on l'affiche (UNIQUEMENT la popup)
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch(e) {}
+        deferredPrompt = null;
+        return;
+      }
+
+      // 3) iPhone Safari => pas de popup native -> instructions iOS
+      if (isIOS && isSafari) {
+        openModal(
+          "Sur iPhone, l’installation se fait via le bouton Partager.",
+          "<strong>Étapes :</strong><br><br>" +
+          "• Appuie sur <strong>Partager</strong> (icône carré + flèche)<br>" +
+          "• Choisis <strong>Sur l’écran d’accueil</strong><br>" +
+          "• Valide <strong>Ajouter</strong>"
+        );
+        return;
+      }
+
+      // 4) Autres cas (Chrome déjà installé / pas éligible PWA) -> petit message propre
+      openModal(
+        "Installation indisponible sur ce navigateur.",
+        "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)."
+      );
     });
   </script>
 
