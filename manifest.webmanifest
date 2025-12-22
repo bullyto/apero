@@ -1,25 +1,28 @@
 {
-  "name": "APERO DE NUIT",
-  "short_name": "APERO",
-  "description": "Livraison d’alcool de nuit à Perpignan. Installe l’app sur l’écran d’accueil ou commande en un clic.",
-  "start_url": "./",
+  "name": "Apéro de Nuit 66",
+  "short_name": "Apéro 66",
+  "description": "Commande rapide • Apéro de Nuit 66",
+  "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b1c2d",
   "theme_color": "#0b1c2d",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "assets/icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
