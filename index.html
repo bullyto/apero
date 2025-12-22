@@ -1,46 +1,169 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>APERO DE NUIT – Livraison d’alcool de nuit</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="APERO DE NUIT – Livraison d’alcool de nuit. Installe l’app ou commande en un clic.">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>APERO DE NUIT – Livraison d’alcool de nuit à Perpignan</title>
+  <meta name="description" content="Livraison d’alcool de nuit à Perpignan. Installe l’app sur l’écran d’accueil ou commande en un clic." />
+  <link rel="canonical" href="https://aperos.net/" />
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0b1c2d" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <meta property="og:title" content="APERO DE NUIT" />
+  <meta property="og:description" content="Livraison d’alcool de nuit à Perpignan. Installe l’app sur l’écran d’accueil ou commande en un clic." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://aperos.net/" />
+  <meta property="og:image" content="assets/og-image-1200x630.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="APERO DE NUIT" />
+  <meta name="twitter:description" content="Livraison d’alcool de nuit à Perpignan. Installe l’app sur l’écran d’accueil ou commande en un clic." />
+  <meta name="twitter:image" content="assets/og-image-1200x630.jpg" />
+
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "APERO DE NUIT", "url": "https://aperos.net/", "description": "Livraison d’alcool de nuit à Perpignan. Installe l’app sur l’écran d’accueil ou commande en un clic.", "potentialAction": {"@type": "ViewAction", "target": "https://www.aperodenuit.com/commander"}}</script>
+
+  <style>
+    :root {
+      --blue:#0b1c2d;
+      --sky:#5db7ee;
+      --btn:#4da3d9;
+      --btnText:#fff;
+      --text:#08111f;
+    }
+    *{box-sizing:border-box}
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#fff; color:var(--text); }
+    .top { background: var(--blue); padding: 0; }
+    .top img { display:block; width:100%; height:auto; }
+    .mid { background:#fff; text-align:center; padding: 22px 14px 8px; }
+    .mid h1 { margin: 6px 0 0; font-size: clamp(26px, 6vw, 40px); letter-spacing:.5px; color: var(--sky); font-weight: 900; }
+    .stage { position:relative; background:#fff; padding: 10px 14px 26px; display:flex; justify-content:center; align-items:flex-start; min-height: 560px; }
+    .bottleWrap { position:relative; width: min(520px, 92vw); height: min(720px, 74vh); display:flex; align-items:center; justify-content:center; }
+    .bottleWrap img { position:absolute; max-width:100%; max-height:100%; opacity:0; transition: opacity .35s ease; will-change: opacity; }
+    .bottleWrap img.active { opacity:1; }
+    .btnStack { position:absolute; left:50%; top: 58%; transform: translate(-50%, -50%); display:flex; flex-direction:column; gap: 10px; align-items:center; width:min(420px, 86vw); }
+    .btn { width:100%; border:none; border-radius: 18px; padding: 14px 16px; font-size: 18px; font-weight: 900; box-shadow: 0 16px 34px rgba(0,0,0,.18); cursor:pointer; }
+    .btn.primary { background: var(--btn); color: var(--btnText); }
+    .btn.secondary { background: rgba(0,0,0,.06); color: #0b1c2d; border:1px solid rgba(11,28,45,.18); }
+    .hint { margin-top: 10px; font-size: 12px; color: rgba(0,0,0,.55); }
+    .modal { position:fixed; inset:0; display:none; align-items:flex-end; justify-content:center; background: rgba(0,0,0,.55); z-index: 999; }
+    .sheet { width: min(720px, 100vw); border-radius: 18px 18px 0 0; background: #fff; padding: 16px 16px 18px; }
+    .sheet h3 { margin: 6px 0 10px; font-size: 18px; }
+    .sheet p { margin: 0 0 10px; color: rgba(0,0,0,.75); line-height:1.35; }
+    .step { background: rgba(11,28,45,.06); border:1px solid rgba(11,28,45,.10); border-radius: 14px; padding: 10px 12px; margin: 8px 0; }
+    .close { width:100%; margin-top: 10px; border:none; border-radius: 14px; padding: 12px 14px; font-weight: 900; background: var(--btn); color:#fff; }
+  </style>
 </head>
 <body>
+  <header class="top">
+    <img src="assets/logo-header.png" alt="APERO DE NUIT" />
+  </header>
 
-<header class="header">
-  <img src="assets/logo.png" alt="APERO DE NUIT">
-</header>
+  <section class="mid" aria-label="Titre">
+    <h1>APÉRO DE NUIT 66</h1>
+  </section>
 
-<main class="stage">
-  <div class="bottles">
-    <img src="assets/bottle1.png" class="active" alt="">
-    <img src="assets/bottle2.png" alt="">
-    <img src="assets/bottle3.png" alt="">
-    <img src="assets/bottle4.png" alt="">
-    <img src="assets/bottle5.png" alt="">
+  <main class="stage" aria-label="Bouteilles">
+    <div class="bottleWrap" id="bottles" aria-hidden="true">
+      <img src='assets/bottle1.png' class='active' alt=''>
+      <img src='assets/bottle2.png' alt=''>
+      <img src='assets/bottle3.png' alt=''>
+      <img src='assets/bottle4.png' alt=''>
+      <img src='assets/bottle5.png' alt=''>
+      <img src='assets/bottle6.png' alt=''>
+      <img src='assets/bottle7.png' alt=''>
+      <div class="btnStack" aria-label="Actions">
+        <button class="btn primary" id="goBtn">Commander</button>
+        <button class="btn secondary" id="installBtn">Ajouter l’app</button>
+        <div class="hint">Si rien ne se passe : <a href="https://www.aperodenuit.com/commander">ouvrir la commande</a></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-label="Aide installation">
+    <div class="sheet">
+      <h3 id="helpTitle">Ajouter à l’écran d’accueil</h3>
+      <p id="helpText"></p>
+      <div id="helpSteps"></div>
+      <button class="close" id="closeHelp">OK</button>
+    </div>
   </div>
-</main>
 
-<div class="actions">
-  <button class="btn commander" onclick="location.href='https://www.aperodenuit.com/commander'">
-    🍾 Commander
-  </button>
-  <button class="btn install" id="installBtn">
-    ⬇️ Installer l’app
-  </button>
-</div>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    }
 
-<script>
-  const imgs = document.querySelectorAll('.bottles img');
-  let i = 0;
-  setInterval(() => {
-    imgs[i].classList.remove('active');
-    i = (i + 1) % imgs.length;
-    imgs[i].classList.add('active');
-  }, 1000);
-</script>
+    const TARGET_URL = "https://www.aperodenuit.com/commander";
+    document.getElementById("goBtn").addEventListener("click", () => {
+      window.location.href = TARGET_URL;
+    });
 
+    const imgs = Array.from(document.querySelectorAll("#bottles > img"));
+    let idx = 0;
+    setInterval(() => {
+      imgs[idx].classList.remove("active");
+      idx = (idx + 1) % imgs.length;
+      imgs[idx].classList.add("active");
+    }, 1000);
+
+    const ua = navigator.userAgent || "";
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isFB = /FBAN|FBAV/i.test(ua);
+    const isIG = /Instagram/i.test(ua);
+    const isInApp = isFB || isIG;
+
+    const helpModal = document.getElementById("helpModal");
+    const helpTitle = document.getElementById("helpTitle");
+    const helpText = document.getElementById("helpText");
+    const helpSteps = document.getElementById("helpSteps");
+    document.getElementById("closeHelp").addEventListener("click", () => helpModal.style.display = "none");
+
+    function openHelp(kind) {
+      helpSteps.innerHTML = "";
+      if (kind === "ios") {
+        helpTitle.textContent = "Ajouter à l’écran d’accueil (iPhone)";
+        helpText.textContent = "Sur iPhone, l’installation se fait via Safari :";
+        helpSteps.innerHTML = `
+          <div class="step">1) Ouvre ce lien dans <b>Safari</b></div>
+          <div class="step">2) Appuie sur <b>Partager</b> (carré + flèche)</div>
+          <div class="step">3) Choisis <b>Sur l’écran d’accueil</b> puis <b>Ajouter</b></div>
+        `;
+      } else if (kind === "inapp") {
+        helpTitle.textContent = "Facebook / Instagram";
+        helpText.textContent = "Pour installer l’app, ouvre le lien dans le navigateur :";
+        helpSteps.innerHTML = `
+          <div class="step">1) Appuie sur <b>⋮</b> ou <b>Partager</b></div>
+          <div class="step">2) Choisis <b>Ouvrir dans Chrome</b> (Android) ou <b>Ouvrir dans Safari</b> (iPhone)</div>
+          <div class="step">3) Reviens ici et appuie sur <b>Ajouter l’app</b></div>
+        `;
+      } else {
+        helpTitle.textContent = "Ajouter l’app";
+        helpText.textContent = "Si l’installation ne s’affiche pas, ouvre dans Chrome (Android) ou Safari (iPhone).";
+        helpSteps.innerHTML = `<div class="step">Ensuite appuie sur <b>Ajouter l’app</b>.</div>`;
+      }
+      helpModal.style.display = "flex";
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+    });
+
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (isInApp) return openHelp("inapp");
+      if (isIOS) return openHelp("ios");
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        return;
+      }
+      openHelp("generic");
+    });
+  </script>
 </body>
 </html>
