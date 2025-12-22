@@ -98,7 +98,7 @@
     /* BOUTONS */
     .btnStack {
       position:absolute;
-      bottom:11vh;
+      bottom:14vh; /* ⬆️ AJUSTEMENT FINAL */
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
@@ -134,12 +134,10 @@
 
 <body>
 
-  <!-- HEADER -->
   <header class="top">
     <img src="assets/logo-header.png" alt="Apéro de Nuit">
   </header>
 
-  <!-- TITRE -->
   <section class="mid">
     <h1>
       APÉRO DE NUIT
@@ -147,7 +145,6 @@
     </h1>
   </section>
 
-  <!-- BOUTEILLES -->
   <main class="stage">
     <div class="bottleWrap" id="bottles">
 
@@ -167,14 +164,13 @@
     </div>
   </main>
 
-  <!-- SCRIPT -->
   <script>
-    /* Commander */
+    // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
       window.location.href = "https://aperodenuit.com/commander";
     });
 
-    /* Défilement bouteilles – 2 secondes */
+    // Défilement bouteilles (2 secondes)
     const bottles = document.querySelectorAll("#bottles img");
     let index = 0;
 
@@ -186,11 +182,11 @@
       }, 2000);
     }
 
-    /* Ajouter l’app – fallback simple */
+    // Ajouter l’app (info simple)
     document.getElementById("installBtn").addEventListener("click", () => {
       alert(
         "📱 Ajouter l’app :\n\n" +
-        "• iPhone : bouton Partager → Sur l’écran d’accueil\n" +
+        "• iPhone : Partager → Sur l’écran d’accueil\n" +
         "• Android : menu ⋮ → Installer l’application"
       );
     });
