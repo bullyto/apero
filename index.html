@@ -48,8 +48,6 @@
       position:relative;
       display:inline-block;
     }
-
-    /* ✅ SEULE MODIFICATION ICI */
     .brand66 .reg {
       position:absolute;
       top:-0.55em;
@@ -101,17 +99,19 @@
     }
     .btn + .btn { margin-top:10px; }
 
+    /* 🔵 PARFAIT, ON N’Y TOUCHE PAS */
     .btn.primary {
       background:var(--btn);
       color:var(--btnText);
     }
 
+    /* ⚪ OPACITÉ BLANCHE BIEN PLUS MARQUÉE */
     .btn.secondary {
       background: linear-gradient(
-        rgba(255,255,255,0.18),
-        rgba(255,255,255,0.18)
+        rgba(255,255,255,0.45),
+        rgba(255,255,255,0.45)
       ),
-      rgba(0,0,0,.12);
+      rgba(0,0,0,.10);
       color:#0b1c2d;
       border:1px solid rgba(11,28,45,.18);
     }
@@ -131,7 +131,7 @@
   </section>
 
   <main class="stage">
-    <div class="bottleWrap" id="bottles">
+    <div class="bottleWrap">
       <img src="assets/bottle1.png" class="active">
       <img src="assets/bottle2.png">
       <img src="assets/bottle3.png">
