@@ -34,13 +34,19 @@
       --text:#08111f;
     }
     *{box-sizing:border-box}
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#fff; color:var(--text); }
+html{height:100%}
+body { margin:0; height:100dvh; overflow:hidden; display:flex; flex-direction:column; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#fff; color:var(--text); }
+
     .top { background: var(--blue); padding: 0; }
-    .top img { display:block; width:100%; height:auto; }
-    .mid { background:#fff; text-align:center; padding: 22px 14px 8px; }
+    .top img { display:block; width:100%; height:auto; max-height: 26vh; object-fit: contain; }
+
+    .mid { background:#fff; text-align:center; padding: 18px 14px 6px; flex:0 0 auto; }
+
     .mid h1 { margin: 6px 0 0; font-size: clamp(26px, 6vw, 40px); letter-spacing:.5px; color: var(--sky); font-weight: 900; }
-    .stage { position:relative; background:#fff; padding: 10px 14px 26px; display:flex; justify-content:center; align-items:flex-start; min-height: 560px; }
-    .bottleWrap { position:relative; width: min(520px, 92vw); height: min(720px, 74vh); display:flex; align-items:center; justify-content:center; }
+    .stage { position:relative; background:#fff; padding: 10px 14px 26px; display:flex; justify-content:center; align-items:flex-start; flex:1; min-height:0; }
+
+    .bottleWrap { position:relative; width: min(520px, 92vw); height: min(720px, 100%); display:flex; align-items:center; justify-content:center; }
+
     .bottleWrap img { position:absolute; max-width:100%; max-height:100%; opacity:0; transition: opacity .35s ease; will-change: opacity; }
     .bottleWrap img.active { opacity:1; }
     .btnStack { position:absolute; left:50%; top: 58%; transform: translate(-50%, -50%); display:flex; flex-direction:column; gap: 10px; align-items:center; width:min(420px, 86vw); }
@@ -77,8 +83,6 @@
       <div class="btnStack" aria-label="Actions">
         <button class="btn primary" id="goBtn">Commander</button>
         <button class="btn secondary" id="installBtn">Ajouter l’app</button>
-        <div class="hint">Si rien ne se passe : <a href="https://www.aperodenuit.com/commander">ouvrir la commande</a></div>
-      </div>
     </div>
   </main>
 
