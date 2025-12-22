@@ -49,7 +49,7 @@ html, body {
 
 .actions {
   position: fixed;
-  bottom: 180px;
+  bottom: 280px;
   left: 0;
   right: 0;
   display: flex;
