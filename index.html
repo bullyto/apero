@@ -1,378 +1,47 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Apéro de Nuit 66</title>
+const CACHE_NAME = "aperodenuit-cache-v1";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./assets/app.css",
+  "./assets/app.js",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/icon-512-maskable.png"
+];
 
-  <!-- ✅ PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0b1c2d">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
 
-  <!-- Préchargement (fluidité du défilement) -->
-  <link rel="preload" as="image" href="assets/logo-header.png">
-  <link rel="preload" as="image" href="assets/bottle1.png">
-  <link rel="preload" as="image" href="assets/bottle2.png">
-  <link rel="preload" as="image" href="assets/bottle3.png">
-  <link rel="preload" as="image" href="assets/bottle4.png">
-  <link rel="preload" as="image" href="assets/bottle5.png">
-  <link rel="preload" as="image" href="assets/bottle6.png">
-  <link rel="preload" as="image" href="assets/bottle7.png">
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
 
-  <style>
-    :root{ --blue:#0b1c2d; --sky:#5db7ee; --text:#0b1c2d; }
-    *{box-sizing:border-box}
+// Cache-first for same-origin requests, network fallback
+self.addEventListener("fetch", (event) => {
+  const req = event.request;
+  const url = new URL(req.url);
 
-    body{
-      margin:0; height:100dvh; display:flex; flex-direction:column;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#fff; color:var(--text); overflow:hidden;
-    }
+  if (url.origin !== self.location.origin) return;
 
-    /* HEADER */
-    .top{background:var(--blue);padding-bottom:8px}
-    .top img{width:100%;max-height:26vh;object-fit:contain;display:block}
-
-    /* TITRE */
-    .mid{text-align:center;padding:18px 14px 6px}
-    .mid h1{margin:0;font-size:clamp(26px,6vw,40px);color:var(--sky);font-weight:900}
-    .brand66{position:relative;display:inline-block}
-    .brand66 .reg{position:absolute;top:-0.2em;right:-0.4em;font-size:1em;font-weight:800}
-
-    /* ZONE BOUTEILLES */
-    .stage{flex:1;display:flex;justify-content:center;padding:12px}
-    .bottleWrap{
-      position:relative;width:min(520px,96vw);min-height:60vh;
-      display:flex;justify-content:center;align-items:flex-start;
-    }
-    .bottleWrap img{
-      position:absolute;max-height:56vh;max-width:100%;width:auto;
-      opacity:0;transition:opacity .4s ease;
-    }
-    .bottleWrap img.active{opacity:1}
-
-    /* BOUTONS */
-    .btnStack{
-      position:absolute;bottom:14vh;left:50%;transform:translateX(-50%);
-      width:min(420px,86vw);z-index:5;
-    }
-    .btn{
-      width:100%;border:none;border-radius:16px;padding:14px;
-      font-size:18px;font-weight:900;cursor:pointer;
-      position:relative; /* ✅ nécessaire pour le badge */
-    }
-    .btn + .btn{margin-top:10px}
-    .btn.primary{background:var(--sky);color:#fff}
-    .btn.secondary{background:rgba(255,255,255,.85);color:#0b1c2d;border:1px solid rgba(11,28,45,.25)}
-
-    /* ✅ Pulse discret pour augmenter le clic SUR "Ajouter l’app" */
-    @keyframes pulseAdd {
-      0%   { box-shadow: 0 0 0 0 rgba(93,183,238,.45); transform: translateY(0); }
-      60%  { box-shadow: 0 0 0 16px rgba(93,183,238,0); }
-      100% { box-shadow: 0 0 0 0 rgba(93,183,238,0); }
-    }
-    .btn.secondary.pulse { animation: pulseAdd 2.6s infinite; }
-
-    /* ✅ Badge "Nouveau" (propre, cohérent design) */
-    .badge-new{
-      position:absolute;
-      top:-8px;
-      right:-8px;
-      background:var(--sky);
-      color:#fff;
-      font-size:11px;
-      font-weight:950;
-      padding:4px 8px;
-      border-radius:999px;
-      box-shadow:0 10px 22px rgba(93,183,238,.45);
-      letter-spacing:.2px;
-      border:2px solid rgba(255,255,255,.85);
-      pointer-events:none;
-    }
-
-    /* MODALE DESIGN */
-    .modal{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:18px;background:rgba(0,0,0,.55);z-index:999;
-    }
-    .modal.open{display:flex}
-    .sheet{
-      width:min(520px,94vw);background:#fff;border-radius:22px;
-      box-shadow:0 18px 60px rgba(0,0,0,.25);padding:18px 16px 14px;
-    }
-    .sheetHead{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start}
-    .sheetIcon{
-      width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-      background:rgba(93,183,238,.18);font-size:20px;
-    }
-    .sheet h3{margin:0;font-size:18px;color:var(--blue);line-height:1.2}
-    .sheet p{margin:10px 0;color:rgba(0,0,0,.75);font-size:14px;line-height:1.35}
-    .step{
-      background:rgba(11,28,45,.06);border:1px solid rgba(11,28,45,.08);
-      border-radius:16px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.35;
-    }
-    .modalActions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
-    .okBtn,.copyBtn{border:none;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;}
-    .okBtn{background:var(--sky);color:#fff;min-width:110px}
-    .copyBtn{background:rgba(93,183,238,.18);color:var(--blue)}
-    .copied{font-size:13px;color:#1b7f2a;margin-top:6px;display:none}
-
-    /* ✅ TOAST (mini notification jolie) */
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%) translateY(20px);
-      opacity:0;
-      pointer-events:none;
-      background:rgba(11,28,45,.92);
-      color:#fff;
-      padding:12px 14px;
-      border-radius:14px;
-      box-shadow:0 18px 60px rgba(0,0,0,.25);
-      z-index:1000;
-      transition:opacity .25s ease, transform .25s ease;
-      font-weight:900;
-      font-size:14px;
-      width:min(520px, 92vw);
-      text-align:center;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  </style>
-</head>
-
-<body>
-  <header class="top">
-    <img src="assets/logo-header.png" alt="">
-  </header>
-
-  <section class="mid">
-    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
-  </section>
-
-  <main class="stage">
-    <div class="bottleWrap" id="bottles">
-      <img src="assets/bottle1.png" class="active" alt="">
-      <img src="assets/bottle2.png" alt="">
-      <img src="assets/bottle3.png" alt="">
-      <img src="assets/bottle4.png" alt="">
-      <img src="assets/bottle5.png" alt="">
-      <img src="assets/bottle6.png" alt="">
-      <img src="assets/bottle7.png" alt="">
-
-      <div class="btnStack">
-        <button class="btn primary" id="goBtn">Commander</button>
-
-        <!-- ✅ Badge Nouveau -->
-        <button class="btn secondary pulse" id="installBtn">
-          Ajouter l’app
-          <span class="badge-new" id="newBadge">Nouveau</span>
-        </button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Toast -->
-  <div class="toast" id="toast">✅ Apéro de Nuit est ajouté à ton écran d’accueil !</div>
-
-  <!-- Modale (Facebook/in-app + iPhone Safari + cas indisponible) -->
-  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-    <div class="sheet">
-      <div class="sheetHead">
-        <div class="sheetIcon" id="helpIcon">📲</div>
-        <div>
-          <h3 id="helpTitle">Installer l’app</h3>
-          <p id="helpIntro"></p>
-        </div>
-      </div>
-
-      <div class="step" id="helpSteps"></div>
-      <div class="copied" id="copiedMsg">✅ Lien copié</div>
-
-      <div class="modalActions">
-        <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
-        <button class="okBtn" id="closeHelp">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ✅ Service Worker (obligatoire pour que Chrome propose l'installation)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        // Cache successful GET responses
+        if (req.method === "GET" && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return res;
       });
-    }
-
-    // Commander
-    document.getElementById("goBtn").addEventListener("click", () => {
-      window.location.href = "https://aperodenuit.com/commander";
-    });
-
-    // Défilement bouteilles (2s)
-    const imgs = document.querySelectorAll("#bottles img");
-    let idx = 0;
-    if (imgs.length > 1) {
-      setInterval(() => {
-        imgs[idx].classList.remove("active");
-        idx = (idx + 1) % imgs.length;
-        imgs[idx].classList.add("active");
-      }, 2000);
-    }
-
-    // Détections
-    const ua = navigator.userAgent || "";
-    const isFBInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-    const isAndroid = /Android/i.test(ua);
-    const isChrome = /Chrome\/\d+/i.test(ua) && !/Edg\/|OPR\//i.test(ua);
-
-    // PWA prompt Android/Chrome
-    let deferredPrompt = null;
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-    });
-
-    // Toast
-    const toastEl = document.getElementById("toast");
-    function showToast(msg){
-      if(msg) toastEl.textContent = msg;
-      toastEl.classList.add("show");
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
-    }
-
-    // ✅ Masquer badge/pulse si déjà installé / en mode "app"
-    function isStandalone(){
-      return window.matchMedia("(display-mode: standalone)").matches
-        || window.navigator.standalone === true; // iOS
-    }
-    function removeInstallHints(){
-      const b = document.getElementById("newBadge");
-      if (b) b.remove();
-      document.getElementById("installBtn").classList.remove("pulse");
-    }
-    if (isStandalone()) removeInstallHints();
-
-    // Quand l'app est installée (Android/Chrome)
-    window.addEventListener("appinstalled", () => {
-      showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
-      removeInstallHints();
-    });
-
-    // Modale helpers
-    const modal = document.getElementById("helpModal");
-    const closeBtn = document.getElementById("closeHelp");
-    const copyBtn = document.getElementById("copyLinkBtn");
-    const copiedMsg = document.getElementById("copiedMsg");
-    const intro = document.getElementById("helpIntro");
-    const steps = document.getElementById("helpSteps");
-    const title = document.getElementById("helpTitle");
-    const icon = document.getElementById("helpIcon");
-
-    function openModal({t="Installer l’app", i="", s="", showCopy=false, ic="📲"}) {
-      title.textContent = t;
-      icon.textContent = ic;
-      intro.innerHTML = i;
-      steps.innerHTML = s;
-      copyBtn.style.display = showCopy ? "inline-block" : "none";
-      copiedMsg.style.display = "none";
-      modal.classList.add("open");
-    }
-
-    closeBtn.addEventListener("click", () => modal.classList.remove("open"));
-    modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
-
-    // Copier lien (avec fallback)
-    copyBtn.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        copiedMsg.style.display = "block";
-      } catch (e) {
-        const tmp = document.createElement("textarea");
-        tmp.value = window.location.href;
-        document.body.appendChild(tmp);
-        tmp.select();
-        document.execCommand("copy");
-        document.body.removeChild(tmp);
-        copiedMsg.style.display = "block";
-      }
-    });
-
-    // Click "Ajouter l’app"
-    document.getElementById("installBtn").addEventListener("click", async () => {
-
-      // Facebook/Instagram in-app : modale + copier lien
-      if (isFBInApp) {
-        openModal({
-          ic:"📣",
-          t:"Ouvrir dans un navigateur",
-          i:"Facebook / Instagram bloque l’installation de l’app.",
-          s:
-            "<strong>Solution :</strong><br><br>" +
-            "1) Clique sur <strong>Copier le lien</strong><br>" +
-            "2) Ouvre <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)<br>" +
-            "3) Colle le lien dans la barre d’adresse, puis re-clique sur <strong>Ajouter l’app</strong>",
-          showCopy:true
-        });
-        return;
-      }
-
-      // ✅ Android Chrome : si l'app est installable -> on déclenche DIRECTEMENT la popup native
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch(e) {}
-        deferredPrompt = null;
-        return;
-      }
-
-      // iPhone Safari : instructions Apple (pas de popup native)
-      if (isIOS && isSafari) {
-        openModal({
-          ic:"🍏",
-          t:"Ajouter à l’écran d’accueil",
-          i:"Sur iPhone, l’installation se fait via le bouton Partager.",
-          s:
-            "<strong>Étapes :</strong><br><br>" +
-            "1) Appuie sur <strong>Partager</strong> (carré + flèche)<br>" +
-            "2) Choisis <strong>Sur l’écran d’accueil</strong><br>" +
-            "3) Valide <strong>Ajouter</strong>"
-        });
-        return;
-      }
-
-      // Android mais pas installable (souvent: pas de SW/manifest ok, ou déjà installé, ou pas au bon scope)
-      if (isAndroid && isChrome) {
-        openModal({
-          ic:"⚠️",
-          t:"Installation indisponible",
-          i:"Chrome ne propose pas l’installation automatique pour le moment.",
-          s:
-            "Vérifie :<br>" +
-            "• que tu es bien sur <strong>HTTPS</strong><br>" +
-            "• que le <strong>service worker</strong> est actif<br>" +
-            "• que <strong>manifest.webmanifest</strong> est chargé (icônes OK)<br><br>" +
-            "Sinon : menu ⋮ → <strong>Installer l’application</strong> / <strong>Ajouter à l’écran d’accueil</strong>.",
-          showCopy:false
-        });
-        return;
-      }
-
-      // Autres cas : message utile + copier lien
-      openModal({
-        ic:"⚠️",
-        t:"Installation indisponible",
-        i:"Ton navigateur ne propose pas l’installation automatique.",
-        s:
-          "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone).<br>" +
-          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
-        showCopy:true
-      });
-    });
-  </script>
-
-</body>
-</html>
+    })
+  );
+});
