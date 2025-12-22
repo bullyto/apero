@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Apéro de Nuit</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0A121C" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <!-- Partage (quand on partage l'URL de cette PWA) -->
+  <meta property="og:title" content="Apéro de Nuit" />
+  <meta property="og:description" content="1er service de livraison d’alcools de nuit à Perpignan." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="./" />
+  <meta property="og:image" content="assets/og-image-1200x630.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Apéro de Nuit" />
+  <meta name="twitter:description" content="1er service de livraison d’alcools de nuit à Perpignan." />
+  <meta name="twitter:image" content="assets/og-image-1200x630.jpg" />
+
+  <style>
+    :root {
+      --bg:#0A121C;
+      --card:#0C375F;
+      --txt:#F5F8FF;
+    }
+    body {
+      margin:0; background:var(--bg); color:var(--txt);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+    }
+    .wrap { text-align:center; max-width:640px; padding:28px; }
+    .logo {
+      width:96px; height:96px; border-radius:22px;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    .muted { opacity:.78; }
+    /* Install pill */
+    #installPWA {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      max-width: min(680px, calc(100vw - 24px));
+      padding: 12px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(12,55,95,.92);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    #installPWA button {
+      border: none;
+      background: #fff;
+      color: #0A121C;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #installPWA .x {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.9);
+      font-size: 20px;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+    /* iOS help modal */
+    #iosHelp {
+      position: fixed; inset: 0;
+      display:none; align-items:flex-end; justify-content:center;
+      background: rgba(0,0,0,.55);
+      z-index: 10000;
+    }
+    #iosHelp .sheet {
+      width: min(760px, 100vw);
+      border-radius: 18px 18px 0 0;
+      background: #0B1B2B;
+      padding: 18px 18px 22px;
+      box-shadow: 0 -12px 30px rgba(0,0,0,.4);
+    }
+    #iosHelp .sheet h3 { margin: 6px 0 8px; font-size: 18px; }
+    #iosHelp .sheet p { margin: 0 0 10px; opacity: .85; }
+    #iosHelp .sheet .steps { display:grid; gap: 8px; }
+    #iosHelp .sheet .step {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    #iosHelp .sheet .close {
+      width:100%;
+      margin-top: 12px;
+      border:none;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 800;
+      background:#fff;
+      color:#0A121C;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="logo" src="assets/icon-192.png" alt="Apéro de Nuit" />
+    <h1 style="margin:16px 0 6px;font-size:22px;">Apéro de Nuit</h1>
+    <p class="muted" style="margin:0 0 14px;">Ouverture…</p>
+    <p class="muted" style="margin:0;font-size:13px;">
+      Si rien ne se passe, <a href="https://www.aperodenuit.com/" style="color:#8fd3ff;">clique ici</a>.
+    </p>
+  </div>
+
+  <!-- Install prompt (Android) -->
+  <div id="installPWA">
+    <span>➕ Ajouter à l’écran d’accueil</span>
+    <button id="installBtn">Installer</button>
+    <button class="x" id="dismissBtn" aria-label="Fermer">×</button>
+  </div>
+
+  <!-- iOS help -->
+  <div id="iosHelp" role="dialog" aria-modal="true">
+    <div class="sheet">
+      <h3>Ajouter à l’écran d’accueil (iPhone)</h3>
+      <p>Apple ne montre pas de bouton “Installer”. Fais juste :</p>
+      <div class="steps">
+        <div class="step">1) Appuie sur <b>Partager</b> (le carré avec la flèche)</div>
+        <div class="step">2) Choisis <b>Sur l’écran d’accueil</b></div>
+        <div class="step">3) Valide avec <b>Ajouter</b></div>
+      </div>
+      <button class="close" id="closeIos">OK</button>
+    </div>
+  </div>
+
+  <script>
+    // ---- PWA install button (Android) ----
+    let deferredPrompt = null;
+    const pill = document.getElementById("installPWA");
+    const installBtn = document.getElementById("installBtn");
+    const dismissBtn = document.getElementById("dismissBtn");
+
+    const dismissed = localStorage.getItem("pwa_install_dismissed") === "1";
+    const isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+
+    function showPill() {
+      if (dismissed || isStandalone) return;
+      pill.style.display = "flex";
+    }
+    function hidePill() {
+      pill.style.display = "none";
+    }
+
+    dismissBtn.addEventListener("click", () => {
+      localStorage.setItem("pwa_install_dismissed", "1");
+      hidePill();
+    });
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showPill();
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      hidePill();
+    });
+
+    window.addEventListener("appinstalled", () => {
+      hidePill();
+    });
+
+    // ---- iOS helper ----
+    const ua = navigator.userAgent || "";
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const iosStandalone = window.navigator.standalone === true;
+    const iosHelp = document.getElementById("iosHelp");
+    const closeIos = document.getElementById("closeIos");
+
+    if (isIOS && !iosStandalone && !dismissed) {
+      // Show the same pill, but open instructions
+      showPill();
+      installBtn.textContent = "Comment faire";
+      installBtn.addEventListener("click", () => {
+        iosHelp.style.display = "flex";
+      }, { once: true });
+      closeIos.addEventListener("click", () => {
+        iosHelp.style.display = "none";
+      });
+    }
+
+    // ---- SW for installability (shell only) ----
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    }
+
+    // Redirect to your real site
+    window.location.replace("https://www.aperodenuit.com/");
+  </script>
+</body>
+</html>
