@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Apéro de Nuit 66" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Apéro de Nuit 66">
 
   <title>Apéro de Nuit 66</title>
 
@@ -16,7 +16,7 @@
       --text:#0b1c2d;
     }
 
-    *{box-sizing:border-box}
+    * { box-sizing: border-box; }
 
     body {
       margin:0;
@@ -29,7 +29,7 @@
       color:var(--text);
     }
 
-    /* ===== HEADER ===== */
+    /* HEADER */
     .top {
       background: var(--blue);
       padding: 0 0 8px 0;
@@ -42,7 +42,7 @@
       object-fit:contain;
     }
 
-    /* ===== TITRE ===== */
+    /* TITRE */
     .mid {
       text-align:center;
       padding:18px 14px 6px;
@@ -68,7 +68,7 @@
       font-weight:800;
     }
 
-    /* ===== CONTENU ===== */
+    /* CONTENU */
     .stage {
       position:relative;
       flex:1;
@@ -90,14 +90,14 @@
       position:absolute;
       max-height:56vh;
       opacity:0;
-      transition:opacity .35s ease;
+      transition:opacity .4s ease;
     }
 
     .bottleWrap img.active {
       opacity:1;
     }
 
-    /* ===== BOUTONS ===== */
+    /* BOUTONS */
     .btnStack {
       position:absolute;
       bottom:9vh;
@@ -139,10 +139,12 @@
 
 <body>
 
+  <!-- HEADER -->
   <header class="top">
     <img src="assets/logo-header.png" alt="Apéro de Nuit">
   </header>
 
+  <!-- TITRE -->
   <section class="mid">
     <h1>
       APÉRO DE NUIT
@@ -150,31 +152,11 @@
     </h1>
   </section>
 
+  <!-- BOUTEILLES -->
   <main class="stage">
     <div class="bottleWrap" id="bottles">
-      <img src="assets/bottle1.png" class="active" alt="">
-      <img src="assets/bottle2.png" alt="">
-      <img src="assets/bottle3.png" alt="">
-      <!-- ajoute d'autres bouteilles si besoin -->
-      
-      <div class="btnStack">
-        <button class="btn primary">Commander</button>
-        <button class="btn secondary">Ajouter l’app</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- ===== DÉFILEMENT DES BOUTEILLES ===== -->
-  <script>
-    const bottles = document.querySelectorAll('#bottles img');
-    let index = 0;
-
-    setInterval(() => {
-      bottles[index].classList.remove('active');
-      index = (index + 1) % bottles.length;
-      bottles[index].classList.add('active');
-    }, 2000); // ⏱ 2 secondes
-  </script>
-
-</body>
-</html>
+      <img src="assets/bouteille1.png" class="active" alt="">
+      <img src="assets/bouteille2.png" alt="">
+      <img src="assets/bouteille3.png" alt="">
+      <img src="assets/bouteille4.png" alt="">
+      <img src="assets/bouteille5.png" alt
