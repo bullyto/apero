@@ -1,3 +1,6 @@
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
 html, body {
   margin: 0;
   padding: 0;
@@ -6,7 +9,9 @@ html, body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ===== HEADER ===== */
+/* =========================================================
+   HEADER
+   ========================================================= */
 .header {
   background: #0b1c2d;
   padding: 18px 0 16px;
@@ -18,7 +23,9 @@ html, body {
   max-height: 120px;
 }
 
-/* ===== SCÈNE / BOUTEILLE ===== */
+/* =========================================================
+   SCÈNE / BOUTEILLES
+   ========================================================= */
 .stage {
   position: relative;
   height: calc(100vh - 220px);
@@ -49,11 +56,12 @@ html, body {
   transform: scale(1);
 }
 
-/* ===== BOUTONS (ICI ON REMONTE) ===== */
+/* =========================================================
+   ACTIONS (BOUTONS)
+   ========================================================= */
 .actions {
   position: fixed;
-  top: 400px;
-bottom: auto;
+  bottom: 380px;              /* ← DEVRAIT LES FAIRE MONTER */
   left: 0;
   right: 0;
   display: flex;
@@ -63,7 +71,9 @@ bottom: auto;
   z-index: 10;
 }
 
-/* ===== STYLE DES BOUTONS ===== */
+/* =========================================================
+   BOUTONS
+   ========================================================= */
 .btn {
   width: min(560px, 92vw);
   border: none;
@@ -83,4 +93,36 @@ bottom: auto;
 .btn.install {
   background: rgba(255,255,255,.25);
   color: #fff;
+}
+
+/* =========================================================
+   ====== TESTS DE VÉRITÉ (NE PAS MODIFIER) ======
+   ========================================================= */
+
+/* TEST 1 — SI LE FOND DEVIENT ROUGE → CSS BIEN CHARGÉ */
+body {
+  background: red !important;
+}
+
+/* TEST 2 — CADRE VERT SI .actions EXISTE VRAIMENT */
+.actions {
+  outline: 6px solid lime !important;
+  background: rgba(0,255,0,0.25) !important;
+}
+
+/* TEST 3 — FORÇAGE DIRECT DES BOUTONS (PREUVE ABSOLUE) */
+#goBtn,
+#installBtn {
+  position: fixed !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+}
+
+#goBtn {
+  top: 20px !important;
+}
+
+#installBtn {
+  top: 90px !important;
 }
