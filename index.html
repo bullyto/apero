@@ -62,8 +62,15 @@
   width:min(420px,86vw);
   z-index:5;
 
-  /* ✅ remonte nettement + reste stable */
-  bottom: clamp(220px, 30dvh, 360px);
+  /* ✅ remonte franchement les boutons, sans dépendre trop du “vh” instable */
+  bottom: calc(30vh + env(safe-area-inset-bottom));
+}
+
+/* ✅ si écran bas (petits téléphones / barre navigateur qui bouffe la place) */
+@media (max-height: 720px){
+  .btnStack{
+    bottom: calc(34vh + env(safe-area-inset-bottom));
+  }
 }
 
     }
