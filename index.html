@@ -27,36 +27,18 @@
     }
 
     /* HEADER */
-    .top {
-      background:var(--blue);
-      padding-bottom:8px;
-    }
-
-    .top img {
-      display:block;
-      width:100%;
-      max-height:26vh;
-      object-fit:contain;
-    }
+    .top { background:var(--blue); padding-bottom:8px; }
+    .top img { display:block; width:100%; max-height:26vh; object-fit:contain; }
 
     /* TITRE */
-    .mid {
-      text-align:center;
-      padding:18px 14px 6px;
-    }
-
+    .mid { text-align:center; padding:18px 14px 6px; }
     .mid h1 {
       margin:0;
       font-size:clamp(26px,6vw,40px);
       color:var(--sky);
       font-weight:900;
     }
-
-    .brand66 {
-      position:relative;
-      display:inline-block;
-    }
-
+    .brand66 { position:relative; display:inline-block; }
     .brand66 .reg {
       position:absolute;
       top:-0.2em;
@@ -66,13 +48,7 @@
     }
 
     /* ZONE BOUTEILLES */
-    .stage {
-      flex:1;
-      display:flex;
-      justify-content:center;
-      padding:12px;
-    }
-
+    .stage { flex:1; display:flex; justify-content:center; padding:12px; }
     .bottleWrap {
       position:relative;
       width:min(520px,96vw);
@@ -81,7 +57,6 @@
       justify-content:center;
       align-items:flex-start;
     }
-
     .bottleWrap img {
       position:absolute;
       max-height:56vh;
@@ -90,21 +65,17 @@
       opacity:0;
       transition:opacity .4s ease;
     }
-
-    .bottleWrap img.active {
-      opacity:1;
-    }
+    .bottleWrap img.active { opacity:1; }
 
     /* BOUTONS */
     .btnStack {
       position:absolute;
-      bottom:14vh; /* ⬆️ AJUSTEMENT FINAL */
+      bottom:14vh;
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
       z-index:5;
     }
-
     .btn {
       width:100%;
       border:none;
@@ -114,20 +85,95 @@
       font-weight:900;
       cursor:pointer;
     }
-
-    .btn + .btn {
-      margin-top:10px;
-    }
-
-    .btn.primary {
-      background:var(--sky);
-      color:#fff;
-    }
-
+    .btn + .btn { margin-top:10px; }
+    .btn.primary { background:var(--sky); color:#fff; }
     .btn.secondary {
       background:rgba(255,255,255,0.85);
       color:#0b1c2d;
       border:1px solid rgba(11,28,45,.25);
+    }
+
+    /* ===== MODALE DESIGN (à la place du alert) ===== */
+    .modal {
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(0,0,0,.55);
+      z-index:999;
+    }
+    .modal.open { display:flex; }
+
+    .sheet {
+      width:min(520px, 94vw);
+      background:#fff;
+      border-radius:22px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      padding:18px 16px 14px;
+    }
+
+    .sheetHead{
+      display:flex;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:10px;
+    }
+
+    .sheetIcon{
+      flex:0 0 auto;
+      width:40px;
+      height:40px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(93,183,238,.18);
+      color:var(--blue);
+      font-size:20px;
+      font-weight:900;
+    }
+
+    .sheet h3{
+      margin:0;
+      font-size:18px;
+      color:var(--blue);
+      line-height:1.2;
+    }
+
+    .sheet p{
+      margin:10px 0;
+      color:rgba(0,0,0,.75);
+      line-height:1.35;
+      font-size:14px;
+    }
+
+    .step{
+      background:rgba(11,28,45,.06);
+      border:1px solid rgba(11,28,45,.08);
+      border-radius:16px;
+      padding:10px 12px;
+      margin:10px 0;
+    }
+
+    .step strong{ color:var(--blue); }
+
+    .modalActions{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:12px;
+    }
+
+    .okBtn{
+      border:none;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:900;
+      background:var(--sky);
+      color:#fff;
+      cursor:pointer;
+      min-width:110px;
     }
   </style>
 </head>
@@ -164,6 +210,35 @@
     </div>
   </main>
 
+  <!-- MODALE INSTALL (design) -->
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="sheet">
+      <div class="sheetHead">
+        <div class="sheetIcon">📱</div>
+        <div>
+          <h3 id="helpTitle">Ajouter l’app</h3>
+          <p>Installe Apéro de Nuit 66 sur ton écran d’accueil en 2 secondes :</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <p><strong>iPhone (Safari)</strong><br>
+          Bouton <em>Partager</em> → <em>Sur l’écran d’accueil</em>
+        </p>
+      </div>
+
+      <div class="step">
+        <p><strong>Android (Chrome)</strong><br>
+          Menu ⋮ → <em>Installer l’application</em> / <em>Ajouter à l’écran d’accueil</em>
+        </p>
+      </div>
+
+      <div class="modalActions">
+        <button class="okBtn" id="closeHelp">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
@@ -173,7 +248,6 @@
     // Défilement bouteilles (2 secondes)
     const bottles = document.querySelectorAll("#bottles img");
     let index = 0;
-
     if (bottles.length > 1) {
       setInterval(() => {
         bottles[index].classList.remove("active");
@@ -182,13 +256,22 @@
       }, 2000);
     }
 
-    // Ajouter l’app (info simple)
-    document.getElementById("installBtn").addEventListener("click", () => {
-      alert(
-        "📱 Ajouter l’app :\n\n" +
-        "• iPhone : Partager → Sur l’écran d’accueil\n" +
-        "• Android : menu ⋮ → Installer l’application"
-      );
+    // Modale "Ajouter l’app"
+    const installBtn = document.getElementById("installBtn");
+    const helpModal = document.getElementById("helpModal");
+    const closeHelp = document.getElementById("closeHelp");
+
+    installBtn.addEventListener("click", () => {
+      helpModal.classList.add("open");
+    });
+
+    closeHelp.addEventListener("click", () => {
+      helpModal.classList.remove("open");
+    });
+
+    // fermer si on clique en dehors de la carte
+    helpModal.addEventListener("click", (e) => {
+      if (e.target === helpModal) helpModal.classList.remove("open");
     });
   </script>
 
