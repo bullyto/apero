@@ -90,7 +90,7 @@
       position:absolute;
       max-height:56vh;
       opacity:0;
-      transition:opacity .35s;
+      transition:opacity .35s ease;
     }
 
     .bottleWrap img.active {
@@ -100,7 +100,7 @@
     /* ===== BOUTONS ===== */
     .btnStack {
       position:absolute;
-      bottom:9vh; /* ⬆️ légèrement remonté */
+      bottom:9vh;
       left:50%;
       transform:translateX(-50%);
       width:min(420px,86vw);
@@ -120,13 +120,11 @@
       margin-top:10px;
     }
 
-    /* 🔵 COMMANDER — BLEU CLAIR */
     .btn.primary {
       background: var(--sky);
       color:#fff;
     }
 
-    /* ⚪ AJOUTER L’APP — BLANC BIEN VISIBLE */
     .btn.secondary {
       background: linear-gradient(
         rgba(255,255,255,0.72),
@@ -153,17 +151,30 @@
   </section>
 
   <main class="stage">
-    <div class="bottleWrap">
+    <div class="bottleWrap" id="bottles">
       <img src="assets/bottle1.png" class="active" alt="">
       <img src="assets/bottle2.png" alt="">
       <img src="assets/bottle3.png" alt="">
-
+      <!-- ajoute d'autres bouteilles si besoin -->
+      
       <div class="btnStack">
         <button class="btn primary">Commander</button>
         <button class="btn secondary">Ajouter l’app</button>
       </div>
     </div>
   </main>
+
+  <!-- ===== DÉFILEMENT DES BOUTEILLES ===== -->
+  <script>
+    const bottles = document.querySelectorAll('#bottles img');
+    let index = 0;
+
+    setInterval(() => {
+      bottles[index].classList.remove('active');
+      index = (index + 1) % bottles.length;
+      bottles[index].classList.add('active');
+    }, 2000); // ⏱ 2 secondes
+  </script>
 
 </body>
 </html>
