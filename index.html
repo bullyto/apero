@@ -3,11 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
   <title>Apéro de Nuit 66</title>
 
   <style>
-    :root {
+    :root{
       --blue:#0b1c2d;
       --sky:#5db7ee;
       --text:#0b1c2d;
@@ -19,25 +18,25 @@
       height:100dvh;
       display:flex;
       flex-direction:column;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background:#fff;
       color:var(--text);
       overflow:hidden;
     }
 
     /* HEADER */
-    .top{ background:var(--blue); padding-bottom:8px; }
-    .top img{ display:block; width:100%; max-height:26vh; object-fit:contain; }
+    .top{background:var(--blue);padding-bottom:8px}
+    .top img{width:100%;max-height:26vh;object-fit:contain;display:block}
 
     /* TITRE */
-    .mid{ text-align:center; padding:18px 14px 6px; }
+    .mid{text-align:center;padding:18px 14px 6px}
     .mid h1{
       margin:0;
       font-size:clamp(26px,6vw,40px);
       color:var(--sky);
       font-weight:900;
     }
-    .brand66{ position:relative; display:inline-block; }
+    .brand66{position:relative;display:inline-block}
     .brand66 .reg{
       position:absolute;
       top:-0.2em;
@@ -47,7 +46,7 @@
     }
 
     /* ZONE BOUTEILLES */
-    .stage{ flex:1; display:flex; justify-content:center; padding:12px; }
+    .stage{flex:1;display:flex;justify-content:center;padding:12px}
     .bottleWrap{
       position:relative;
       width:min(520px,96vw);
@@ -60,11 +59,10 @@
       position:absolute;
       max-height:56vh;
       max-width:100%;
-      width:auto;
       opacity:0;
       transition:opacity .4s ease;
     }
-    .bottleWrap img.active{ opacity:1; }
+    .bottleWrap img.active{opacity:1}
 
     /* BOUTONS */
     .btnStack{
@@ -84,16 +82,15 @@
       font-weight:900;
       cursor:pointer;
     }
-    .btn + .btn{ margin-top:10px; }
-
-    .btn.primary{ background:var(--sky); color:#fff; }
+    .btn + .btn{margin-top:10px}
+    .btn.primary{background:var(--sky);color:#fff}
     .btn.secondary{
-      background:rgba(255,255,255,0.85);
+      background:rgba(255,255,255,.85);
       color:#0b1c2d;
       border:1px solid rgba(11,28,45,.25);
     }
 
-    /* MODALE (uniquement pour Facebook in-app ou iPhone Safari) */
+    /* MODALE */
     .modal{
       position:fixed;
       inset:0;
@@ -104,202 +101,199 @@
       background:rgba(0,0,0,.55);
       z-index:999;
     }
-    .modal.open{ display:flex; }
+    .modal.open{display:flex}
 
     .sheet{
-      width:min(520px, 94vw);
+      width:min(520px,94vw);
       background:#fff;
       border-radius:22px;
       box-shadow:0 18px 60px rgba(0,0,0,.25);
       padding:18px 16px 14px;
     }
-    .sheetHead{
-      display:flex;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:10px;
-    }
+
+    .sheetHead{display:flex;gap:12px;margin-bottom:10px}
     .sheetIcon{
-      width:40px; height:40px;
-      border-radius:14px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      width:40px;height:40px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
       background:rgba(93,183,238,.18);
       font-size:20px;
     }
-    .sheet h3{
-      margin:0;
-      font-size:18px;
-      color:var(--blue);
-      line-height:1.2;
-    }
-    .sheet p{
-      margin:10px 0;
-      color:rgba(0,0,0,.75);
-      line-height:1.35;
-      font-size:14px;
-    }
+
+    .sheet h3{margin:0;font-size:18px;color:var(--blue)}
+    .sheet p{margin:10px 0;color:rgba(0,0,0,.75);font-size:14px}
+
     .step{
       background:rgba(11,28,45,.06);
-      border:1px solid rgba(11,28,45,.08);
       border-radius:16px;
       padding:10px 12px;
       margin:10px 0;
+      font-size:14px;
     }
+
     .modalActions{
       display:flex;
+      gap:10px;
       justify-content:flex-end;
-      margin-top:12px;
+      margin-top:14px;
+      flex-wrap:wrap;
     }
-    .okBtn{
+
+    .okBtn,.copyBtn{
       border:none;
       border-radius:14px;
       padding:12px 16px;
       font-weight:900;
-      background:var(--sky);
-      color:#fff;
       cursor:pointer;
-      min-width:110px;
+    }
+
+    .okBtn{background:var(--sky);color:#fff}
+    .copyBtn{
+      background:rgba(93,183,238,.18);
+      color:var(--blue);
+    }
+
+    .copied{
+      font-size:13px;
+      color:green;
+      margin-top:6px;
+      display:none;
     }
   </style>
 </head>
 
 <body>
 
-  <header class="top">
-    <img src="assets/logo-header.png" alt="Apéro de Nuit">
-  </header>
+<header class="top">
+  <img src="assets/logo-header.png" alt="">
+</header>
 
-  <section class="mid">
-    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
-  </section>
+<section class="mid">
+  <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
+</section>
 
-  <main class="stage">
-    <div class="bottleWrap" id="bottles">
-      <img src="assets/bottle1.png" class="active" alt="">
-      <img src="assets/bottle2.png" alt="">
-      <img src="assets/bottle3.png" alt="">
-      <img src="assets/bottle4.png" alt="">
-      <img src="assets/bottle5.png" alt="">
-      <img src="assets/bottle6.png" alt="">
-      <img src="assets/bottle7.png" alt="">
+<main class="stage">
+  <div class="bottleWrap" id="bottles">
+    <img src="assets/bottle1.png" class="active">
+    <img src="assets/bottle2.png">
+    <img src="assets/bottle3.png">
+    <img src="assets/bottle4.png">
+    <img src="assets/bottle5.png">
+    <img src="assets/bottle6.png">
+    <img src="assets/bottle7.png">
 
-      <div class="btnStack">
-        <button class="btn primary" id="goBtn">Commander</button>
-        <button class="btn secondary" id="installBtn">Ajouter l’app</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Modale (Facebook in-app OU iPhone Safari uniquement) -->
-  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-    <div class="sheet">
-      <div class="sheetHead">
-        <div class="sheetIcon">📲</div>
-        <div>
-          <h3 id="helpTitle">Installer l’app</h3>
-          <p id="helpIntro"> </p>
-        </div>
-      </div>
-
-      <div class="step" id="helpSteps"></div>
-
-      <div class="modalActions">
-        <button class="okBtn" id="closeHelp">OK</button>
-      </div>
+    <div class="btnStack">
+      <button class="btn primary" id="goBtn">Commander</button>
+      <button class="btn secondary" id="installBtn">Ajouter l’app</button>
     </div>
   </div>
+</main>
 
-  <script>
-    // ===== Commander =====
-    document.getElementById("goBtn").addEventListener("click", () => {
-      window.location.href = "https://aperodenuit.com/commander";
-    });
+<!-- MODALE -->
+<div class="modal" id="helpModal">
+  <div class="sheet">
+    <div class="sheetHead">
+      <div class="sheetIcon">📲</div>
+      <div>
+        <h3 id="helpTitle"></h3>
+        <p id="helpIntro"></p>
+      </div>
+    </div>
 
-    // ===== Défilement bouteilles (2s) =====
-    const bottles = document.querySelectorAll("#bottles img");
-    let index = 0;
-    if (bottles.length > 1) {
-      setInterval(() => {
-        bottles[index].classList.remove("active");
-        index = (index + 1) % bottles.length;
-        bottles[index].classList.add("active");
-      }, 2000);
-    }
+    <div class="step" id="helpSteps"></div>
+    <div class="copied" id="copiedMsg">✅ Lien copié</div>
 
-    // ===== Détection Facebook / Instagram in-app =====
-    const ua = navigator.userAgent || "";
-    const isFacebookInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
+    <div class="modalActions">
+      <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
+      <button class="okBtn" id="closeHelp">OK</button>
+    </div>
+  </div>
+</div>
 
-    // ===== iOS Safari (pas de vraie popup install) =====
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+<script>
+  // Commander
+  document.getElementById("goBtn").onclick = () => {
+    window.location.href = "https://aperodenuit.com/commander";
+  };
 
-    // ===== PWA install prompt (Android/Chrome etc.) =====
-    let deferredPrompt = null;
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e; // -> popup native dispo
-    });
+  // Défilement bouteilles
+  const imgs = document.querySelectorAll("#bottles img");
+  let i = 0;
+  setInterval(() => {
+    imgs[i].classList.remove("active");
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add("active");
+  }, 2000);
 
-    // ===== Modale helpers =====
-    const helpModal = document.getElementById("helpModal");
-    const closeHelp = document.getElementById("closeHelp");
-    const helpIntro = document.getElementById("helpIntro");
-    const helpSteps = document.getElementById("helpSteps");
+  // Détection
+  const ua = navigator.userAgent || "";
+  const isFB = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
 
-    function openModal(introHtml, stepsHtml){
-      helpIntro.innerHTML = introHtml;
-      helpSteps.innerHTML = stepsHtml;
-      helpModal.classList.add("open");
-    }
+  let deferredPrompt = null;
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
 
-    closeHelp.addEventListener("click", () => helpModal.classList.remove("open"));
-    helpModal.addEventListener("click", (e) => { if(e.target === helpModal) helpModal.classList.remove("open"); });
+  const modal = document.getElementById("helpModal");
+  const title = document.getElementById("helpTitle");
+  const intro = document.getElementById("helpIntro");
+  const steps = document.getElementById("helpSteps");
+  const copyBtn = document.getElementById("copyLinkBtn");
+  const copiedMsg = document.getElementById("copiedMsg");
 
-    // ===== Click "Ajouter l’app" =====
-    document.getElementById("installBtn").addEventListener("click", async () => {
+  function openModal(t,i,s,showCopy=false){
+    title.innerHTML=t;
+    intro.innerHTML=i;
+    steps.innerHTML=s;
+    copyBtn.style.display = showCopy ? "inline-block" : "none";
+    copiedMsg.style.display="none";
+    modal.classList.add("open");
+  }
 
-      // 1) Facebook/Instagram in-app => UNIQUEMENT la modale "ouvrir dans Chrome/Safari"
-      if (isFacebookInApp) {
-        openModal(
-          "Facebook/Instagram ne permet pas l’installation.",
-          "<strong>Ouvre dans un vrai navigateur :</strong><br><br>" +
-          "• Appuie sur <strong>⋯</strong> (menu) en haut à droite<br>" +
-          "• Choisis <strong>Ouvrir dans Chrome</strong> (Android) ou <strong>Ouvrir dans Safari</strong> (iPhone)<br>" +
-          "• Reviens ici et clique sur <strong>Ajouter l’app</strong>"
-        );
-        return;
-      }
+  document.getElementById("closeHelp").onclick = () => modal.classList.remove("open");
+  modal.onclick = e => { if(e.target===modal) modal.classList.remove("open"); };
 
-      // 2) Si la popup native est dispo => on l'affiche (UNIQUEMENT la popup)
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch(e) {}
-        deferredPrompt = null;
-        return;
-      }
+  document.getElementById("installBtn").onclick = async () => {
 
-      // 3) iPhone Safari => pas de popup native -> instructions iOS
-      if (isIOS && isSafari) {
-        openModal(
-          "Sur iPhone, l’installation se fait via le bouton Partager.",
-          "<strong>Étapes :</strong><br><br>" +
-          "• Appuie sur <strong>Partager</strong> (icône carré + flèche)<br>" +
-          "• Choisis <strong>Sur l’écran d’accueil</strong><br>" +
-          "• Valide <strong>Ajouter</strong>"
-        );
-        return;
-      }
-
-      // 4) Autres cas (Chrome déjà installé / pas éligible PWA) -> petit message propre
+    if (isFB) {
       openModal(
-        "Installation indisponible sur ce navigateur.",
-        "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)."
+        "Installer l’app",
+        "Facebook / Instagram ne permet pas l’installation.",
+        "Clique sur <strong>Copier le lien</strong>, puis ouvre-le dans <strong>Chrome</strong> ou <strong>Safari</strong>.",
+        true
       );
-    });
-  </script>
+      return;
+    }
+
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+      return;
+    }
+
+    if (isIOS && isSafari) {
+      openModal(
+        "Installer l’app",
+        "Sur iPhone, l’installation se fait manuellement.",
+        "Bouton <strong>Partager</strong> → <strong>Sur l’écran d’accueil</strong>"
+      );
+      return;
+    }
+
+    openModal(
+      "Installation indisponible",
+      "Essaie avec Chrome ou Safari.",
+      ""
+    );
+  };
+
+  copyBtn.onclick = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    copiedMsg.style.display="block";
+  };
+</script>
 
 </body>
 </html>
