@@ -1,28 +1,21 @@
 {
-  "name": "Apéro de Nuit",
-  "short_name": "Apéro",
-  "description": "1er service de livraison d’alcools de nuit à Perpignan.",
-  "start_url": "./?pwa=1",
-  "scope": "./",
+  "name": "APERO DE NUIT",
+  "short_name": "APERO",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A121C",
-  "theme_color": "#0A121C",
+  "background_color": "#0b1c2d",
+  "theme_color": "#0b1c2d",
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }
