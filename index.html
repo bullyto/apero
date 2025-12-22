@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
-  <!-- ✅ PWA -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <!-- ✅ AJOUTS MINIMAUX POUR PWA (chemins selon ta structure) -->
+  <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0b1c2d">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 
   <!-- Préchargement (fluidité du défilement) -->
   <link rel="preload" as="image" href="assets/logo-header.png">
@@ -53,14 +56,8 @@
 
     /* BOUTONS */
     .btnStack{
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      width:min(420px,86vw);
-      z-index:5;
-
-      /* ✅ placement "milieu de page" (et plus bas si écran petit) */
-      bottom: clamp(18vh, 22vh, 28vh);
+      position:absolute;bottom:14vh;left:50%;transform:translateX(-50%);
+      width:min(420px,86vw);z-index:5;
     }
     .btn{
       width:100%;border:none;border-radius:16px;padding:14px;
@@ -174,6 +171,12 @@
           Ajouter l’app
           <span class="badge-new" id="newBadge">Nouveau</span>
         </button>
+
+<!-- 🎁 Bouton promo (après ajout de l’app + délai) -->
+<button class="btn secondary" id="promoBtn" style="display:none">
+  Code promo
+  <span class="badge-new" id="promoBadge">Nouveau</span>
+</button>
       </div>
     </div>
   </main>
@@ -203,7 +206,7 @@
   </div>
 
   <script>
-    // ✅ Enregistre service worker (si dispo)
+    // ✅ AJOUT MINIMAL : register service worker (sinon pas de beforeinstallprompt)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js").catch(() => {});
@@ -212,10 +215,11 @@
 
     // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
+      promoKickoffAfterCommander(); // 🎁 démarre le compteur cumulatif (mode app uniquement)
       window.location.href = "https://aperodenuit.com/commander";
     });
 
-    // Défilement bouteilles (2s)
+// Défilement bouteilles (2s)
     const imgs = document.querySelectorAll("#bottles img");
     let idx = 0;
     if (imgs.length > 1) {
@@ -248,31 +252,188 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
 
-    // ✅ Standalone detection
+    // ✅ Masquer badge/pulse ET le bouton si déjà installé / en mode "app"
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
     }
+    
+// =========================
+// 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
+// =========================
+const PROMO_URL = "https://stats.aperos.net/go/apero?src=QR";
+const PROMO_REQUIRED_MS = 90_000; // 1m30
+const PROMO_KEYS = {
+  enabled: "promo_enabled",
+  acc: "promo_acc_ms",
+  visibleStart: "promo_visible_start",
+  unlockedTs: "promo_unlocked_ts",
+  expiryTs: "promo_expiry_ts",
+  clicked: "promo_clicked"
+};
 
-    // ✅ Cache badge/pulse (et optionnellement le bouton si déjà installé)
-    function removeInstallHints(hideButton=false){
+function addMonths(ts, months){
+  const d = new Date(ts);
+  const day = d.getDate();
+  d.setMonth(d.getMonth() + months);
+
+  // garde-fou fin de mois
+  if (d.getDate() !== day) d.setDate(0);
+  return d.getTime();
+}
+
+function lsGetInt(k, def=0){
+  const v = localStorage.getItem(k);
+  const n = v === null ? def : parseInt(v, 10);
+  return Number.isFinite(n) ? n : def;
+}
+function lsGetBool(k){
+  return localStorage.getItem(k) === "1";
+}
+function lsSetBool(k, val){
+  localStorage.setItem(k, val ? "1" : "0");
+}
+
+function promoReset(){
+  localStorage.removeItem(PROMO_KEYS.enabled);
+  localStorage.removeItem(PROMO_KEYS.acc);
+  localStorage.removeItem(PROMO_KEYS.visibleStart);
+  localStorage.removeItem(PROMO_KEYS.unlockedTs);
+  localStorage.removeItem(PROMO_KEYS.expiryTs);
+  localStorage.removeItem(PROMO_KEYS.clicked);
+}
+
+function promoExpired(){
+  const expiry = lsGetInt(PROMO_KEYS.expiryTs, 0);
+  return expiry > 0 && Date.now() > expiry;
+}
+
+function promoIsUnlocked(){
+  return lsGetInt(PROMO_KEYS.unlockedTs, 0) > 0;
+}
+
+function promoIsEnabled(){
+  return lsGetBool(PROMO_KEYS.enabled);
+}
+
+function promoUpdateUI(){
+  const promoBtn = document.getElementById("promoBtn");
+  const promoBadge = document.getElementById("promoBadge");
+  if (!promoBtn) return;
+
+  // Expiré => on supprime tout
+  if (promoExpired()){
+    promoReset();
+  }
+
+  // visible uniquement en mode app ET si débloqué et pas expiré
+  const shouldShow =
+    isStandalone() &&
+    promoIsEnabled() &&
+    promoIsUnlocked() &&
+    !promoExpired();
+
+  promoBtn.style.display = shouldShow ? "block" : "none";
+
+  // badge "Nouveau" disparaît après clic
+  if (promoBadge){
+    promoBadge.style.display = lsGetBool(PROMO_KEYS.clicked) ? "none" : "inline-block";
+  }
+}
+
+function promoUnlockNow(){
+  const now = Date.now();
+  localStorage.setItem(PROMO_KEYS.unlockedTs, String(now));
+  localStorage.setItem(PROMO_KEYS.expiryTs, String(addMonths(now, 4))); // 4 mois après apparition
+  promoUpdateUI();
+}
+
+function promoStopSession(){
+  const start = lsGetInt(PROMO_KEYS.visibleStart, 0);
+  if (!start) return;
+  const delta = Math.max(0, Date.now() - start);
+  localStorage.removeItem(PROMO_KEYS.visibleStart);
+
+  // on cumule uniquement si activé + pas encore débloqué
+  if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
+
+  const acc = lsGetInt(PROMO_KEYS.acc, 0) + delta;
+  localStorage.setItem(PROMO_KEYS.acc, String(acc));
+
+  if (acc >= PROMO_REQUIRED_MS){
+    promoUnlockNow();
+  }
+}
+
+function promoStartSession(){
+  if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
+  if (!isStandalone()) return; // on compte uniquement dans l'app
+  if (document.visibilityState !== "visible") return;
+
+  // évite double-start
+  const existing = lsGetInt(PROMO_KEYS.visibleStart, 0);
+  if (!existing) localStorage.setItem(PROMO_KEYS.visibleStart, String(Date.now()));
+}
+
+// appelé au clic sur "Commander"
+function promoKickoffAfterCommander(){
+  // uniquement si l'app est installée (comme tu l'as demandé)
+  if (!isStandalone()) return;
+
+  // si expiré -> reset
+  if (promoExpired()) promoReset();
+
+  // active le système si pas déjà activé
+  if (!promoIsEnabled()){
+    lsSetBool(PROMO_KEYS.enabled, true);
+    localStorage.setItem(PROMO_KEYS.acc, "0");
+    lsSetBool(PROMO_KEYS.clicked, false);
+    localStorage.removeItem(PROMO_KEYS.visibleStart);
+    localStorage.removeItem(PROMO_KEYS.unlockedTs);
+    localStorage.removeItem(PROMO_KEYS.expiryTs);
+  }
+
+  // on démarre une session de comptage si la page est visible
+  promoStartSession();
+}
+
+// Cumul du temps (même sur plusieurs sessions)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") promoStopSession();
+  if (document.visibilityState === "visible") promoStartSession();
+  promoUpdateUI();
+});
+
+window.addEventListener("pagehide", promoStopSession);
+window.addEventListener("beforeunload", promoStopSession);
+
+// Click bouton promo
+const promoBtnEl = document.getElementById("promoBtn");
+if (promoBtnEl){
+  promoBtnEl.addEventListener("click", () => {
+    lsSetBool(PROMO_KEYS.clicked, true); // enlève le badge
+    promoUpdateUI();
+    window.location.href = PROMO_URL;
+  });
+}
+
+// init UI au chargement
+promoUpdateUI();
+promoStartSession();function removeInstallHints(){
       const b = document.getElementById("newBadge");
       if (b) b.remove();
-
       const installBtn = document.getElementById("installBtn");
       if (installBtn) {
         installBtn.classList.remove("pulse");
-        if (hideButton) installBtn.style.display = "none";
+        installBtn.style.display = "none"; // ✅ LA MODIF QUE TU VEUX
       }
     }
-
-    // Si déjà en mode app => on cache direct le bouton (logique)
-    if (isStandalone()) removeInstallHints(true);
+    if (isStandalone()) removeInstallHints();
 
     // Quand l'app est installée (Android/Chrome)
     window.addEventListener("appinstalled", () => {
       showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
-      removeInstallHints(true);
+      removeInstallHints();
     });
 
     // Modale helpers
@@ -316,12 +477,6 @@
 
     // Click "Ajouter l’app"
     document.getElementById("installBtn").addEventListener("click", async () => {
-
-      // Si déjà en mode app, on masque et basta
-      if (isStandalone()) {
-        removeInstallHints(true);
-        return;
-      }
 
       // Facebook/Instagram in-app : modale + copier lien
       if (isFBInApp) {
