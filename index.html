@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
+  <!-- ✅ PWA -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b1c2d">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
   <!-- Préchargement (fluidité du défilement) -->
   <link rel="preload" as="image" href="assets/logo-header.png">
   <link rel="preload" as="image" href="assets/bottle1.png">
@@ -193,6 +198,13 @@
   </div>
 
   <script>
+    // ✅ Service Worker (obligatoire pour que Chrome propose l'installation)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+      });
+    }
+
     // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
       window.location.href = "https://aperodenuit.com/commander";
@@ -214,6 +226,8 @@
     const isFBInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    const isAndroid = /Android/i.test(ua);
+    const isChrome = /Chrome\/\d+/i.test(ua) && !/Edg\/|OPR\//i.test(ua);
 
     // PWA prompt Android/Chrome
     let deferredPrompt = null;
@@ -307,7 +321,7 @@
         return;
       }
 
-      // Si popup native dispo : on déclenche UNIQUEMENT la popup
+      // ✅ Android Chrome : si l'app est installable -> on déclenche DIRECTEMENT la popup native
       if (deferredPrompt) {
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch(e) {}
@@ -326,6 +340,23 @@
             "1) Appuie sur <strong>Partager</strong> (carré + flèche)<br>" +
             "2) Choisis <strong>Sur l’écran d’accueil</strong><br>" +
             "3) Valide <strong>Ajouter</strong>"
+        });
+        return;
+      }
+
+      // Android mais pas installable (souvent: pas de SW/manifest ok, ou déjà installé, ou pas au bon scope)
+      if (isAndroid && isChrome) {
+        openModal({
+          ic:"⚠️",
+          t:"Installation indisponible",
+          i:"Chrome ne propose pas l’installation automatique pour le moment.",
+          s:
+            "Vérifie :<br>" +
+            "• que tu es bien sur <strong>HTTPS</strong><br>" +
+            "• que le <strong>service worker</strong> est actif<br>" +
+            "• que <strong>manifest.webmanifest</strong> est chargé (icônes OK)<br><br>" +
+            "Sinon : menu ⋮ → <strong>Installer l’application</strong> / <strong>Ajouter à l’écran d’accueil</strong>.",
+          showCopy:false
         });
         return;
       }
