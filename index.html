@@ -159,4 +159,28 @@
       <img src="assets/bouteille2.png" alt="">
       <img src="assets/bouteille3.png" alt="">
       <img src="assets/bouteille4.png" alt="">
-      <img src="assets/bouteille5.png" alt
+      <img src="assets/bouteille5.png" alt="">
+      <img src="assets/bouteille6.png" alt="">
+      <img src="assets/bouteille7.png" alt="">
+
+      <div class="btnStack">
+        <button class="btn primary">Commander</button>
+        <button class="btn secondary">Ajouter l’app</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- SCRIPT DÉFILEMENT -->
+  <script>
+    const bottles = document.querySelectorAll('#bottles img');
+    let index = 0;
+
+    setInterval(() => {
+      bottles[index].classList.remove('active');
+      index = (index + 1) % bottles.length;
+      bottles[index].classList.add('active');
+    }, 2000); // 2 secondes
+  </script>
+
+</body>
+</html>
