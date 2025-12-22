@@ -5,13 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
-  <!-- ✅ AJOUTS MINIMAUX POUR PWA (chemins selon ta structure) -->
-  <link rel="manifest" href="./manifest.webmanifest">
-  <meta name="theme-color" content="#0b1c2d">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
-
   <!-- Préchargement (fluidité du défilement) -->
   <link rel="preload" as="image" href="assets/logo-header.png">
   <link rel="preload" as="image" href="assets/bottle1.png">
@@ -56,8 +49,12 @@
 
     /* BOUTONS */
     .btnStack{
-      position:absolute;bottom:14vh;left:50%;transform:translateX(-50%);
-      width:min(420px,86vw);z-index:5;
+      position:absolute;
+      top:46vh;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(420px,86vw);
+      z-index:5;
     }
     .btn{
       width:100%;border:none;border-radius:16px;padding:14px;
@@ -200,13 +197,6 @@
   </div>
 
   <script>
-    // ✅ AJOUT MINIMAL : register service worker (sinon pas de beforeinstallprompt)
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
-      });
-    }
-
     // Commander
     document.getElementById("goBtn").addEventListener("click", () => {
       window.location.href = "https://aperodenuit.com/commander";
@@ -245,20 +235,25 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
 
-    // ✅ Masquer badge/pulse ET le bouton si déjà installé / en mode "app"
+    // ✅ Standalone detection
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
     }
+
+    // ✅ Cache TOUT le bouton (pas juste badge/pulse)
     function removeInstallHints(){
       const b = document.getElementById("newBadge");
       if (b) b.remove();
+
       const installBtn = document.getElementById("installBtn");
       if (installBtn) {
         installBtn.classList.remove("pulse");
-        installBtn.style.display = "none"; // ✅ LA MODIF QUE TU VEUX
+        installBtn.style.display = "none"; // ✅ le bouton disparaît
       }
     }
+
+    // Si déjà en mode app => on cache direct
     if (isStandalone()) removeInstallHints();
 
     // Quand l'app est installée (Android/Chrome)
@@ -306,8 +301,30 @@
       }
     });
 
+    // Mini diagnostic (quand Chrome ne donne pas beforeinstallprompt)
+    function buildInstallDiagHTML(){
+      const isHttps = location.protocol === "https:";
+      const inIncognitoHint = "Si tu es en navigation privée, Chrome bloque souvent l’installation.";
+      return (
+        "<strong>Vérifie :</strong><br><br>" +
+        "• HTTPS : " + (isHttps ? "✅" : "❌") + "<br>" +
+        "• Manifest chargé (pas 404) ✅<br>" +
+        "• Service Worker enregistré + actif ✅<br>" +
+        "• Icônes 192/512 accessibles ✅<br>" +
+        "• scope/start_url cohérents ✅<br><br>" +
+        "<em>Astuce cache :</em> supprime les données du site + désinscris le service worker, puis ouvre l’URL avec <strong>?v=123</strong>.<br><br>" +
+        "<em>" + inIncognitoHint + "</em>"
+      );
+    }
+
     // Click "Ajouter l’app"
     document.getElementById("installBtn").addEventListener("click", async () => {
+
+      // Si on est déjà en mode app, on cache et basta
+      if (isStandalone()) {
+        removeInstallHints();
+        return;
+      }
 
       // Facebook/Instagram in-app : modale + copier lien
       if (isFBInApp) {
@@ -348,14 +365,15 @@
         return;
       }
 
-      // Autres cas : message utile + copier lien
+      // Autres cas : message utile + copier lien + diag
       openModal({
         ic:"⚠️",
         t:"Installation indisponible",
         i:"Ton navigateur ne propose pas l’installation automatique.",
         s:
           "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone).<br>" +
-          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
+          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.<br><br>" +
+          buildInstallDiagHTML(),
         showCopy:true
       });
     });
