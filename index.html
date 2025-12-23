@@ -390,6 +390,9 @@
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
+      // quand Chrome peut proposer l'installation, on force l'UI "install visible"
+      // (ça aide si un flag local était faux)
+      updateInstallUI();
     });
 
     // Toast
@@ -407,35 +410,91 @@
         || window.navigator.standalone === true; // iOS
     }
 
-    // ✅ AFFICHAGE DYNAMIQUE DU BOUTON "AJOUTER L’APP"
-    function updateInstallUI(){
+    // ===============================
+    // ✅ LOGIQUE INSTALL "FIABLE"
+    // ===============================
+    const INSTALL = {
+      key: "pwa_installed_flag",
+      relatedAppsChecked: false,
+      relatedAppsInstalled: null, // true/false/null
+    };
+
+    function setInstalledFlag(val){ localStorage.setItem(INSTALL.key, val ? "1" : "0"); }
+    function getInstalledFlag(){ return localStorage.getItem(INSTALL.key) === "1"; }
+
+    async function checkInstalledRelatedApps(){
+      if (typeof navigator.getInstalledRelatedApps !== "function") {
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = null;
+        return null;
+      }
+      try{
+        const apps = await navigator.getInstalledRelatedApps();
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = Array.isArray(apps) && apps.length > 0;
+        return INSTALL.relatedAppsInstalled;
+      }catch(e){
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = null;
+        return null;
+      }
+    }
+
+    function applyInstallUI(isInstalled){
       const installBtn = document.getElementById("installBtn");
-      const newBadge = document.getElementById("newBadge");
+      const badge = document.getElementById("newBadge");
       if(!installBtn) return;
 
-      if (isStandalone()) {
+      if (isInstalled) {
         installBtn.style.display = "none";
       } else {
         installBtn.style.display = "block";
         installBtn.classList.add("pulse");
-        if (newBadge) newBadge.style.display = "inline-block";
+        if (badge) badge.style.display = "inline-block";
       }
     }
+
+    async function updateInstallUI(){
+      // 1) Si on est dans la PWA => installé
+      if (isStandalone()) {
+        setInstalledFlag(true);
+        applyInstallUI(true);
+        return;
+      }
+
+      // 2) Android/Chrome: API fiable
+      const related = await checkInstalledRelatedApps();
+      if (related === true) {
+        setInstalledFlag(true);
+        applyInstallUI(true);
+        return;
+      }
+      if (related === false) {
+        setInstalledFlag(false);
+        applyInstallUI(false);
+        return;
+      }
+
+      // 3) Fallback: flag local
+      const flag = getInstalledFlag();
+      applyInstallUI(flag);
+
+      // 4) Si Chrome peut proposer l’installation => montrer le bouton
+      if (deferredPrompt) {
+        setInstalledFlag(false);
+        applyInstallUI(false);
+      }
+    }
+
+    // Au chargement + retour onglet
     updateInstallUI();
-
-    // Écoute changement de mode d’affichage
-    try{
-      const mq = window.matchMedia("(display-mode: standalone)");
-      if (mq && typeof mq.addEventListener === "function") mq.addEventListener("change", updateInstallUI);
-      else if (mq && typeof mq.addListener === "function") mq.addListener(updateInstallUI);
-    }catch(e){}
-
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") updateInstallUI();
     });
 
-    // Quand l’app est installée
+    // Quand l’app est installée (Chrome Android)
     window.addEventListener("appinstalled", () => {
+      setInstalledFlag(true);
       showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
       updateInstallUI();
     });
@@ -508,10 +567,8 @@
     }
     function ageSetMinor(){
       localStorage.setItem(AGE.KEY_LAST, "minor");
-      // pas de until -> boucle
     }
 
-    // Anti fermeture fond/ESC
     [ageQuestion, ageBlocked].forEach(o=>{
       o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
     });
@@ -738,6 +795,8 @@
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch(e) {}
         deferredPrompt = null;
+        // après tentative d'install, on re-check
+        setTimeout(updateInstallUI, 600);
         return;
       }
 
