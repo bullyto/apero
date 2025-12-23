@@ -55,17 +55,27 @@
     .bottleWrap img.active{opacity:1}
 
     /* BOUTONS */
-    .btnStack{
-      position:absolute;bottom:14vh;left:50%;transform:translateX(-50%);
-      width:min(420px,86vw);z-index:5;
-    }
+    
+.btnStack{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:min(420px,86vw);
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  align-items:center;
+  justify-content:center;
+  padding:0 12px;
+}
     .btn{
       width:100%;border:none;border-radius:16px;padding:14px;
       font-size:18px;font-weight:900;cursor:pointer;
       position:relative;
     }
-    .btn + .btn{margin-top:10px}
-    .btn.primary{background:var(--sky);color:#fff}
+        .btn.primary{background:var(--sky);color:#fff}
     .btn.secondary{background:rgba(255,255,255,.85);color:#0b1c2d;border:1px solid rgba(11,28,45,.25)}
 
     /* Pulse */
@@ -265,7 +275,7 @@
       <div class="btnStack">
         <button class="btn primary" id="goBtn">Commander</button>
 
-        <button class="btn secondary pulse" id="installBtn">
+        <button class="btn secondary pulse" id="installBtn" style="display:none">
           Ajouter l’app
           <span class="badge-new" id="newBadge">Nouveau</span>
         </button>
@@ -384,11 +394,8 @@
     const isFBInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-
     // PWA prompt Android/Chrome
     let deferredPrompt = null;
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
       deferredPrompt = e;
       // quand Chrome peut proposer l'installation, on force l'UI "install visible"
       // (ça aide si un flag local était faux)
@@ -412,370 +419,72 @@
 
     // ===============================
     // ✅ LOGIQUE INSTALL "FIABLE"
-    // ===============================
-    const INSTALL = {
-      key: "pwa_installed_flag",
-      relatedAppsChecked: false,
-      relatedAppsInstalled: null, // true/false/null
-    };
+    // ===========// ===============================
+// ✅ INSTALL APP : affichage fiable
+// - Bouton caché par défaut
+// - S'affiche seulement si Chrome autorise l'installation
+// - Disparaît si déjà installé (standalone ou flag)
+// ===============================
+const installBtn = document.getElementById("installBtn");
 
-    function setInstalledFlag(val){ localStorage.setItem(INSTALL.key, val ? "1" : "0"); }
-    function getInstalledFlag(){ return localStorage.getItem(INSTALL.key) === "1"; }
+const INSTALL_FLAG_KEY = "pwa_installed_flag_v1";
 
-    async function checkInstalledRelatedApps(){
-      if (typeof navigator.getInstalledRelatedApps !== "function") {
-        INSTALL.relatedAppsChecked = true;
-        INSTALL.relatedAppsInstalled = null;
-        return null;
-      }
-      try{
-        const apps = await navigator.getInstalledRelatedApps();
-        INSTALL.relatedAppsChecked = true;
-        INSTALL.relatedAppsInstalled = Array.isArray(apps) && apps.length > 0;
-        return INSTALL.relatedAppsInstalled;
-      }catch(e){
-        INSTALL.relatedAppsChecked = true;
-        INSTALL.relatedAppsInstalled = null;
-        return null;
-      }
-    }
+function setInstalledFlag(v){ try{ localStorage.setItem(INSTALL_FLAG_KEY, v ? "1" : "0"); }catch(e){} }
+function getInstalledFlag(){ try{ return localStorage.getItem(INSTALL_FLAG_KEY) === "1"; }catch(e){ return false; } }
 
-    function applyInstallUI(isInstalled){
-      const installBtn = document.getElementById("installBtn");
-      const badge = document.getElementById("newBadge");
-      if(!installBtn) return;
+function isStandalone(){
+  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+}
 
-      if (isInstalled) {
-        installBtn.style.display = "none";
-      } else {
-        installBtn.style.display = "block";
-        installBtn.classList.add("pulse");
-        if (badge) badge.style.display = "inline-block";
-      }
-    }
+// Cache/affiche le bouton (par défaut caché)
+function applyInstallUI(installed){
+  if(!installBtn) return;
+  installBtn.style.display = installed ? "none" : (deferredPrompt ? "block" : "none");
+  if(installed) installBtn.classList.remove("pulse");
+  else installBtn.classList.add("pulse");
+}
 
-    async function updateInstallUI(){
-      // 1) Si on est dans la PWA => installé
-      if (isStandalone()) {
-        setInstalledFlag(true);
-        applyInstallUI(true);
-        return;
-      }
+// Check initial : si on est dans la PWA => installé
+(function initInstallUI(){
+  if (isStandalone()) {
+    setInstalledFlag(true);
+    applyInstallUI(true);
+  } else if (getInstalledFlag()) {
+    // Permet de cacher le bouton dans Chrome si l'app a déjà été installée sur cet appareil
+    applyInstallUI(true);
+  } else {
+    // On attend beforeinstallprompt pour afficher
+    applyInstallUI(false);
+  }
+})();
 
-      // 2) Android/Chrome: API fiable
-      const related = await checkInstalledRelatedApps();
-      if (related === true) {
-        setInstalledFlag(true);
-        applyInstallUI(true);
-        return;
-      }
-      if (related === false) {
-        setInstalledFlag(false);
-        applyInstallUI(false);
-        return;
-      }
+// Quand Chrome autorise l'installation => on peut afficher le bouton
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
 
-      // 3) Fallback: flag local
-      const flag = getInstalledFlag();
-      applyInstallUI(flag);
+  // Si l'utilisateur a désinstallé l'app, cet event va réapparaitre :
+  // on nettoie le flag pour réafficher le bouton.
+  setInstalledFlag(false);
+  applyInstallUI(false);
+});
 
-      // 4) Si Chrome peut proposer l’installation => montrer le bouton
-      if (deferredPrompt) {
-        setInstalledFlag(false);
-        applyInstallUI(false);
-      }
-    }
+// Quand l'installation est terminée
+window.addEventListener("appinstalled", () => {
+  setInstalledFlag(true);
+  applyInstallUI(true);
+  showToast("✅ Apéro de Nuit est ajouté à ton écran d’accueil !");
+});
 
-    // Au chargement + retour onglet
-    updateInstallUI();
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") updateInstallUI();
-    });
+// Recheck au retour d'onglet (ex: installation faite puis retour)
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && isStandalone()) {
+    setInstalledFlag(true);
+    applyInstallUI(true);
+  }
+});
 
-    // Quand l’app est installée (Chrome Android)
-    window.addEventListener("appinstalled", () => {
-      setInstalledFlag(true);
-      showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
-      updateInstallUI();
-    });
-
-    /* =========================
-       🔞 AGE GATE (chargement + commander)
-       ========================= */
-    const AGE = {
-      KEY_UNTIL: "ad_major_until",
-      KEY_LAST: "ad_last_choice",
-      WEEK_MS: 7 * 24 * 60 * 60 * 1000,
-      BLOCK_S: 20,
-      commanderUrl: "https://aperodenuit.com/commander"
-    };
-
-    const ageQuestion = document.getElementById("ageQuestion");
-    const ageBlocked  = document.getElementById("ageBlocked");
-    const ageYes      = document.getElementById("ageYes");
-    const ageNo       = document.getElementById("ageNo");
-    const ageCount    = document.getElementById("ageCount");
-
-    let ageInterval = null;
-    let agePendingAction = null;
-
-    function ageNow(){ return Date.now(); }
-    function ageGetUntil(){
-      const v = localStorage.getItem(AGE.KEY_UNTIL);
-      const n = v ? parseInt(v, 10) : 0;
-      return Number.isFinite(n) ? n : 0;
-    }
-    function ageIsMajorValid(){ return ageGetUntil() > ageNow(); }
-
-    function ageShow(el){
-      el.classList.add("show");
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-    }
-    function ageHide(el){
-      el.classList.remove("show");
-      if(!ageQuestion.classList.contains("show") && !ageBlocked.classList.contains("show")){
-        document.documentElement.style.overflow = "";
-        document.body.style.overflow = "";
-      }
-    }
-    function ageShowQuestion(){
-      ageHide(ageBlocked);
-      ageShow(ageQuestion);
-    }
-    function ageShowBlocked(){
-      ageHide(ageQuestion);
-      ageShow(ageBlocked);
-
-      let t = AGE.BLOCK_S;
-      ageCount.textContent = t;
-
-      if(ageInterval) clearInterval(ageInterval);
-      ageInterval = setInterval(() => {
-        t--;
-        ageCount.textContent = t;
-        if(t <= 0){
-          clearInterval(ageInterval);
-          ageInterval = null;
-          ageShowQuestion();
-        }
-      }, 1000);
-    }
-    function ageSetMajorWeek(){
-      localStorage.setItem(AGE.KEY_LAST, "major");
-      localStorage.setItem(AGE.KEY_UNTIL, String(ageNow() + AGE.WEEK_MS));
-    }
-    function ageSetMinor(){
-      localStorage.setItem(AGE.KEY_LAST, "minor");
-    }
-
-    [ageQuestion, ageBlocked].forEach(o=>{
-      o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
-    });
-    document.addEventListener("keydown", (e)=>{
-      if((ageQuestion.classList.contains("show") || ageBlocked.classList.contains("show")) && e.key === "Escape"){
-        e.preventDefault();
-      }
-    });
-
-    function requireMajorThen(actionFn){
-      if(ageIsMajorValid()){
-        actionFn();
-        return;
-      }
-      agePendingAction = actionFn;
-      ageShowQuestion();
-    }
-
-    ageYes.addEventListener("click", ()=>{
-      ageSetMajorWeek();
-      ageHide(ageQuestion);
-      if(typeof agePendingAction === "function"){
-        const fn = agePendingAction;
-        agePendingAction = null;
-        fn();
-      }
-    });
-
-    ageNo.addEventListener("click", ()=>{
-      ageSetMinor();
-      ageShowBlocked();
-    });
-
-    // ✅ AU CHARGEMENT : si pas validé -> affiche direct
-    if(!ageIsMajorValid()){
-      ageShowQuestion();
-    }
-
-    // =========================
-    // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
-    // =========================
-    const PROMO_URL = "https://stats.aperos.net/go/jeux?src=QR";
-    const PROMO_REQUIRED_MS = 90_000; // 1m30
-    const PROMO_KEYS = {
-      enabled: "promo_enabled",
-      acc: "promo_acc_ms",
-      visibleStart: "promo_visible_start",
-      unlockedTs: "promo_unlocked_ts",
-      expiryTs: "promo_expiry_ts",
-      clicked: "promo_clicked"
-    };
-
-    function addMonths(ts, months){
-      const d = new Date(ts);
-      const day = d.getDate();
-      d.setMonth(d.getMonth() + months);
-      if (d.getDate() !== day) d.setDate(0);
-      return d.getTime();
-    }
-    function lsGetInt(k, def=0){
-      const v = localStorage.getItem(k);
-      const n = v === null ? def : parseInt(v, 10);
-      return Number.isFinite(n) ? n : def;
-    }
-    function lsGetBool(k){ return localStorage.getItem(k) === "1"; }
-    function lsSetBool(k, val){ localStorage.setItem(k, val ? "1" : "0"); }
-
-    function promoReset(){
-      localStorage.removeItem(PROMO_KEYS.enabled);
-      localStorage.removeItem(PROMO_KEYS.acc);
-      localStorage.removeItem(PROMO_KEYS.visibleStart);
-      localStorage.removeItem(PROMO_KEYS.unlockedTs);
-      localStorage.removeItem(PROMO_KEYS.expiryTs);
-      localStorage.removeItem(PROMO_KEYS.clicked);
-    }
-    function promoExpired(){
-      const expiry = lsGetInt(PROMO_KEYS.expiryTs, 0);
-      return expiry > 0 && Date.now() > expiry;
-    }
-    function promoIsUnlocked(){ return lsGetInt(PROMO_KEYS.unlockedTs, 0) > 0; }
-    function promoIsEnabled(){ return lsGetBool(PROMO_KEYS.enabled); }
-
-    function promoUpdateUI(){
-      const promoBtn = document.getElementById("promoBtn");
-      const promoBadge = document.getElementById("promoBadge");
-      if (!promoBtn) return;
-
-      if (promoExpired()) promoReset();
-
-      const shouldShow =
-        isStandalone() &&
-        promoIsEnabled() &&
-        promoIsUnlocked() &&
-        !promoExpired();
-
-      promoBtn.style.display = shouldShow ? "block" : "none";
-
-      if (promoBadge){
-        promoBadge.style.display = lsGetBool(PROMO_KEYS.clicked) ? "none" : "inline-block";
-      }
-    }
-
-    function promoUnlockNow(){
-      const now = Date.now();
-      localStorage.setItem(PROMO_KEYS.unlockedTs, String(now));
-      localStorage.setItem(PROMO_KEYS.expiryTs, String(addMonths(now, 4)));
-      promoUpdateUI();
-    }
-
-    function promoStopSession(){
-      const start = lsGetInt(PROMO_KEYS.visibleStart, 0);
-      if (!start) return;
-      const delta = Math.max(0, Date.now() - start);
-      localStorage.removeItem(PROMO_KEYS.visibleStart);
-
-      if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
-
-      const acc = lsGetInt(PROMO_KEYS.acc, 0) + delta;
-      localStorage.setItem(PROMO_KEYS.acc, String(acc));
-
-      if (acc >= PROMO_REQUIRED_MS) promoUnlockNow();
-    }
-
-    function promoStartSession(){
-      if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
-      if (!isStandalone()) return;
-      if (document.visibilityState !== "visible") return;
-
-      const existing = lsGetInt(PROMO_KEYS.visibleStart, 0);
-      if (!existing) localStorage.setItem(PROMO_KEYS.visibleStart, String(Date.now()));
-    }
-
-    function promoKickoffAfterCommander(){
-      if (!isStandalone()) return;
-
-      if (promoExpired()) promoReset();
-
-      if (!promoIsEnabled()){
-        lsSetBool(PROMO_KEYS.enabled, true);
-        localStorage.setItem(PROMO_KEYS.acc, "0");
-        lsSetBool(PROMO_KEYS.clicked, false);
-        localStorage.removeItem(PROMO_KEYS.visibleStart);
-        localStorage.removeItem(PROMO_KEYS.unlockedTs);
-        localStorage.removeItem(PROMO_KEYS.expiryTs);
-      }
-      promoStartSession();
-    }
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") promoStopSession();
-      if (document.visibilityState === "visible") promoStartSession();
-      promoUpdateUI();
-    });
-    window.addEventListener("pagehide", promoStopSession);
-    window.addEventListener("beforeunload", promoStopSession);
-
-    const promoBtnEl = document.getElementById("promoBtn");
-    if (promoBtnEl){
-      promoBtnEl.addEventListener("click", () => {
-        lsSetBool(PROMO_KEYS.clicked, true);
-        promoUpdateUI();
-        window.location.href = PROMO_URL;
-      });
-    }
-
-    promoUpdateUI();
-    promoStartSession();
-
-    // Modale helpers
-    const modal = document.getElementById("helpModal");
-    const closeBtn = document.getElementById("closeHelp");
-    const copyBtn = document.getElementById("copyLinkBtn");
-    const copiedMsg = document.getElementById("copiedMsg");
-    const intro = document.getElementById("helpIntro");
-    const steps = document.getElementById("helpSteps");
-    const title = document.getElementById("helpTitle");
-    const icon = document.getElementById("helpIcon");
-
-    function openModal({t="Installer l’app", i="", s="", showCopy=false, ic="📲"}) {
-      title.textContent = t;
-      icon.textContent = ic;
-      intro.innerHTML = i;
-      steps.innerHTML = s;
-      copyBtn.style.display = showCopy ? "inline-block" : "none";
-      copiedMsg.style.display = "none";
-      modal.classList.add("open");
-    }
-    closeBtn.addEventListener("click", () => modal.classList.remove("open"));
-    modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
-
-    copyBtn.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(window.location.href);
-        copiedMsg.style.display = "block";
-      } catch (e) {
-        const tmp = document.createElement("textarea");
-        tmp.value = window.location.href;
-        document.body.appendChild(tmp);
-        tmp.select();
-        document.execCommand("copy");
-        document.body.removeChild(tmp);
-        copiedMsg.style.display = "block";
-      }
-    });
-
-    // Click "Ajouter l’app"
-    document.getElementById("installBtn").addEventListener("click", async () => {
+    ick", async () => {
       if (isFBInApp) {
         openModal({
           ic:"📣",
