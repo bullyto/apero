@@ -12,253 +12,207 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 
-  <!-- Préchargement -->
-  <link rel="preload" as="image" href="assets/logo-header.png">
-  <link rel="preload" as="image" href="assets/bottle1.png">
-  <link rel="preload" as="image" href="assets/bottle2.png">
-  <link rel="preload" as="image" href="assets/bottle3.png">
-  <link rel="preload" as="image" href="assets/bottle4.png">
-  <link rel="preload" as="image" href="assets/bottle5.png">
-  <link rel="preload" as="image" href="assets/bottle6.png">
-  <link rel="preload" as="image" href="assets/bottle7.png">
-
   <style>
-    :root{ --blue:#0b1c2d; --sky:#5db7ee; --text:#0b1c2d; }
+    :root{
+      --bg:#0b1c2d;
+      --blue:#63b6ff;
+      --blue2:#3fa3ff;
+      --txt:#ffffff;
+    }
     *{box-sizing:border-box}
-
+    html,body{margin:0;padding:0}
     body{
-      margin:0; height:100dvh; display:flex; flex-direction:column;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#fff; color:var(--text); overflow:hidden;
+      background:#ffffff;
+      color:#111;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      min-height: 100dvh;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
     }
 
     /* HEADER */
-    .top{background:var(--blue);padding-bottom:8px}
-    .top img{width:100%;max-height:26vh;object-fit:contain;display:block}
+    .header{
+      background:var(--bg);
+      padding:18px 0 16px;
+      text-align:center;
+    }
+    .header img{
+      max-width:92%;
+      max-height:120px;
+    }
 
     /* TITRE */
-    .mid{text-align:center;padding:18px 14px 6px}
-    .mid h1{margin:0;font-size:clamp(26px,6vw,40px);color:var(--sky);font-weight:900}
-    .brand66{position:relative;display:inline-block}
-    .brand66 .reg{position:absolute;top:-0.2em;right:-0.4em;font-size:1em;font-weight:800}
-
-    /* ZONE BOUTEILLES */
-    .stage{flex:1;display:flex;justify-content:center;padding:12px}
-    .bottleWrap{
-      position:relative;width:min(520px,96vw);min-height:60vh;
-      display:flex;justify-content:center;align-items:flex-start;
+    .titleBlock{
+      text-align:center;
+      padding:22px 12px 12px;
+      background:#fff;
     }
+    .titleBlock h1{
+      margin:0;
+      font-size:42px;
+      letter-spacing:1px;
+      color:#73c6ff;
+      font-weight:800;
+    }
+    .titleBlock .brand66{
+      display:inline-flex;
+      align-items:flex-start;
+      gap:2px;
+    }
+    .titleBlock .reg{
+      font-size:16px;
+      transform:translateY(6px);
+      opacity:.9;
+    }
+
+    /* STAGE */
+    .stage{flex:1;display:flex;justify-content:center;padding:12px}
+
+    .bottleWrap{
+      position:relative;
+      width:min(520px,96vw);
+      min-height:60vh;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    /* ✅ BOUTEILLES + FONDU REFLET (le fix) */
     .bottleWrap img{
-      position:absolute;max-height:56vh;max-width:100%;width:auto;
-      opacity:0;transition:opacity .4s ease;
+      position:absolute;
+      max-height:56vh;
+      max-width:100%;
+      width:auto;
+      opacity:0;
+      transition:opacity .4s ease;
+
+      /* ✅ fondu du bas (évite la coupure nette en PWA) */
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
     }
     .bottleWrap img.active{opacity:1}
 
-    /* BOUTONS */
-    
-.btnStack{
-  position:fixed;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:min(420px,86vw);
-  z-index:50;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:center;
-  justify-content:center;
-  padding:0 12px;
-}
+    /* ✅ BOUTONS CENTRÉS AU MILIEU DE L’ÉCRAN */
+    .btnStack{
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:min(420px,86vw);
+      z-index:50;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+    }
+
     .btn{
-      width:100%;border:none;border-radius:16px;padding:14px;
-      font-size:18px;font-weight:900;cursor:pointer;
+      width:100%;
+      border:none;
+      border-radius:22px;
+      padding:18px 18px;
+      font-size:26px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:0 10px 18px rgba(0,0,0,.12);
+    }
+    .btn.primary{
+      background:#7ec5ff;
+      color:#fff;
+    }
+    .btn.secondary{
+      background:#ffffff;
+      color:#111;
+      border:2px solid rgba(0,0,0,.12);
       position:relative;
     }
-        .btn.primary{background:var(--sky);color:#fff}
-    .btn.secondary{background:rgba(255,255,255,.85);color:#0b1c2d;border:1px solid rgba(11,28,45,.25)}
 
-    /* Pulse */
-    @keyframes pulseAdd {
-      0%   { box-shadow: 0 0 0 0 rgba(93,183,238,.45); transform: translateY(0); }
-      60%  { box-shadow: 0 0 0 16px rgba(93,183,238,0); }
-      100% { box-shadow: 0 0 0 0 rgba(93,183,238,0); }
+    .pulse{
+      animation:pulse 1.6s infinite;
     }
-    .btn.secondary.pulse { animation: pulseAdd 2.6s infinite; }
+    @keyframes pulse{
+      0%{transform:scale(1)}
+      50%{transform:scale(1.02)}
+      100%{transform:scale(1)}
+    }
 
-    /* Badge "Nouveau" */
     .badge-new{
       position:absolute;
-      top:-8px;
-      right:-8px;
-      background:var(--sky);
+      right:12px;
+      top:-10px;
+      background:#67c3ff;
       color:#fff;
-      font-size:11px;
-      font-weight:950;
-      padding:4px 8px;
+      font-weight:800;
+      font-size:14px;
+      padding:6px 10px;
       border-radius:999px;
-      box-shadow:0 10px 22px rgba(93,183,238,.45);
-      letter-spacing:.2px;
-      border:2px solid rgba(255,255,255,.85);
-      pointer-events:none;
+      box-shadow:0 8px 14px rgba(0,0,0,.12);
     }
 
-    /* MODALE */
-    .modal{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-      padding:18px;background:rgba(0,0,0,.55);z-index:999;
-    }
-    .modal.open{display:flex}
-    .sheet{
-      width:min(520px,94vw);background:#fff;border-radius:22px;
-      box-shadow:0 18px 60px rgba(0,0,0,.25);padding:18px 16px 14px;
-    }
-    .sheetHead{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start}
-    .sheetIcon{
-      width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-      background:rgba(93,183,238,.18);font-size:20px;
-    }
-    .sheet h3{margin:0;font-size:18px;color:var(--blue);line-height:1.2}
-    .sheet p{margin:10px 0;color:rgba(0,0,0,.75);font-size:14px;line-height:1.35}
-    .step{
-      background:rgba(11,28,45,.06);border:1px solid rgba(11,28,45,.08);
-      border-radius:16px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.35;
-    }
-    .modalActions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
-    .okBtn,.copyBtn{border:none;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;}
-    .okBtn{background:var(--sky);color:#fff;min-width:110px}
-    .copyBtn{background:rgba(93,183,238,.18);color:var(--blue)}
-    .copied{font-size:13px;color:#1b7f2a;margin-top:6px;display:none}
-
-    /* TOAST */
+    /* Toast */
     .toast{
       position:fixed;
       left:50%;
-      bottom:18px;
-      transform:translateX(-50%) translateY(20px);
+      bottom:16px;
+      transform:translateX(-50%);
+      background:rgba(16,16,16,.92);
+      color:#fff;
+      padding:10px 14px;
+      border-radius:12px;
+      font-size:14px;
       opacity:0;
       pointer-events:none;
-      background:rgba(11,28,45,.92);
-      color:#fff;
-      padding:12px 14px;
-      border-radius:14px;
-      box-shadow:0 18px 60px rgba(0,0,0,.25);
-      z-index:1000;
-      transition:opacity .25s ease, transform .25s ease;
-      font-weight:900;
-      font-size:14px;
-      width:min(520px, 92vw);
+      transition:opacity .25s ease;
+      z-index:99;
+      max-width:min(520px,92vw);
       text-align:center;
     }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    .toast.show{opacity:1}
 
-    /* =========================
-       🔞 AGE GATE
-       ========================= */
-    .ageOverlay{
-      position:fixed; inset:0;
+    /* Modal âge */
+    .ageModal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.62);
       display:none;
-      align-items:center; justify-content:center;
-      padding:18px;
-      z-index:5000;
-      background: rgba(0,0,0,.62);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+      z-index:999;
     }
-    .ageOverlay.show{display:flex;}
-
+    .ageModal.show{display:flex}
     .ageCard{
-      width:min(560px, 94vw);
-      border-radius:22px;
-      background: linear-gradient(180deg, rgba(20,35,56,.94), rgba(10,20,33,.94));
-      border:1px solid rgba(255,255,255,.12);
-      box-shadow:0 30px 80px rgba(0,0,0,.55);
-      overflow:hidden;
-      color:#fff;
+      width:min(520px,92vw);
+      background:#fff;
+      border-radius:18px;
+      padding:18px;
+      text-align:center;
+      box-shadow:0 18px 40px rgba(0,0,0,.25);
     }
-    .ageTop{
-      padding:16px 18px 12px;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background: rgba(255,255,255,.02);
-    }
-    .ageBrand{
-      display:flex; align-items:center; gap:10px; min-width:0;
-    }
-    .ageBadge{
-      width:34px;height:34px;border-radius:12px;
-      display:grid;place-items:center;
-      background: rgba(93,183,238,.18);
-      border:1px solid rgba(93,183,238,.30);
-      font-weight:950;color:#5db7ee;
-      flex:0 0 auto;
-    }
-    .ageBrand b{
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      font-size:14px;
-      color:rgba(255,255,255,.88);
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .ageBody{padding:18px;}
-    .ageTitle{margin:6px 0 10px;font-size:28px;line-height:1.1;font-weight:950}
-    .ageLead{margin:0 0 14px;color:rgba(255,255,255,.74);line-height:1.45;font-size:15px}
-    .ageNotice{
-      margin:14px 0 18px;
-      padding:12px 12px;
-      border-radius: 14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      color: rgba(255,255,255,.88);
-      font-size:14px;
-      line-height:1.35;
-    }
-    .ageBtns{display:grid; gap:10px; margin-top:10px;}
-    .ageBtn{
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(19,36,59,.90);
-      color:#fff;
-      padding:14px 14px;
-      border-radius: 14px;
+    .ageCard h2{margin:0 0 10px;font-size:22px}
+    .ageCard p{margin:0 0 14px;color:#333}
+    .ageActions{display:flex;gap:12px}
+    .ageActions button{
+      flex:1;
+      border:none;
+      border-radius:14px;
+      padding:14px 12px;
+      font-weight:800;
       cursor:pointer;
-      font-weight:950;
-      font-size:15px;
+      font-size:18px;
     }
-    .ageBtnPrimary{
-      background: linear-gradient(180deg, rgba(40,199,111,1), rgba(24,160,86,1));
-      border-color: rgba(40,199,111,.55);
-      box-shadow: 0 14px 40px rgba(40,199,111,.22);
-    }
-    .ageBtnSecondary{
-      background: rgba(255,255,255,.05);
-      border-color: rgba(255,255,255,.12);
-      color: rgba(255,255,255,.92);
-    }
-    .ageTimer{
-      margin-top:12px;
-      font-weight:950;
-      color:#5db7ee;
-      text-align:center;
-      font-size:16px;
-    }
-    .ageFine{
-      margin:12px 0 0;
-      color: rgba(255,255,255,.60);
-      font-size:12.5px;
-      line-height:1.35;
-      text-align:center;
-    }
-    .ageFine a{color:#5db7ee; text-decoration:none; font-weight:900;}
-    .ageFine a:hover{text-decoration:underline;}
+    .yes{background:#28c76f;color:#fff}
+    .no{background:#ff4d4d;color:#fff}
   </style>
 </head>
 
 <body>
-  <header class="top">
+  <header class="header">
     <img src="assets/logo-header.png" alt="">
   </header>
 
-  <section class="mid">
+  <section class="titleBlock">
     <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
   </section>
 
@@ -271,101 +225,31 @@
       <img src="assets/bottle5.png" alt="">
       <img src="assets/bottle6.png" alt="">
       <img src="assets/bottle7.png" alt="">
-
-      <div class="btnStack">
-        <button class="btn primary" id="goBtn">Commander</button>
-
-        <button class="btn secondary pulse" id="installBtn" style="display:none">
-          Ajouter l’app
-          <span class="badge-new" id="newBadge">Nouveau</span>
-        </button>
-
-        <button class="btn secondary" id="promoBtn" style="display:none">
-          Code promo
-          <span class="badge-new" id="promoBadge">Nouveau</span>
-        </button>
-      </div>
     </div>
   </main>
 
-  <!-- Toast -->
-  <div class="toast" id="toast">✅ Apéro de Nuit est ajouté à ton écran d’accueil !</div>
+  <div class="btnStack">
+    <button class="btn primary" id="goBtn">Commander</button>
 
-  <!-- Modale help install -->
-  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
-    <div class="sheet">
-      <div class="sheetHead">
-        <div class="sheetIcon" id="helpIcon">📲</div>
-        <div>
-          <h3 id="helpTitle">Installer l’app</h3>
-          <p id="helpIntro"></p>
-        </div>
-      </div>
+    <button class="btn secondary pulse" id="installBtn" style="display:none">
+      Ajouter l’app
+      <span class="badge-new" id="newBadge">Nouveau</span>
+    </button>
 
-      <div class="step" id="helpSteps"></div>
-      <div class="copied" id="copiedMsg">✅ Lien copié</div>
-
-      <div class="modalActions">
-        <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
-        <button class="okBtn" id="closeHelp">OK</button>
-      </div>
-    </div>
+    <button class="btn secondary" id="promoBtn" style="display:none"></button>
   </div>
 
-  <!-- 🔞 AGE GATE -->
-  <div class="ageOverlay" id="ageQuestion" role="dialog" aria-modal="true">
-    <div class="ageCard">
-      <div class="ageTop">
-        <div class="ageBrand">
-          <div class="ageBadge">AD</div>
-          <b>APÉRO DE NUIT</b>
-        </div>
-      </div>
-      <div class="ageBody">
-        <div class="ageTitle">Bienvenue ✨</div>
-        <p class="ageLead">
-          Ce site présente des boissons alcoolisées. Pour continuer, confirme que tu as l’âge légal.
-        </p>
-        <div class="ageNotice">
-          <b>La vente d’alcool est interdite aux mineurs.</b><br>
-          L’abus d’alcool est dangereux pour la santé, à consommer avec modération.
-        </div>
-        <div class="ageBtns">
-          <button class="ageBtn ageBtnPrimary" id="ageYes">✅ Je suis majeur</button>
-          <button class="ageBtn ageBtnSecondary" id="ageNo">ℹ️ Je ne suis pas majeur</button>
-        </div>
-        <div class="ageFine">🔒 Choix mémorisé 7 jours sur cet appareil.</div>
-      </div>
-    </div>
-  </div>
+  <!-- ✅ Toast -->
+  <div class="toast" id="toast">✅ Apéro de Nuit est prêt.</div>
 
-  <div class="ageOverlay" id="ageBlocked" role="dialog" aria-modal="true">
+  <!-- ✅ Modal âge -->
+  <div class="ageModal" id="ageModal" aria-hidden="true">
     <div class="ageCard">
-      <div class="ageTop">
-        <div class="ageBrand">
-          <div class="ageBadge">18+</div>
-          <b>ACCÈS RÉSERVÉ</b>
-        </div>
-      </div>
-      <div class="ageBody">
-        <div class="ageTitle">Accès réservé 🔞</div>
-        <p class="ageLead">
-          Ce contenu est strictement réservé aux personnes majeures.<br>
-          La vente d’alcool est interdite aux mineurs.
-        </p>
-        <div class="ageNotice">
-          Pour accéder au contenu, une vérification d’âge est obligatoire.
-        </div>
-        <div class="ageTimer">
-          Nouvelle tentative dans <span id="ageCount">20</span>s
-        </div>
-        <div class="ageFine">
-          Si tu penses être bloqué par erreur, contacte Apéro de Nuit (page contact / réseaux)
-          ou <a href="mailto:contact@aperodenuit.com">contact@aperodenuit.com</a>.
-        </div>
-        <div class="ageFine" style="margin-top:10px;">
-          L’abus d’alcool est dangereux pour la santé.
-        </div>
+      <h2>As-tu 18 ans ou plus ?</h2>
+      <p>La commande d’alcool est réservée aux majeurs.</p>
+      <div class="ageActions">
+        <button class="yes" id="ageYes">Oui</button>
+        <button class="no" id="ageNo">Non</button>
       </div>
     </div>
   </div>
@@ -389,18 +273,11 @@
       }, 2000);
     }
 
-    // Détections
-    const ua = navigator.userAgent || "";
-    const isFBInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
-    // PWA prompt Android/Chrome
+    // ===============================
+    // ✅ INSTALL PWA
+    // ===============================
+    const installBtn = document.getElementById("installBtn");
     let deferredPrompt = null;
-      deferredPrompt = e;
-      // quand Chrome peut proposer l'installation, on force l'UI "install visible"
-      // (ça aide si un flag local était faux)
-      updateInstallUI();
-    });
 
     // Toast
     const toastEl = document.getElementById("toast");
@@ -411,134 +288,152 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
 
-    // ✅ Standalone (PWA)
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
     }
 
-    // ===============================
-    // ✅ LOGIQUE INSTALL "FIABLE"
-    // ===========// ===============================
-// ✅ INSTALL APP : affichage fiable
-// - Bouton caché par défaut
-// - S'affiche seulement si Chrome autorise l'installation
-// - Disparaît si déjà installé (standalone ou flag)
-// ===============================
-const installBtn = document.getElementById("installBtn");
+    async function checkInstalledRelatedApps(){
+      if (!navigator.getInstalledRelatedApps) return null;
+      try {
+        const related = await navigator.getInstalledRelatedApps();
+        return (related && related.length) ? true : false;
+      } catch (e) {
+        return null;
+      }
+    }
 
-const INSTALL_FLAG_KEY = "pwa_installed_flag_v1";
+    function applyInstallUI(installed){
+      // installé => caché
+      installBtn.style.display = installed ? "none" : "none";
+      // ⚠️ On n’affiche JAMAIS le bouton ici directement.
+      // Il ne s’affiche QUE quand beforeinstallprompt se déclenche.
+    }
 
-function setInstalledFlag(v){ try{ localStorage.setItem(INSTALL_FLAG_KEY, v ? "1" : "0"); }catch(e){} }
-function getInstalledFlag(){ try{ return localStorage.getItem(INSTALL_FLAG_KEY) === "1"; }catch(e){ return false; } }
-
-function isStandalone(){
-  return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-}
-
-// Cache/affiche le bouton (par défaut caché)
-function applyInstallUI(installed){
-  if(!installBtn) return;
-  installBtn.style.display = installed ? "none" : (deferredPrompt ? "block" : "none");
-  if(installed) installBtn.classList.remove("pulse");
-  else installBtn.classList.add("pulse");
-}
-
-// Check initial : si on est dans la PWA => installé
-(function initInstallUI(){
-  if (isStandalone()) {
-    setInstalledFlag(true);
-    applyInstallUI(true);
-  } else if (getInstalledFlag()) {
-    // Permet de cacher le bouton dans Chrome si l'app a déjà été installée sur cet appareil
-    applyInstallUI(true);
-  } else {
-    // On attend beforeinstallprompt pour afficher
-    applyInstallUI(false);
-  }
-})();
-
-// Quand Chrome autorise l'installation => on peut afficher le bouton
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  // Si l'utilisateur a désinstallé l'app, cet event va réapparaitre :
-  // on nettoie le flag pour réafficher le bouton.
-  setInstalledFlag(false);
-  applyInstallUI(false);
-});
-
-// Quand l'installation est terminée
-window.addEventListener("appinstalled", () => {
-  setInstalledFlag(true);
-  applyInstallUI(true);
-  showToast("✅ Apéro de Nuit est ajouté à ton écran d’accueil !");
-});
-
-// Recheck au retour d'onglet (ex: installation faite puis retour)
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && isStandalone()) {
-    setInstalledFlag(true);
-    applyInstallUI(true);
-  }
-});
-
-    ick", async () => {
-      if (isFBInApp) {
-        openModal({
-          ic:"📣",
-          t:"Ouvrir dans un navigateur",
-          i:"Facebook / Instagram bloque l’installation de l’app.",
-          s:
-            "<strong>Solution :</strong><br><br>" +
-            "1) Clique sur <strong>Copier le lien</strong><br>" +
-            "2) Ouvre <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)<br>" +
-            "3) Colle le lien dans la barre d’adresse, puis re-clique sur <strong>Ajouter l’app</strong>",
-          showCopy:true
-        });
+    async function updateInstallUI(){
+      if (isStandalone()) {
+        localStorage.setItem("pwa_installed_flag", "1");
+        applyInstallUI(true);
         return;
       }
 
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch(e) {}
-        deferredPrompt = null;
-        // après tentative d'install, on re-check
-        setTimeout(updateInstallUI, 600);
+      const related = await checkInstalledRelatedApps();
+      if (related === true) {
+        localStorage.setItem("pwa_installed_flag", "1");
+        applyInstallUI(true);
+        return;
+      }
+      if (related === false) {
+        localStorage.setItem("pwa_installed_flag", "0");
+        applyInstallUI(false);
         return;
       }
 
-      if (isIOS && isSafari) {
-        openModal({
-          ic:"🍏",
-          t:"Ajouter à l’écran d’accueil",
-          i:"Sur iPhone, l’installation se fait via le bouton Partager.",
-          s:
-            "<strong>Étapes :</strong><br><br>" +
-            "1) Appuie sur <strong>Partager</strong> (carré + flèche)<br>" +
-            "2) Choisis <strong>Sur l’écran d’accueil</strong><br>" +
-            "3) Valide <strong>Ajouter</strong>"
-        });
-        return;
-      }
+      const flag = localStorage.getItem("pwa_installed_flag") === "1";
+      applyInstallUI(flag);
 
-      openModal({
-        ic:"⚠️",
-        t:"Installation indisponible",
-        i:"Ton navigateur ne propose pas l’installation automatique.",
-        s:
-          "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone).<br>" +
-          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
-        showCopy:true
-      });
+      // si Chrome sait proposer l’install, le bouton sera affiché par beforeinstallprompt
+      if (deferredPrompt && !flag) installBtn.style.display = "block";
+    }
+
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      // On n’affiche le bouton QUE si pas déjà installé (flag/standalone)
+      const flag = localStorage.getItem("pwa_installed_flag") === "1";
+      if (!isStandalone() && !flag) {
+        installBtn.style.display = "block";
+      }
     });
 
-    // ✅ Commander -> passe par Age Gate + promo
-    document.getElementById("goBtn").addEventListener("click", () => {
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const res = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+
+      if (res.outcome === "accepted") {
+        installBtn.style.display = "none";
+        localStorage.setItem("pwa_installed_flag", "1");
+        showToast("✅ Application installée !");
+      } else {
+        showToast("❌ Installation annulée.");
+      }
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installBtn.style.display = "none";
+      localStorage.setItem("pwa_installed_flag", "1");
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) updateInstallUI();
+    });
+
+    window.addEventListener("load", () => {
+      updateInstallUI();
+    });
+
+    // ===============================
+    // ✅ VÉRIFICATION ÂGE (UNIQUEMENT AU CLIC SUR COMMANDER)
+    // ===============================
+    const AGE = {
+      KEY_UNTIL: "age_major_until",
+      DAYS: 120
+    };
+
+    const ageModal = document.getElementById("ageModal");
+    const ageYes = document.getElementById("ageYes");
+    const ageNo  = document.getElementById("ageNo");
+
+    let agePendingAction = null;
+
+    function ageNow(){ return Date.now(); }
+    function ageGetUntil(){
+      const v = localStorage.getItem(AGE.KEY_UNTIL);
+      const n = v ? parseInt(v, 10) : 0;
+      return Number.isFinite(n) ? n : 0;
+    }
+    function ageIsMajorValid(){ return ageGetUntil() > ageNow(); }
+
+    function ageOpen(){
+      ageModal.classList.add("show");
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
+    function ageClose(){
+      ageModal.classList.remove("show");
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    }
+
+    function requireMajorThen(fn){
+      if (ageIsMajorValid()) return fn();
+      agePendingAction = fn;
+      ageOpen();
+    }
+
+    ageYes.addEventListener("click", () => {
+      const until = ageNow() + (AGE.DAYS * 24 * 60 * 60 * 1000);
+      localStorage.setItem(AGE.KEY_UNTIL, String(until));
+      ageClose();
+      if (typeof agePendingAction === "function") agePendingAction();
+      agePendingAction = null;
+    });
+
+    ageNo.addEventListener("click", () => {
+      ageClose();
+      agePendingAction = null;
+      showToast("⛔ Réservé aux majeurs.");
+    });
+
+    // ✅ Commander : déclenche la vérif âge ici seulement
+    const goBtn = document.getElementById("goBtn");
+    goBtn.addEventListener("click", () => {
       requireMajorThen(() => {
-        promoKickoffAfterCommander();
-        window.location.href = AGE.commanderUrl;
+        // 👉 Ton action “commander” ici
+        window.location.href = "https://stats.aperos.net/go/apero?src=QR";
       });
     });
   </script>
