@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
-  <!-- ✅ AJOUTS MINIMAUX POUR PWA (chemins selon ta structure) -->
+  <!-- ✅ PWA -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0b1c2d">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
 
-  <!-- Préchargement (fluidité du défilement) -->
+  <!-- Préchargement -->
   <link rel="preload" as="image" href="assets/logo-header.png">
   <link rel="preload" as="image" href="assets/bottle1.png">
   <link rel="preload" as="image" href="assets/bottle2.png">
@@ -62,13 +62,13 @@
     .btn{
       width:100%;border:none;border-radius:16px;padding:14px;
       font-size:18px;font-weight:900;cursor:pointer;
-      position:relative; /* ✅ nécessaire pour le badge */
+      position:relative;
     }
     .btn + .btn{margin-top:10px}
     .btn.primary{background:var(--sky);color:#fff}
     .btn.secondary{background:rgba(255,255,255,.85);color:#0b1c2d;border:1px solid rgba(11,28,45,.25)}
 
-    /* ✅ Pulse discret pour augmenter le clic SUR "Ajouter l’app" */
+    /* Pulse */
     @keyframes pulseAdd {
       0%   { box-shadow: 0 0 0 0 rgba(93,183,238,.45); transform: translateY(0); }
       60%  { box-shadow: 0 0 0 16px rgba(93,183,238,0); }
@@ -76,7 +76,7 @@
     }
     .btn.secondary.pulse { animation: pulseAdd 2.6s infinite; }
 
-    /* ✅ Badge "Nouveau" (propre, cohérent design) */
+    /* Badge "Nouveau" */
     .badge-new{
       position:absolute;
       top:-8px;
@@ -93,7 +93,7 @@
       pointer-events:none;
     }
 
-    /* MODALE DESIGN */
+    /* MODALE */
     .modal{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
       padding:18px;background:rgba(0,0,0,.55);z-index:999;
@@ -120,7 +120,7 @@
     .copyBtn{background:rgba(93,183,238,.18);color:var(--blue)}
     .copied{font-size:13px;color:#1b7f2a;margin-top:6px;display:none}
 
-    /* ✅ TOAST (mini notification jolie) */
+    /* TOAST */
     .toast{
       position:fixed;
       left:50%;
@@ -143,14 +143,14 @@
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
     /* =========================
-       🔞 AGE GATE (ajout)
+       🔞 AGE GATE
        ========================= */
     .ageOverlay{
       position:fixed; inset:0;
       display:none;
       align-items:center; justify-content:center;
       padding:18px;
-      z-index:5000; /* au-dessus de tout (toast 1000 / modal 999) */
+      z-index:5000;
       background: rgba(0,0,0,.62);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
@@ -265,13 +265,11 @@
       <div class="btnStack">
         <button class="btn primary" id="goBtn">Commander</button>
 
-        <!-- ✅ Badge Nouveau -->
         <button class="btn secondary pulse" id="installBtn">
           Ajouter l’app
           <span class="badge-new" id="newBadge">Nouveau</span>
         </button>
 
-        <!-- 🎁 Bouton promo (après ajout de l’app + délai) -->
         <button class="btn secondary" id="promoBtn" style="display:none">
           Code promo
           <span class="badge-new" id="promoBadge">Nouveau</span>
@@ -283,7 +281,7 @@
   <!-- Toast -->
   <div class="toast" id="toast">✅ Apéro de Nuit est ajouté à ton écran d’accueil !</div>
 
-  <!-- Modale (Facebook/in-app + iPhone Safari + cas indisponible) -->
+  <!-- Modale help install -->
   <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <div class="sheet">
       <div class="sheetHead">
@@ -304,11 +302,7 @@
     </div>
   </div>
 
-  <!-- =========================
-       🔞 AGE GATE (HTML ajout)
-       ========================= -->
-
-  <!-- Question -->
+  <!-- 🔞 AGE GATE -->
   <div class="ageOverlay" id="ageQuestion" role="dialog" aria-modal="true">
     <div class="ageCard">
       <div class="ageTop">
@@ -335,7 +329,6 @@
     </div>
   </div>
 
-  <!-- Blocage 20s (uniquement après "pas majeur") -->
   <div class="ageOverlay" id="ageBlocked" role="dialog" aria-modal="true">
     <div class="ageCard">
       <div class="ageTop">
@@ -356,13 +349,10 @@
         <div class="ageTimer">
           Nouvelle tentative dans <span id="ageCount">20</span>s
         </div>
-
-        <!-- ✅ mention débloquage (sans inventer de numéro) -->
         <div class="ageFine">
-          Si tu penses être bloqué par erreur, contacte Apéro de Nuit via la page contact / réseaux,
+          Si tu penses être bloqué par erreur, contacte Apéro de Nuit (page contact / réseaux)
           ou <a href="mailto:contact@aperodenuit.com">contact@aperodenuit.com</a>.
         </div>
-
         <div class="ageFine" style="margin-top:10px;">
           L’abus d’alcool est dangereux pour la santé.
         </div>
@@ -371,7 +361,7 @@
   </div>
 
   <script>
-    // ✅ AJOUT MINIMAL : register service worker (sinon pas de beforeinstallprompt)
+    // ✅ Service worker
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js").catch(() => {});
@@ -411,14 +401,47 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
 
-    // ✅ Masquer badge/pulse ET le bouton si déjà installé / en mode "app"
+    // ✅ Standalone (PWA)
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
     }
 
+    // ✅ AFFICHAGE DYNAMIQUE DU BOUTON "AJOUTER L’APP"
+    function updateInstallUI(){
+      const installBtn = document.getElementById("installBtn");
+      const newBadge = document.getElementById("newBadge");
+      if(!installBtn) return;
+
+      if (isStandalone()) {
+        installBtn.style.display = "none";
+      } else {
+        installBtn.style.display = "block";
+        installBtn.classList.add("pulse");
+        if (newBadge) newBadge.style.display = "inline-block";
+      }
+    }
+    updateInstallUI();
+
+    // Écoute changement de mode d’affichage
+    try{
+      const mq = window.matchMedia("(display-mode: standalone)");
+      if (mq && typeof mq.addEventListener === "function") mq.addEventListener("change", updateInstallUI);
+      else if (mq && typeof mq.addListener === "function") mq.addListener(updateInstallUI);
+    }catch(e){}
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") updateInstallUI();
+    });
+
+    // Quand l’app est installée
+    window.addEventListener("appinstalled", () => {
+      showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
+      updateInstallUI();
+    });
+
     /* =========================
-       🔞 AGE GATE (JS ajout)
+       🔞 AGE GATE (chargement + commander)
        ========================= */
     const AGE = {
       KEY_UNTIL: "ad_major_until",
@@ -429,12 +452,13 @@
     };
 
     const ageQuestion = document.getElementById("ageQuestion");
-    const ageBlocked = document.getElementById("ageBlocked");
-    const ageYes = document.getElementById("ageYes");
-    const ageNo = document.getElementById("ageNo");
-    const ageCount = document.getElementById("ageCount");
+    const ageBlocked  = document.getElementById("ageBlocked");
+    const ageYes      = document.getElementById("ageYes");
+    const ageNo       = document.getElementById("ageNo");
+    const ageCount    = document.getElementById("ageCount");
 
     let ageInterval = null;
+    let agePendingAction = null;
 
     function ageNow(){ return Date.now(); }
     function ageGetUntil(){
@@ -442,9 +466,8 @@
       const n = v ? parseInt(v, 10) : 0;
       return Number.isFinite(n) ? n : 0;
     }
-    function ageIsMajorValid(){
-      return ageGetUntil() > ageNow();
-    }
+    function ageIsMajorValid(){ return ageGetUntil() > ageNow(); }
+
     function ageShow(el){
       el.classList.add("show");
       document.documentElement.style.overflow = "hidden";
@@ -485,10 +508,10 @@
     }
     function ageSetMinor(){
       localStorage.setItem(AGE.KEY_LAST, "minor");
-      // pas de "until" => boucle tant que pas majeur
+      // pas de until -> boucle
     }
 
-    // Anti fermeture par clic fond / ESC
+    // Anti fermeture fond/ESC
     [ageQuestion, ageBlocked].forEach(o=>{
       o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
     });
@@ -497,9 +520,6 @@
         e.preventDefault();
       }
     });
-
-    // On va stocker ici l'action à exécuter une fois "majeur" validé
-    let agePendingAction = null;
 
     function requireMajorThen(actionFn){
       if(ageIsMajorValid()){
@@ -513,7 +533,6 @@
     ageYes.addEventListener("click", ()=>{
       ageSetMajorWeek();
       ageHide(ageQuestion);
-      // exécute l'action demandée (ex: commander)
       if(typeof agePendingAction === "function"){
         const fn = agePendingAction;
         agePendingAction = null;
@@ -525,6 +544,11 @@
       ageSetMinor();
       ageShowBlocked();
     });
+
+    // ✅ AU CHARGEMENT : si pas validé -> affiche direct
+    if(!ageIsMajorValid()){
+      ageShowQuestion();
+    }
 
     // =========================
     // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
@@ -547,18 +571,13 @@
       if (d.getDate() !== day) d.setDate(0);
       return d.getTime();
     }
-
     function lsGetInt(k, def=0){
       const v = localStorage.getItem(k);
       const n = v === null ? def : parseInt(v, 10);
       return Number.isFinite(n) ? n : def;
     }
-    function lsGetBool(k){
-      return localStorage.getItem(k) === "1";
-    }
-    function lsSetBool(k, val){
-      localStorage.setItem(k, val ? "1" : "0");
-    }
+    function lsGetBool(k){ return localStorage.getItem(k) === "1"; }
+    function lsSetBool(k, val){ localStorage.setItem(k, val ? "1" : "0"); }
 
     function promoReset(){
       localStorage.removeItem(PROMO_KEYS.enabled);
@@ -568,28 +587,19 @@
       localStorage.removeItem(PROMO_KEYS.expiryTs);
       localStorage.removeItem(PROMO_KEYS.clicked);
     }
-
     function promoExpired(){
       const expiry = lsGetInt(PROMO_KEYS.expiryTs, 0);
       return expiry > 0 && Date.now() > expiry;
     }
-
-    function promoIsUnlocked(){
-      return lsGetInt(PROMO_KEYS.unlockedTs, 0) > 0;
-    }
-
-    function promoIsEnabled(){
-      return lsGetBool(PROMO_KEYS.enabled);
-    }
+    function promoIsUnlocked(){ return lsGetInt(PROMO_KEYS.unlockedTs, 0) > 0; }
+    function promoIsEnabled(){ return lsGetBool(PROMO_KEYS.enabled); }
 
     function promoUpdateUI(){
       const promoBtn = document.getElementById("promoBtn");
       const promoBadge = document.getElementById("promoBadge");
       if (!promoBtn) return;
 
-      if (promoExpired()){
-        promoReset();
-      }
+      if (promoExpired()) promoReset();
 
       const shouldShow =
         isStandalone() &&
@@ -622,9 +632,7 @@
       const acc = lsGetInt(PROMO_KEYS.acc, 0) + delta;
       localStorage.setItem(PROMO_KEYS.acc, String(acc));
 
-      if (acc >= PROMO_REQUIRED_MS){
-        promoUnlockNow();
-      }
+      if (acc >= PROMO_REQUIRED_MS) promoUnlockNow();
     }
 
     function promoStartSession(){
@@ -649,7 +657,6 @@
         localStorage.removeItem(PROMO_KEYS.unlockedTs);
         localStorage.removeItem(PROMO_KEYS.expiryTs);
       }
-
       promoStartSession();
     }
 
@@ -658,7 +665,6 @@
       if (document.visibilityState === "visible") promoStartSession();
       promoUpdateUI();
     });
-
     window.addEventListener("pagehide", promoStopSession);
     window.addEventListener("beforeunload", promoStopSession);
 
@@ -673,22 +679,6 @@
 
     promoUpdateUI();
     promoStartSession();
-
-    function removeInstallHints(){
-      const b = document.getElementById("newBadge");
-      if (b) b.remove();
-      const installBtn = document.getElementById("installBtn");
-      if (installBtn) {
-        installBtn.classList.remove("pulse");
-        installBtn.style.display = "none";
-      }
-    }
-    if (isStandalone()) removeInstallHints();
-
-    window.addEventListener("appinstalled", () => {
-      showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
-      removeInstallHints();
-    });
 
     // Modale helpers
     const modal = document.getElementById("helpModal");
@@ -709,11 +699,9 @@
       copiedMsg.style.display = "none";
       modal.classList.add("open");
     }
-
     closeBtn.addEventListener("click", () => modal.classList.remove("open"));
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
 
-    // Copier lien (avec fallback)
     copyBtn.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(window.location.href);
@@ -731,7 +719,6 @@
 
     // Click "Ajouter l’app"
     document.getElementById("installBtn").addEventListener("click", async () => {
-
       if (isFBInApp) {
         openModal({
           ic:"📣",
@@ -779,17 +766,13 @@
       });
     });
 
-    /* =========================
-       ✅ Commander -> passe par le Age Gate
-       ========================= */
+    // ✅ Commander -> passe par Age Gate + promo
     document.getElementById("goBtn").addEventListener("click", () => {
       requireMajorThen(() => {
-        promoKickoffAfterCommander(); // 🎁 démarre le compteur cumulatif (mode app uniquement)
+        promoKickoffAfterCommander();
         window.location.href = AGE.commanderUrl;
       });
     });
-
   </script>
-
 </body>
 </html>
