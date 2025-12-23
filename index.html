@@ -405,7 +405,7 @@
       if(msg) toastEl.textContent = msg;
       toastEl.classList.add("show");
       clearTimeout(showToast._t);
-      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
+      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 3600);
     }
 
     // ✅ Standalone (PWA)
@@ -609,7 +609,7 @@
     // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
     // =========================
     const PROMO_URL = "https://stats.aperos.net/go/jeux?src=QR";
-    const PROMO_REQUIRED_MS = 90_000; // 1m30
+    const PROMO_REQUIRED_MS = 30000 ; // 30 secondes
     const PROMO_KEYS = {
       enabled: "promo_enabled",
       acc: "promo_acc_ms",
