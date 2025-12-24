@@ -5,22 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Apéro de Nuit 66</title>
 
-  <!-- 🔗 PARTAGE RÉSEAUX / SMS -->
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Apéro de Nuit 66">
-  <meta property="og:description" content="Télécharge l’app et fais livrer ton apéro en quelques minutes 🍾">
-  <meta property="og:image" content="https://aperos.net/partage.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://aperos.net/">
-  <meta property="og:site_name" content="Apéro de Nuit 66">
-
-  <!-- Twitter / X -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Apéro de Nuit 66">
-  <meta name="twitter:description" content="Télécharge l’app et fais livrer ton apéro 🍻">
-  <meta name="twitter:image" content="https://aperos.net/partage.png">
-
   <!-- ✅ PWA -->
   <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0b1c2d">
@@ -49,14 +33,17 @@
       background:#fff; color:var(--text); overflow-x:hidden; overflow-y:hidden;
     }
 
+    /* HEADER */
     .top{background:var(--blue);padding-bottom:8px}
     .top img{width:100%;max-height:26vh;object-fit:contain;display:block}
 
+    /* TITRE */
     .mid{text-align:center;padding:18px 14px 6px}
     .mid h1{margin:0;font-size:clamp(26px,6vw,40px);color:var(--sky);font-weight:900}
     .brand66{position:relative;display:inline-block}
     .brand66 .reg{position:absolute;top:-0.2em;right:-0.4em;font-size:1em;font-weight:800}
 
+    /* ZONE BOUTEILLES */
     .stage{flex:1;display:flex;justify-content:center;padding:12px}
     .bottleWrap{
       position:relative;width:min(520px,96vw);min-height:60vh;
@@ -67,20 +54,199 @@
       opacity:0;transition:opacity .4s ease;
       -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
       mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
     }
     .bottleWrap img.active{opacity:1}
 
+    /* BOUTONS */
     .btnStack{
       position:fixed;left:50%;top:65%;transform:translate(-50%,-50%);
       width:min(420px,86vw);z-index:50;
       display:flex;flex-direction:column;gap:12px;align-items:center;
     }
+    .btnStack .btn + .btn{margin-top:0}
     .btn{
       width:100%;border:none;border-radius:16px;padding:14px;
       font-size:18px;font-weight:900;cursor:pointer;
+      position:relative;
     }
+    .btn + .btn{margin-top:10px}
     .btn.primary{background:var(--sky);color:#fff}
     .btn.secondary{background:rgba(255,255,255,.85);color:#0b1c2d;border:1px solid rgba(11,28,45,.25)}
+
+    /* Pulse */
+    @keyframes pulseAdd {
+      0%   { box-shadow: 0 0 0 0 rgba(93,183,238,.45); transform: translateY(0); }
+      60%  { box-shadow: 0 0 0 16px rgba(93,183,238,0); }
+      100% { box-shadow: 0 0 0 0 rgba(93,183,238,0); }
+    }
+    .btn.secondary.pulse { animation: pulseAdd 2.6s infinite; }
+
+    /* Badge "Nouveau" */
+    .badge-new{
+      position:absolute;
+      top:-8px;
+      right:-8px;
+      background:var(--sky);
+      color:#fff;
+      font-size:11px;
+      font-weight:950;
+      padding:4px 8px;
+      border-radius:999px;
+      box-shadow:0 10px 22px rgba(93,183,238,.45);
+      letter-spacing:.2px;
+      border:2px solid rgba(255,255,255,.85);
+      pointer-events:none;
+    }
+
+    /* MODALE */
+    .modal{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+      padding:18px;background:rgba(0,0,0,.55);z-index:999;
+    }
+    .modal.open{display:flex}
+    .sheet{
+      width:min(520px,94vw);background:#fff;border-radius:22px;
+      box-shadow:0 18px 60px rgba(0,0,0,.25);padding:18px 16px 14px;
+    }
+    .sheetHead{display:flex;gap:12px;margin-bottom:8px;align-items:flex-start}
+    .sheetIcon{
+      width:40px;height:40px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+      background:rgba(93,183,238,.18);font-size:20px;
+    }
+    .sheet h3{margin:0;font-size:18px;color:var(--blue);line-height:1.2}
+    .sheet p{margin:10px 0;color:rgba(0,0,0,.75);font-size:14px;line-height:1.35}
+    .step{
+      background:rgba(11,28,45,.06);border:1px solid rgba(11,28,45,.08);
+      border-radius:16px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.35;
+    }
+    .modalActions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+    .okBtn,.copyBtn{border:none;border-radius:14px;padding:12px 16px;font-weight:900;cursor:pointer;}
+    .okBtn{background:var(--sky);color:#fff;min-width:110px}
+    .copyBtn{background:rgba(93,183,238,.18);color:var(--blue)}
+    .copied{font-size:13px;color:#1b7f2a;margin-top:6px;display:none}
+
+    /* TOAST */
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%) translateY(20px);
+      opacity:0;
+      pointer-events:none;
+      background:rgba(11,28,45,.92);
+      color:#fff;
+      padding:12px 14px;
+      border-radius:14px;
+      box-shadow:0 18px 60px rgba(0,0,0,.25);
+      z-index:1000;
+      transition:opacity .25s ease, transform .25s ease;
+      font-weight:900;
+      font-size:14px;
+      width:min(520px, 92vw);
+      text-align:center;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* =========================
+       🔞 AGE GATE
+       ========================= */
+    .ageOverlay{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:5000;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .ageOverlay.show{display:flex;}
+
+    .ageCard{
+      width:min(560px, 94vw);
+      border-radius:22px;
+      background: linear-gradient(180deg, rgba(20,35,56,.94), rgba(10,20,33,.94));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+      color:#fff;
+    }
+    .ageTop{
+      padding:16px 18px 12px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+    }
+    .ageBrand{
+      display:flex; align-items:center; gap:10px; min-width:0;
+    }
+    .ageBadge{
+      width:34px;height:34px;border-radius:12px;
+      display:grid;place-items:center;
+      background: rgba(93,183,238,.18);
+      border:1px solid rgba(93,183,238,.30);
+      font-weight:950;color:#5db7ee;
+      flex:0 0 auto;
+    }
+    .ageBrand b{
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:14px;
+      color:rgba(255,255,255,.88);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .ageBody{padding:18px;}
+    .ageTitle{margin:6px 0 10px;font-size:28px;line-height:1.1;font-weight:950}
+    .ageLead{margin:0 0 14px;color:rgba(255,255,255,.74);line-height:1.45;font-size:15px}
+    .ageNotice{
+      margin:14px 0 18px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.88);
+      font-size:14px;
+      line-height:1.35;
+    }
+    .ageBtns{display:grid; gap:10px; margin-top:10px;}
+    .ageBtn{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(19,36,59,.90);
+      color:#fff;
+      padding:14px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:950;
+      font-size:15px;
+    }
+    .ageBtnPrimary{
+      background: linear-gradient(180deg, rgba(40,199,111,1), rgba(24,160,86,1));
+      border-color: rgba(40,199,111,.55);
+      box-shadow: 0 14px 40px rgba(40,199,111,.22);
+    }
+    .ageBtnSecondary{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.12);
+      color: rgba(255,255,255,.92);
+    }
+    .ageTimer{
+      margin-top:12px;
+      font-weight:950;
+      color:#5db7ee;
+      text-align:center;
+      font-size:16px;
+    }
+    .ageFine{
+      margin:12px 0 0;
+      color: rgba(255,255,255,.60);
+      font-size:12.5px;
+      line-height:1.35;
+      text-align:center;
+    }
+    .ageFine a{color:#5db7ee; text-decoration:none; font-weight:900;}
+    .ageFine a:hover{text-decoration:underline;}
   </style>
 </head>
 
@@ -105,14 +271,565 @@
 
       <div class="btnStack">
         <button class="btn primary" id="goBtn">Commander</button>
-        <button class="btn secondary pulse" id="installBtn" style="display:none">Ajouter l’app</button>
-        <button class="btn secondary" id="promoBtn" style="display:none">Code promo</button>
+
+        <button class="btn secondary pulse" id="installBtn" style="display:none">
+          Ajouter l’app
+          <span class="badge-new" id="newBadge">Nouveau</span>
+        </button>
+
+        <button class="btn secondary" id="promoBtn" style="display:none">
+          Code promo
+          <span class="badge-new" id="promoBadge">Nouveau</span>
+        </button>
       </div>
     </div>
   </main>
 
-  <!-- 🔥 TOUT LE JS ORIGINAL EST CONSERVÉ ICI SANS AUCUNE MODIF 🔥 -->
-  <!-- (service worker, install, age gate, promo, etc.) -->
+  <!-- Toast -->
+  <div class="toast" id="toast">✅ Apéro de Nuit 66® est ajouté à ton écran d’accueil !</div>
 
+  <!-- Modale help install -->
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="sheet">
+      <div class="sheetHead">
+        <div class="sheetIcon" id="helpIcon">📲</div>
+        <div>
+          <h3 id="helpTitle">Installer l’app</h3>
+          <p id="helpIntro"></p>
+        </div>
+      </div>
+
+      <div class="step" id="helpSteps"></div>
+      <div class="copied" id="copiedMsg">✅ Lien copié</div>
+
+      <div class="modalActions">
+        <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
+        <button class="okBtn" id="closeHelp">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔞 AGE GATE -->
+  <div class="ageOverlay" id="ageQuestion" role="dialog" aria-modal="true">
+    <div class="ageCard">
+      <div class="ageTop">
+        <div class="ageBrand">
+          <div class="ageBadge">AD</div>
+          <b>APÉRO DE NUIT®</b>
+        </div>
+      </div>
+      <div class="ageBody">
+        <div class="ageTitle">Bienvenue ✨</div>
+        <p class="ageLead">
+          Ce site présente des boissons alcoolisées. Pour continuer, confirme que tu as l’âge légal.
+        </p>
+        <div class="ageNotice">
+          <b>La vente d’alcool est interdite aux mineurs.</b><br>
+          L’abus d’alcool est dangereux pour la santé, à consommer avec modération.
+        </div>
+        <div class="ageBtns">
+          <button class="ageBtn ageBtnPrimary" id="ageYes">✅ Je suis majeur</button>
+          <button class="ageBtn ageBtnSecondary" id="ageNo">ℹ️ Je ne suis pas majeur</button>
+        </div>
+        <div class="ageFine">🔒 Choix mémorisé sur cet appareil.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ageOverlay" id="ageBlocked" role="dialog" aria-modal="true">
+    <div class="ageCard">
+      <div class="ageTop">
+        <div class="ageBrand">
+          <div class="ageBadge">18+</div>
+          <b>ACCÈS RÉSERVÉ</b>
+        </div>
+      </div>
+      <div class="ageBody">
+        <div class="ageTitle">Accès réservé 🔞</div>
+        <p class="ageLead">
+          Ce contenu est strictement réservé aux personnes majeures.<br>
+          La vente d’alcool est interdite aux mineurs.
+        </p>
+        <div class="ageNotice">
+          Pour accéder au contenu, une vérification d’âge est obligatoire.
+        </div>
+        <div class="ageFine">
+          Si tu penses être bloqué par erreur, contacte Apéro de Nuit® (06.52.33.64.61)
+          ou <a href="mailto:apero.nuit.du.66@gmail.com">contact@aperodenuit.com</a>.
+        </div>
+        <div class="ageFine" style="margin-top:10px;">
+          L’abus d’alcool est dangereux pour la santé.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ Service worker
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+      });
+    }
+
+    // Défilement bouteilles (2s)
+    const imgs = document.querySelectorAll("#bottles img");
+    let idx = 0;
+    if (imgs.length > 1) {
+      setInterval(() => {
+        imgs[idx].classList.remove("active");
+        idx = (idx + 1) % imgs.length;
+        imgs[idx].classList.add("active");
+      }, 2000);
+    }
+
+    // Détections
+    const ua = navigator.userAgent || "";
+    const isFBInApp = /FBAN|FBAV|FB_IAB|FB4A|FB4i|Instagram/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+
+    // PWA prompt Android/Chrome
+    let deferredPrompt = null;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // quand Chrome peut proposer l'installation, on force l'UI "install visible"
+      // (ça aide si un flag local était faux)
+      updateInstallUI();
+    });
+
+    // Toast
+    const toastEl = document.getElementById("toast");
+    function showToast(msg){
+      if(msg) toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toastEl.classList.remove("show"), 3600);
+    }
+
+    // ✅ Standalone (PWA)
+    function isStandalone(){
+      return window.matchMedia("(display-mode: standalone)").matches
+        || window.navigator.standalone === true; // iOS
+    }
+
+    // ===============================
+    // ✅ LOGIQUE INSTALL "FIABLE"
+    // ===============================
+    const INSTALL = {
+      key: "pwa_installed_flag",
+      relatedAppsChecked: false,
+      relatedAppsInstalled: null, // true/false/null
+    };
+
+    function setInstalledFlag(val){ localStorage.setItem(INSTALL.key, val ? "1" : "0"); }
+    function getInstalledFlag(){ return localStorage.getItem(INSTALL.key) === "1"; }
+
+    async function checkInstalledRelatedApps(){
+      if (typeof navigator.getInstalledRelatedApps !== "function") {
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = null;
+        return null;
+      }
+      try{
+        const apps = await navigator.getInstalledRelatedApps();
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = Array.isArray(apps) && apps.length > 0;
+        return INSTALL.relatedAppsInstalled;
+      }catch(e){
+        INSTALL.relatedAppsChecked = true;
+        INSTALL.relatedAppsInstalled = null;
+        return null;
+      }
+    }
+
+    function applyInstallUI(isInstalled){
+      const installBtn = document.getElementById("installBtn");
+      const badge = document.getElementById("newBadge");
+      if(!installBtn) return;
+
+      if (isInstalled) {
+        installBtn.style.display = "none";
+      } else {
+        installBtn.style.display = "block";
+        installBtn.classList.add("pulse");
+        if (badge) badge.style.display = "inline-block";
+      }
+    }
+
+    async function updateInstallUI(){
+      // 1) Si on est dans la PWA => installé
+      if (isStandalone()) {
+        setInstalledFlag(true);
+        applyInstallUI(true);
+        return;
+      }
+
+      // 2) Android/Chrome: API fiable
+      const related = await checkInstalledRelatedApps();
+      if (related === true) {
+        setInstalledFlag(true);
+        applyInstallUI(true);
+        return;
+      }
+      if (related === false) {
+        setInstalledFlag(false);
+        applyInstallUI(false);
+        return;
+      }
+
+      // 3) Fallback: flag local
+      const flag = getInstalledFlag();
+      applyInstallUI(flag);
+
+      // 4) Si Chrome peut proposer l’installation => montrer le bouton
+      if (deferredPrompt) {
+        setInstalledFlag(false);
+        applyInstallUI(false);
+      }
+    }
+
+    // Au chargement + retour onglet
+    updateInstallUI();
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") updateInstallUI();
+    });
+
+    // Quand l’app est installée (Chrome Android)
+    window.addEventListener("appinstalled", () => {
+      setInstalledFlag(true);
+      showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
+      updateInstallUI();
+    });
+
+    /* =========================
+       🔞 AGE GATE (chargement + commander)
+       ========================= */
+    const AGE = {
+      KEY_UNTIL: "ad_major_until",
+      KEY_LAST: "ad_last_choice",
+      WEEK_MS: 20 * 24 * 60 * 60 * 1000,
+      BLOCK_S: 48 * 60 * 60,
+      commanderUrl: "https://aperodenuit.com/commander"
+    };
+
+    const ageQuestion = document.getElementById("ageQuestion");
+    const ageBlocked  = document.getElementById("ageBlocked");
+    const ageYes      = document.getElementById("ageYes");
+    const ageNo       = document.getElementById("ageNo");
+    const ageCount    = document.getElementById("ageCount");
+
+    let ageInterval = null;
+    let agePendingAction = null;
+
+    function ageNow(){ return Date.now(); }
+    function ageGetUntil(){
+      const v = localStorage.getItem(AGE.KEY_UNTIL);
+      const n = v ? parseInt(v, 10) : 0;
+      return Number.isFinite(n) ? n : 0;
+    }
+    function ageIsMajorValid(){ return ageGetUntil() > ageNow(); }
+
+    function ageShow(el){
+      el.classList.add("show");
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
+    function ageHide(el){
+      el.classList.remove("show");
+      if(!ageQuestion.classList.contains("show") && !ageBlocked.classList.contains("show")){
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      }
+    }
+    function ageShowQuestion(){
+      ageHide(ageBlocked);
+      ageShow(ageQuestion);
+    }
+    function ageShowBlocked(){
+      ageHide(ageQuestion);
+      ageShow(ageBlocked);
+
+      let t = AGE.BLOCK_S;
+      ageCount.textContent = t;
+
+      if(ageInterval) clearInterval(ageInterval);
+      ageInterval = setInterval(() => {
+        t--;
+        ageCount.textContent = t;
+        if(t <= 0){
+          clearInterval(ageInterval);
+          ageInterval = null;
+          ageShowQuestion();
+        }
+      }, 1000);
+    }
+    function ageSetMajorWeek(){
+      localStorage.setItem(AGE.KEY_LAST, "major");
+      localStorage.setItem(AGE.KEY_UNTIL, String(ageNow() + AGE.WEEK_MS));
+    }
+    function ageSetMinor(){
+      localStorage.setItem(AGE.KEY_LAST, "minor");
+    }
+
+    [ageQuestion, ageBlocked].forEach(o=>{
+      o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
+    });
+    document.addEventListener("keydown", (e)=>{
+      if((ageQuestion.classList.contains("show") || ageBlocked.classList.contains("show")) && e.key === "Escape"){
+        e.preventDefault();
+      }
+    });
+
+    function requireMajorThen(actionFn){
+      if(ageIsMajorValid()){
+        actionFn();
+        return;
+      }
+      agePendingAction = actionFn;
+      ageShowQuestion();
+    }
+
+    ageYes.addEventListener("click", ()=>{
+      ageSetMajorWeek();
+      ageHide(ageQuestion);
+      if(typeof agePendingAction === "function"){
+        const fn = agePendingAction;
+        agePendingAction = null;
+        fn();
+      }
+    });
+
+    ageNo.addEventListener("click", ()=>{
+      ageSetMinor();
+      ageShowBlocked();
+    });
+    // =========================
+    // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
+    // =========================
+    const PROMO_URL = "https://stats.aperos.net/go/jeux?src=QR";
+    const PROMO_REQUIRED_MS = 30000 ; // 30 secondes
+    const PROMO_KEYS = {
+      enabled: "promo_enabled",
+      acc: "promo_acc_ms",
+      visibleStart: "promo_visible_start",
+      unlockedTs: "promo_unlocked_ts",
+      expiryTs: "promo_expiry_ts",
+      clicked: "promo_clicked"
+    };
+
+    function addMonths(ts, months){
+      const d = new Date(ts);
+      const day = d.getDate();
+      d.setMonth(d.getMonth() + months);
+      if (d.getDate() !== day) d.setDate(0);
+      return d.getTime();
+    }
+    function lsGetInt(k, def=0){
+      const v = localStorage.getItem(k);
+      const n = v === null ? def : parseInt(v, 10);
+      return Number.isFinite(n) ? n : def;
+    }
+    function lsGetBool(k){ return localStorage.getItem(k) === "1"; }
+    function lsSetBool(k, val){ localStorage.setItem(k, val ? "1" : "0"); }
+
+    function promoReset(){
+      localStorage.removeItem(PROMO_KEYS.enabled);
+      localStorage.removeItem(PROMO_KEYS.acc);
+      localStorage.removeItem(PROMO_KEYS.visibleStart);
+      localStorage.removeItem(PROMO_KEYS.unlockedTs);
+      localStorage.removeItem(PROMO_KEYS.expiryTs);
+      localStorage.removeItem(PROMO_KEYS.clicked);
+    }
+    function promoExpired(){
+      const expiry = lsGetInt(PROMO_KEYS.expiryTs, 0);
+      return expiry > 0 && Date.now() > expiry;
+    }
+    function promoIsUnlocked(){ return lsGetInt(PROMO_KEYS.unlockedTs, 0) > 0; }
+    function promoIsEnabled(){ return lsGetBool(PROMO_KEYS.enabled); }
+
+    function promoUpdateUI(){
+      const promoBtn = document.getElementById("promoBtn");
+      const promoBadge = document.getElementById("promoBadge");
+      if (!promoBtn) return;
+
+      if (promoExpired()) promoReset();
+
+      const shouldShow =
+        isStandalone() &&
+        promoIsEnabled() &&
+        promoIsUnlocked() &&
+        !promoExpired();
+
+      promoBtn.style.display = shouldShow ? "block" : "none";
+
+      if (promoBadge){
+        promoBadge.style.display = lsGetBool(PROMO_KEYS.clicked) ? "none" : "inline-block";
+      }
+    }
+
+    function promoUnlockNow(){
+      const now = Date.now();
+      localStorage.setItem(PROMO_KEYS.unlockedTs, String(now));
+      localStorage.setItem(PROMO_KEYS.expiryTs, String(addMonths(now, 4)));
+      promoUpdateUI();
+    }
+
+    function promoStopSession(){
+      const start = lsGetInt(PROMO_KEYS.visibleStart, 0);
+      if (!start) return;
+      const delta = Math.max(0, Date.now() - start);
+      localStorage.removeItem(PROMO_KEYS.visibleStart);
+
+      if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
+
+      const acc = lsGetInt(PROMO_KEYS.acc, 0) + delta;
+      localStorage.setItem(PROMO_KEYS.acc, String(acc));
+
+      if (acc >= PROMO_REQUIRED_MS) promoUnlockNow();
+    }
+
+    function promoStartSession(){
+      if (!promoIsEnabled() || promoIsUnlocked() || promoExpired()) return;
+      if (!isStandalone()) return;
+      if (document.visibilityState !== "visible") return;
+
+      const existing = lsGetInt(PROMO_KEYS.visibleStart, 0);
+      if (!existing) localStorage.setItem(PROMO_KEYS.visibleStart, String(Date.now()));
+    }
+
+    function promoKickoffAfterCommander(){
+      if (!isStandalone()) return;
+
+      if (promoExpired()) promoReset();
+
+      if (!promoIsEnabled()){
+        lsSetBool(PROMO_KEYS.enabled, true);
+        localStorage.setItem(PROMO_KEYS.acc, "0");
+        lsSetBool(PROMO_KEYS.clicked, false);
+        localStorage.removeItem(PROMO_KEYS.visibleStart);
+        localStorage.removeItem(PROMO_KEYS.unlockedTs);
+        localStorage.removeItem(PROMO_KEYS.expiryTs);
+      }
+      promoStartSession();
+    }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") promoStopSession();
+      if (document.visibilityState === "visible") promoStartSession();
+      promoUpdateUI();
+    });
+    window.addEventListener("pagehide", promoStopSession);
+    window.addEventListener("beforeunload", promoStopSession);
+
+    const promoBtnEl = document.getElementById("promoBtn");
+    if (promoBtnEl){
+      promoBtnEl.addEventListener("click", () => {
+        lsSetBool(PROMO_KEYS.clicked, true);
+        promoUpdateUI();
+        window.location.href = PROMO_URL;
+      });
+    }
+
+    promoUpdateUI();
+    promoStartSession();
+
+    // Modale helpers
+    const modal = document.getElementById("helpModal");
+    const closeBtn = document.getElementById("closeHelp");
+    const copyBtn = document.getElementById("copyLinkBtn");
+    const copiedMsg = document.getElementById("copiedMsg");
+    const intro = document.getElementById("helpIntro");
+    const steps = document.getElementById("helpSteps");
+    const title = document.getElementById("helpTitle");
+    const icon = document.getElementById("helpIcon");
+
+    function openModal({t="Installer l’app", i="", s="", showCopy=false, ic="📲"}) {
+      title.textContent = t;
+      icon.textContent = ic;
+      intro.innerHTML = i;
+      steps.innerHTML = s;
+      copyBtn.style.display = showCopy ? "inline-block" : "none";
+      copiedMsg.style.display = "none";
+      modal.classList.add("open");
+    }
+    closeBtn.addEventListener("click", () => modal.classList.remove("open"));
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("open"); });
+
+    copyBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        copiedMsg.style.display = "block";
+      } catch (e) {
+        const tmp = document.createElement("textarea");
+        tmp.value = window.location.href;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        copiedMsg.style.display = "block";
+      }
+    });
+
+    // Click "Ajouter l’app"
+    document.getElementById("installBtn").addEventListener("click", async () => {
+      if (isFBInApp) {
+        openModal({
+          ic:"📣",
+          t:"Ouvrir dans un navigateur",
+          i:"Facebook / Instagram bloque l’installation de l’app.",
+          s:
+            "<strong>Solution :</strong><br><br>" +
+            "1) Clique sur <strong>Copier le lien</strong><br>" +
+            "2) Ouvre <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)<br>" +
+            "3) Colle le lien dans la barre d’adresse, puis re-clique sur <strong>Ajouter l’app</strong>",
+          showCopy:true
+        });
+        return;
+      }
+
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        try { await deferredPrompt.userChoice; } catch(e) {}
+        deferredPrompt = null;
+        // après tentative d'install, on re-check
+        setTimeout(updateInstallUI, 600);
+        return;
+      }
+
+      if (isIOS && isSafari) {
+        openModal({
+          ic:"🍏",
+          t:"Ajouter à l’écran d’accueil",
+          i:"Sur iPhone, l’installation se fait via le bouton Partager.",
+          s:
+            "<strong>Étapes :</strong><br><br>" +
+            "1) Appuie sur <strong>Partager</strong> (carré + flèche)<br>" +
+            "2) Choisis <strong>Sur l’écran d’accueil</strong><br>" +
+            "3) Valide <strong>Ajouter</strong>"
+        });
+        return;
+      }
+
+      openModal({
+        ic:"⚠️",
+        t:"Installation indisponible",
+        i:"Ton navigateur ne propose pas l’installation automatique.",
+        s:
+          "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone).<br>" +
+          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
+        showCopy:true
+      });
+    });
+
+    // ✅ Commander -> passe par Age Gate + promo
+    document.getElementById("goBtn").addEventListener("click", () => {
+      requireMajorThen(() => {
+        promoKickoffAfterCommander();
+        window.location.href = AGE.commanderUrl;
+      });
+    });
+  </script>
 </body>
 </html>
