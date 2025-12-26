@@ -2,7 +2,7 @@
    Minimal cache pour rendre la PWA installable + offline basique.
    (Ne change rien à ton UI, juste support PWA.)
 */
-const CACHE_NAME = "aperodenuit-v1";
+const CACHE_NAME = "aperodenuit-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -36,6 +36,19 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  const url = new URL(req.url);
+
+  // ✅ Ne jamais mettre en cache le status global (doit rester à jour)
+  if (req.method === "GET" && url.href.includes("bullyto.github.io/status/status.json")) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
+
+  // ✅ Évite de cacher le cross-origin (opaque) pour ne pas bloquer les mises à jour
+  if (url.origin !== self.location.origin) {
+    return; // laisser le réseau gérer
+  }
+
   // Network-first pour HTML (toujours à jour), cache-first pour le reste
   const accept = req.headers.get("accept") || "";
   if (req.method !== "GET") return;
