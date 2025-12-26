@@ -1,4 +1,4 @@
-const CACHE_NAME = "aperodenuit-cache-v1";
+const CACHE_NAME = "aperodenuit-cache-v2";
 const ASSETS = [
   "./",
   "./index.html",
