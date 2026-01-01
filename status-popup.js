@@ -266,8 +266,40 @@
           warningClickMsg = cfg.warning_click_message || warningClickMsg;
 
           const schedule = cfg.block_schedule || { enabled:false };
-          const blockedNow = withinSchedule(schedule, new Date());
-          setOrderEnabled(!blockedNow);
+
+          function applyNow(){
+            const blockedNow = withinSchedule(schedule, new Date());
+
+            // ✅ WARNING ne bloque QUE pendant la plage horaire
+            if(!blockedNow){
+              hideOverlay();
+              setOrderEnabled(true);
+              try{ window.__ad_warn_timer && clearInterval(window.__ad_warn_timer); }catch(e){}
+              window.__ad_warn_timer = null;
+              return false;
+            }
+
+            // Dans la plage => warning bloquant + commande bloquée
+            setOrderEnabled(false);
+            setSecondary("", false);
+            setCloseEnabled(false, "warning");
+            okBtn.textContent = "OK, j'ai compris";
+            return true;
+          }
+
+          // applique tout de suite
+          const stillBlocked = applyNow();
+          if(!stillBlocked) return;
+
+          // ✅ auto-déblocage sans recharger (vérifie toutes les 20s)
+          try{ window.__ad_warn_timer && clearInterval(window.__ad_warn_timer); }catch(e){}
+          window.__ad_warn_timer = setInterval(applyNow, 20000);
+
+          return;
+        }
+
+          // Dans la plage => warning bloquant + commande bloquée
+          setOrderEnabled(false);
 
           setSecondary("", false);
           setCloseEnabled(false, "warning");

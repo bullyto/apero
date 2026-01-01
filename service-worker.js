@@ -2,7 +2,7 @@
    Minimal cache pour rendre la PWA installable + offline basique.
    (Ne change rien à ton UI, juste support PWA.)
 */
-const CACHE_NAME = "aperodenuit-v3.2";
+const CACHE_NAME = "aperodenuit-v3.4";
 const CORE_ASSETS = [
   "./",
   "./index.html",
