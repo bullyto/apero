@@ -1,13 +1,20 @@
 /* =========================================================
-   Status Popup (Apéro de Nuit 66) — v3.3 (SAFE)
+   Status Popup (Apéro de Nuit 66) — v3.4 (SAFE, NO-FLASH)
    Fix:
-   - Safety timer: impossible de rester bloqué si fetch/JSON/caches font n'importe quoi
-   - WARNING: auto-déblocage fiable (même en PWA) + nettoyage timer
+   - ❌ Ne montre plus l’overlay "chargement..." au démarrage
+   - ✅ Affiche uniquement si le status est réellement actif
+   - Safety timer conservé (anti-blocage PWA/caches/réseau)
+   - WARNING: auto-déblocage fiable + nettoyage timer
+   - ✅ Retire data-status-boot à la fin (pour l’anti-flash CSS)
    ========================================================= */
 (function(){
   const STATUS_URL = "https://bullyto.github.io/status/status.json";
   const FETCH_TIMEOUT_MS = 4500; // évite les attentes infinies sur réseau lent
   const SAFETY_HIDE_MS = 6500;   // 🔥 anti-popup bloqué (PWA/caches/réseau)
+
+  function finishBoot(){
+    try { document.documentElement.removeAttribute("data-status-boot"); } catch(e){}
+  }
 
   function withinSchedule(schedule, now = new Date()){
     // enabled=false => bloqué tout le temps (donc "dans la plage" = true)
@@ -125,10 +132,13 @@
     const barSub = document.getElementById("adStatusBarSub");
     const secondary = document.getElementById("adStatusSecondary");
 
-    if(!overlay || !imgEl || !titleEl || !msgEl || !okBtn) return;
+    if(!overlay || !imgEl || !titleEl || !msgEl || !okBtn){
+      finishBoot();
+      return;
+    }
 
-    // Affiche tout de suite
-    showOverlay();
+    // ✅ IMPORTANT: on NE montre PAS l'overlay au démarrage (zéro flash)
+    hideOverlay();
 
     // 🔥 Safety: si le réseau/caches font n'importe quoi => on ne reste jamais bloqué
     const safetyTimer = setTimeout(() => {
@@ -138,14 +148,15 @@
         if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
         window.__ad_warn_timer = null;
       } catch(e) {}
+      finishBoot();
     }, SAFETY_HIDE_MS);
 
     let canClose = true;
     let mode = "none";
     let warningClickMsg = "Ce n'est actuellement pas possible de commander.";
 
-    function setCloseEnabled(on, m){
-      canClose = !!on;
+    function setCloseEnabled(enabled, m){
+      canClose = !!enabled;
       mode = m || mode;
 
       if(xBtn) xBtn.disabled = !canClose;
@@ -202,7 +213,7 @@
     });
     if(xBtn) xBtn.addEventListener("click", closeIfAllowed);
 
-    // Pré-état : on bloque la fermeture tant qu'on ne sait pas (évite “flash”)
+    // Pré-état : on bloque la fermeture tant qu'on ne sait pas
     setCloseEnabled(false, "info");
     okBtn.textContent = "OK, j'ai compris";
     setSecondary("", false);
@@ -223,10 +234,12 @@
           window.__ad_warn_timer = null;
         } catch(e){}
 
+        // ✅ Inactif => on ne montre rien
         if(!data || !data.active){
           hideOverlay();
           setOrderEnabled(true);
           setCloseEnabled(true, "none");
+          finishBoot();
           return;
         }
 
@@ -236,10 +249,11 @@
           hideOverlay();
           setOrderEnabled(true);
           setCloseEnabled(true, "none");
+          finishBoot();
           return;
         }
 
-        // UI
+        // UI (prépare seulement, mais on affichera seulement si nécessaire)
         const base = STATUS_URL.replace(/\/status\.json$/,'/');
         const src = (cfg.image || "");
         const imgUrl = /^https?:\/\//i.test(src) ? src : (base + (src || "images/panne.png"));
@@ -249,7 +263,7 @@
         msgEl.textContent = cfg.message || "";
         if(barSub) barSub.textContent = "Mise à jour officielle";
 
-        // INFO
+        // INFO => on affiche
         if(mode === "info"){
           const delay = Number.isFinite(cfg.ok_delay_seconds) ? cfg.ok_delay_seconds : 5;
 
@@ -259,6 +273,8 @@
           let left = delay;
           setCloseEnabled(false, "info");
           okBtn.textContent = `OK, j'ai compris (dans ${left}s)`;
+
+          showOverlay();
 
           const t = setInterval(() => {
             left -= 1;
@@ -271,6 +287,7 @@
             }
           }, 1000);
 
+          finishBoot();
           return;
         }
 
@@ -306,19 +323,24 @@
 
           // applique tout de suite
           const stillBlocked = applyNow();
-          if(!stillBlocked) return;
+          if(!stillBlocked){
+            finishBoot();
+            return;
+          }
 
           // auto-déblocage fiable même en PWA (vérifie toutes les 15s)
           try { if(window.__ad_warn_timer) clearInterval(window.__ad_warn_timer); } catch(e){}
           window.__ad_warn_timer = setInterval(applyNow, 15000);
 
+          finishBoot();
           return;
         }
 
-        // default
+        // default / none => ne rien montrer
         hideOverlay();
         setOrderEnabled(true);
         setCloseEnabled(true, "none");
+        finishBoot();
       })
       .catch(() => {
         clearTimeout(timer);
@@ -332,6 +354,7 @@
           if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
           window.__ad_warn_timer = null;
         } catch(e){}
+        finishBoot();
       });
   }
 
