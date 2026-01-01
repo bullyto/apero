@@ -1,19 +1,18 @@
 /* =========================================================
-   Status Popup (Apéro de Nuit 66) — v3.2
-   Objectif:
-   - Afficher IMMÉDIATEMENT un overlay "Chargement..." (avant que la page finisse de charger)
-   - Puis lire https://bullyto.github.io/status/status.json
-   - Modes : info / warning
-   - INFO    : fermeture impossible pendant ok_delay_seconds (OK + croix + clic dehors + ESC)
-   - WARNING : impossible de fermer + message secondaire au clic ; commande bloquée selon planning
-   - Images  : accepte URL absolue OU chemin relatif au dépôt status
+   Status Popup (Apéro de Nuit 66) — v3.3 (SAFE)
+   Fix:
+   - Safety timer: impossible de rester bloqué si fetch/JSON/caches font n'importe quoi
+   - WARNING: auto-déblocage fiable (même en PWA) + nettoyage timer
    ========================================================= */
 (function(){
   const STATUS_URL = "https://bullyto.github.io/status/status.json";
   const FETCH_TIMEOUT_MS = 4500; // évite les attentes infinies sur réseau lent
+  const SAFETY_HIDE_MS = 6500;   // 🔥 anti-popup bloqué (PWA/caches/réseau)
 
   function withinSchedule(schedule, now = new Date()){
-    if(!schedule || !schedule.enabled) return true; // enabled=false => bloqué tout le temps
+    // enabled=false => bloqué tout le temps (donc "dans la plage" = true)
+    if(!schedule || schedule.enabled === false) return true;
+
     const days = Array.isArray(schedule.days) ? schedule.days : [];
     const day = now.getDay();
     if(days.length && !days.includes(day)) return false;
@@ -96,7 +95,6 @@
         </div>
       </div>
     `;
-    // append ASAP even if body not ready
     (document.body || document.documentElement).appendChild(wrap);
   }
 
@@ -129,8 +127,18 @@
 
     if(!overlay || !imgEl || !titleEl || !msgEl || !okBtn) return;
 
-    // Affiche tout de suite (c’est le but)
+    // Affiche tout de suite
     showOverlay();
+
+    // 🔥 Safety: si le réseau/caches font n'importe quoi => on ne reste jamais bloqué
+    const safetyTimer = setTimeout(() => {
+      try { hideOverlay(); } catch(e) {}
+      try { setOrderEnabled(true); } catch(e) {}
+      try {
+        if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
+        window.__ad_warn_timer = null;
+      } catch(e) {}
+    }, SAFETY_HIDE_MS);
 
     let canClose = true;
     let mode = "none";
@@ -140,9 +148,8 @@
       canClose = !!on;
       mode = m || mode;
 
-      if(xBtn){
-        xBtn.disabled = !canClose;
-      }
+      if(xBtn) xBtn.disabled = !canClose;
+
       if(okBtn){
         if(mode === "info"){
           okBtn.disabled = !canClose;
@@ -165,7 +172,6 @@
       hideOverlay();
     }
 
-    // Toujours: pas de fermeture par clic dehors
     overlay.addEventListener("click", (e) => {
       if(e.target === overlay){
         if(!canClose && mode === "warning"){
@@ -202,7 +208,6 @@
     setSecondary("", false);
     setOrderEnabled(true);
 
-    // Fetch avec timeout
     const ctrl = new AbortController();
     const timer = setTimeout(()=> ctrl.abort(), FETCH_TIMEOUT_MS);
 
@@ -210,11 +215,18 @@
       .then(r => r.json())
       .then(data => {
         clearTimeout(timer);
+        clearTimeout(safetyTimer);
+
+        // Nettoyage timer warning (au cas où)
+        try {
+          if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
+          window.__ad_warn_timer = null;
+        } catch(e){}
 
         if(!data || !data.active){
-          // pas de popup
           hideOverlay();
           setOrderEnabled(true);
+          setCloseEnabled(true, "none");
           return;
         }
 
@@ -223,6 +235,7 @@
         if(!cfg){
           hideOverlay();
           setOrderEnabled(true);
+          setCloseEnabled(true, "none");
           return;
         }
 
@@ -264,18 +277,21 @@
         // WARNING
         if(mode === "warning"){
           warningClickMsg = cfg.warning_click_message || warningClickMsg;
-
           const schedule = cfg.block_schedule || { enabled:false };
 
           function applyNow(){
             const blockedNow = withinSchedule(schedule, new Date());
 
-            // ✅ WARNING ne bloque QUE pendant la plage horaire
+            // WARNING ne bloque QUE pendant la plage horaire
             if(!blockedNow){
               hideOverlay();
               setOrderEnabled(true);
-              try{ window.__ad_warn_timer && clearInterval(window.__ad_warn_timer); }catch(e){}
-              window.__ad_warn_timer = null;
+              setCloseEnabled(true, "none");
+              setSecondary("", false);
+              try {
+                if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
+                window.__ad_warn_timer = null;
+              } catch(e){}
               return false;
             }
 
@@ -284,6 +300,7 @@
             setSecondary("", false);
             setCloseEnabled(false, "warning");
             okBtn.textContent = "OK, j'ai compris";
+            showOverlay();
             return true;
           }
 
@@ -291,37 +308,35 @@
           const stillBlocked = applyNow();
           if(!stillBlocked) return;
 
-          // ✅ auto-déblocage sans recharger (vérifie toutes les 20s)
-          try{ window.__ad_warn_timer && clearInterval(window.__ad_warn_timer); }catch(e){}
-          window.__ad_warn_timer = setInterval(applyNow, 20000);
+          // auto-déblocage fiable même en PWA (vérifie toutes les 15s)
+          try { if(window.__ad_warn_timer) clearInterval(window.__ad_warn_timer); } catch(e){}
+          window.__ad_warn_timer = setInterval(applyNow, 15000);
 
           return;
         }
 
-          // Dans la plage => warning bloquant + commande bloquée
-          setOrderEnabled(false);
-
-          setSecondary("", false);
-          setCloseEnabled(false, "warning");
-          okBtn.textContent = "OK, j'ai compris";
-          return;
-        }
-
-        // default: ferme
+        // default
         hideOverlay();
         setOrderEnabled(true);
+        setCloseEnabled(true, "none");
       })
       .catch(() => {
         clearTimeout(timer);
+        clearTimeout(safetyTimer);
+
         // réseau lent/HS => on n'affiche pas de popup (pour pas bloquer)
         hideOverlay();
         setOrderEnabled(true);
+        setCloseEnabled(true, "none");
+        try {
+          if(window.__ad_warn_timer){ clearInterval(window.__ad_warn_timer); }
+          window.__ad_warn_timer = null;
+        } catch(e){}
       });
   }
 
-  // 🚀 Lancer le plus tôt possible
+  // Lancer au plus tôt possible
   if(document.readyState === "loading"){
-    // Si body pas encore là, on attend juste qu'il existe (sans attendre toutes les images)
     document.addEventListener("readystatechange", () => {
       if(document.readyState === "interactive") run();
     }, { once:true });
