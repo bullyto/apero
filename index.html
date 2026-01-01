@@ -231,13 +231,7 @@
       border-color: rgba(255,255,255,.12);
       color: rgba(255,255,255,.92);
     }
-    .ageTimer{
-      margin-top:12px;
-      font-weight:950;
-      color:#5db7ee;
-      text-align:center;
-      font-size:16px;
-    }
+    .ageTimer{ display:none; } /* on ne révèle jamais la durée */
     .ageFine{
       margin:12px 0 0;
       color: rgba(255,255,255,.60);
@@ -400,8 +394,6 @@
     window.addEventListener("beforeinstallprompt", (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      // quand Chrome peut proposer l'installation, on force l'UI "install visible"
-      // (ça aide si un flag local était faux)
       updateInstallUI();
     });
 
@@ -465,14 +457,12 @@
     }
 
     async function updateInstallUI(){
-      // 1) Si on est dans la PWA => installé
       if (isStandalone()) {
         setInstalledFlag(true);
         applyInstallUI(true);
         return;
       }
 
-      // 2) Android/Chrome: API fiable
       const related = await checkInstalledRelatedApps();
       if (related === true) {
         setInstalledFlag(true);
@@ -485,24 +475,20 @@
         return;
       }
 
-      // 3) Fallback: flag local
       const flag = getInstalledFlag();
       applyInstallUI(flag);
 
-      // 4) Si Chrome peut proposer l’installation => montrer le bouton
       if (deferredPrompt) {
         setInstalledFlag(false);
         applyInstallUI(false);
       }
     }
 
-    // Au chargement + retour onglet
     updateInstallUI();
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") updateInstallUI();
     });
 
-    // Quand l’app est installée (Chrome Android)
     window.addEventListener("appinstalled", () => {
       setInstalledFlag(true);
       showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
@@ -510,13 +496,14 @@
     });
 
     /* =========================
-       🔞 AGE GATE (chargement + commander)
+       🔞 AGE GATE (48h silencieuses si mineur)
        ========================= */
     const AGE = {
-      KEY_UNTIL: "ad_major_until",
+      KEY_MAJOR_UNTIL: "ad_major_until",
       KEY_LAST: "ad_last_choice",
-      WEEK_MS: 20 * 24 * 60 * 60 * 1000,
-      BLOCK_S: 48 * 60 * 60,
+      KEY_MINOR_UNTIL: "ad_minor_until",
+      MAJOR_MS: 20 * 24 * 60 * 60 * 1000, // 20 jours
+      MINOR_MS: 48 * 60 * 60 * 1000,      // 48h
       commanderUrl: "https://aperodenuit.com/commander"
     };
 
@@ -524,18 +511,20 @@
     const ageBlocked  = document.getElementById("ageBlocked");
     const ageYes      = document.getElementById("ageYes");
     const ageNo       = document.getElementById("ageNo");
-    const ageCount    = document.getElementById("ageCount");
 
-    let ageInterval = null;
     let agePendingAction = null;
+    let ageInterval = null;
 
     function ageNow(){ return Date.now(); }
-    function ageGetUntil(){
-      const v = localStorage.getItem(AGE.KEY_UNTIL);
+
+    function ageGetInt(key){
+      const v = localStorage.getItem(key);
       const n = v ? parseInt(v, 10) : 0;
       return Number.isFinite(n) ? n : 0;
     }
-    function ageIsMajorValid(){ return ageGetUntil() > ageNow(); }
+
+    function ageIsMajorValid(){ return ageGetInt(AGE.KEY_MAJOR_UNTIL) > ageNow(); }
+    function ageIsMinorBlocked(){ return ageGetInt(AGE.KEY_MINOR_UNTIL) > ageNow(); }
 
     function ageShow(el){
       el.classList.add("show");
@@ -549,36 +538,45 @@
         document.body.style.overflow = "";
       }
     }
+
     function ageShowQuestion(){
       ageHide(ageBlocked);
       ageShow(ageQuestion);
     }
+
     function ageShowBlocked(){
       ageHide(ageQuestion);
       ageShow(ageBlocked);
 
-      let t = AGE.BLOCK_S;
-      ageCount.textContent = t;
-
+      // timer silencieux : on ne montre rien, mais on vérifie l'expiration
       if(ageInterval) clearInterval(ageInterval);
-      ageInterval = setInterval(() => {
-        t--;
-        ageCount.textContent = t;
-        if(t <= 0){
+
+      const tick = () => {
+        const until = ageGetInt(AGE.KEY_MINOR_UNTIL);
+        const left = until - ageNow();
+        if(left <= 0){
           clearInterval(ageInterval);
           ageInterval = null;
+          localStorage.removeItem(AGE.KEY_MINOR_UNTIL);
           ageShowQuestion();
         }
-      }, 1000);
-    }
-    function ageSetMajorWeek(){
-      localStorage.setItem(AGE.KEY_LAST, "major");
-      localStorage.setItem(AGE.KEY_UNTIL, String(ageNow() + AGE.WEEK_MS));
-    }
-    function ageSetMinor(){
-      localStorage.setItem(AGE.KEY_LAST, "minor");
+      };
+      tick();
+      ageInterval = setInterval(tick, 1000);
     }
 
+    function ageSetMajor(){
+      localStorage.setItem(AGE.KEY_LAST, "major");
+      localStorage.setItem(AGE.KEY_MAJOR_UNTIL, String(ageNow() + AGE.MAJOR_MS));
+      localStorage.removeItem(AGE.KEY_MINOR_UNTIL);
+    }
+
+    function ageSetMinorBlock(){
+      localStorage.setItem(AGE.KEY_LAST, "minor");
+      localStorage.setItem(AGE.KEY_MINOR_UNTIL, String(ageNow() + AGE.MINOR_MS));
+    }
+
+    // Empêche fermeture via overlay / escape
     [ageQuestion, ageBlocked].forEach(o=>{
       o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
     });
@@ -589,16 +587,26 @@
     });
 
     function requireMajorThen(actionFn){
+      // Si mineur et encore dans la fenêtre 48h => bloqué direct (persistant)
+      if(ageIsMinorBlocked()){
+        agePendingAction = null;
+        ageShowBlocked();
+        return;
+      }
+
+      // Si majeur valide => go
       if(ageIsMajorValid()){
         actionFn();
         return;
       }
+
+      // Sinon on demande
       agePendingAction = actionFn;
       ageShowQuestion();
     }
 
     ageYes.addEventListener("click", ()=>{
-      ageSetMajorWeek();
+      ageSetMajor();
       ageHide(ageQuestion);
       if(typeof agePendingAction === "function"){
         const fn = agePendingAction;
@@ -608,9 +616,15 @@
     });
 
     ageNo.addEventListener("click", ()=>{
-      ageSetMinor();
+      ageSetMinorBlock();
       ageShowBlocked();
     });
+
+    // Si on arrive sur la page déjà bloqué => on force le blocage
+    if(ageIsMinorBlocked()){
+      ageShowBlocked();
+    }
+
     // =========================
     // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
     // =========================
@@ -799,7 +813,6 @@
         deferredPrompt.prompt();
         try { await deferredPrompt.userChoice; } catch(e) {}
         deferredPrompt = null;
-        // après tentative d'install, on re-check
         setTimeout(updateInstallUI, 600);
         return;
       }
