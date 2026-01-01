@@ -1,15 +1,31 @@
-/* service-worker.js
-   Minimal cache pour rendre la PWA installable + offline basique.
-   (Ne change rien à ton UI, juste support PWA.)
+/* service-worker.js — v3.5 (SAFE)
+   Fix:
+   - Precache robuste: n’échoue pas si un fichier manque (sinon SW ne s’update jamais)
+   - NE JAMAIS cacher status-popup.js / status.json / images status (toujours frais)
+   - HTML en network-first, reste en cache-first
 */
-const CACHE_NAME = "aperodenuit-v3.4";
+const CACHE_NAME = "aperodenuit-v3.5";
+
+// ⚠️ Pré-cache minimal + tolérant aux fichiers absents
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+
+  // (optionnel) si présents
+  "./style.css",
+  "./logo.png",
+  "./partage.png",
+
+  // icônes possibles (selon tes noms de fichiers)
   "./icon-192.png",
   "./icon-512.png",
+  "./icône-192.png",
+  "./icône-512.png",
+  "./icône-touch-apple.png",
   "./assets/apple-touch-icon.png",
+
+  // assets possibles
   "./assets/logo-header.png",
   "./assets/bottle1.png",
   "./assets/bottle2.png",
@@ -17,70 +33,87 @@ const CORE_ASSETS = [
   "./assets/bottle4.png",
   "./assets/bottle5.png",
   "./assets/bottle6.png",
-  "./assets/bottle7.png"
+  "./assets/bottle7.png",
 ];
+
+// Ajout tolérant: si 1 fichier manque, on n’annule pas tout le SW
+async function precacheSafe(cache){
+  const results = await Promise.allSettled(
+    CORE_ASSETS.map((url) => cache.add(url))
+  );
+  // (silencieux) — si tu veux debug: console.log(results)
+  return results;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)).then(() => self.skipWaiting())
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      await precacheSafe(cache);
+      await self.skipWaiting();
+    })()
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await self.clients.claim();
+    })()
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-
-  // ✅ Ne jamais mettre en cache status-popup.js (mise à jour instant)
-  if (req.method === "GET" && url.pathname.endsWith("/status-popup.js")) {
-    event.respondWith(fetch(req, { cache: "no-store" }));
-    return;
-  }
-
-  // ✅ Ne jamais mettre en cache les images du status (URL absolues ou GitHub)
-  if (req.method === "GET" && url.href.includes("bullyto.github.io/status/")) {
-    event.respondWith(fetch(req, { cache: "no-store" }));
-    return;
-  }
-
-  // ✅ Ne jamais mettre en cache le status global (doit rester à jour)
-  if (req.method === "GET" && url.href.includes("bullyto.github.io/status/status.json")) {
-    event.respondWith(fetch(req, { cache: "no-store" }));
-    return;
-  }
-
-  // ✅ Évite de cacher le cross-origin (opaque) pour ne pas bloquer les mises à jour
-  if (url.origin !== self.location.origin) {
-    return; // laisser le réseau gérer
-  }
-
-  // Network-first pour HTML (toujours à jour), cache-first pour le reste
-  const accept = req.headers.get("accept") || "";
   if (req.method !== "GET") return;
 
+  const url = new URL(req.url);
+
+  // ✅ Toujours frais (anti-bug caches/PWA)
+  // 1) status-popup.js (ton JS qui pilote les blocages)
+  if (url.origin === self.location.origin && url.pathname.endsWith("/status-popup.js")) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
+
+  // 2) status.json + toutes ressources du dossier status (cross-origin)
+  if (url.href.includes("bullyto.github.io/status/")) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
+
+  // ✅ Évite de cacher le cross-origin (opaque) autrement
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
+  const accept = req.headers.get("accept") || "";
+
+  // Network-first pour HTML
   if (accept.includes("text/html")) {
     event.respondWith(
-      fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
     );
     return;
   }
 
+  // Cache-first pour le reste
   event.respondWith(
-    caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-      return res;
-    }))
+    caches.match(req).then((cached) => {
+      if (cached) return cached;
+      return fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      });
+    })
   );
 });
