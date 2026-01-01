@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-status-boot="1">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -240,12 +240,31 @@
     }
     .ageFine a{color:#5db7ee; text-decoration:none; font-weight:900;}
     .ageFine a:hover{text-decoration:underline;}
+
+    /* =========================
+       ✅ Anti-flash status admin (FOUC)
+       ========================= */
+    html[data-status-boot="1"] .statusOverlay,
+    html[data-status-boot="1"] #statusOverlay,
+    html[data-status-boot="1"] .statusModal,
+    html[data-status-boot="1"] #statusModal,
+    html[data-status-boot="1"] .status-popup,
+    html[data-status-boot="1"] #statusPopup{
+      display:none !important;
+      opacity:0 !important;
+      visibility:hidden !important;
+    }
   </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
+
   <link rel="preload" as="script" href="./status-popup.js?v=20260101">
-  <script src="./status-popup.js?v=20260101"></script>
+  <script>
+    // ✅ démarre en "boot" : on cache toute popup status tant que status-popup.js n'a pas décidé
+    document.documentElement.setAttribute("data-status-boot","1");
+  </script>
+  <script defer src="./status-popup.js?v=20260101"></script>
 </head>
 
 <body>
@@ -363,7 +382,7 @@
   </div>
 
   <script>
-    // ✅ Service worker (cache-bust pour forcer la MAJ)
+    // ✅ Service worker (cache-bust)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js?v=20260101").catch(() => {});
@@ -515,7 +534,6 @@
 
     function ageNow(){ return Date.now(); }
 
-    // ---- Storage helpers (LS if possible, else cookies)
     function storageAvailable(){
       try{
         const k="__t";
@@ -618,7 +636,6 @@
       storeSetInt(AGE.KEY_MINOR_UNTIL, ageNow() + AGE.MINOR_MS, Math.floor(AGE.MINOR_MS/1000));
     }
 
-    // Empêche fermeture via overlay / escape
     [ageQuestion, ageBlocked].forEach(o=>{
       o.addEventListener("click", (e)=>{ if(e.target === o){ /* rien */ } });
     });
@@ -657,13 +674,12 @@
       ageShowBlocked();
     });
 
-    // Au chargement : si bloqué -> on force le blocage
     if(ageIsMinorBlocked()){
       ageShowBlocked();
     }
 
     // =========================
-    // 🎁 PROMO (après installation + "Commander" + 1m30 cumulées)
+    // 🎁 PROMO
     // =========================
     const PROMO_URL = "https://stats.aperos.net/go/jeux?src=QR";
     const PROMO_REQUIRED_MS = 30000 ; // 30 secondes
