@@ -6,11 +6,11 @@
   <title>Apéro de Nuit 66</title>
 
   <!-- ✅ PWA -->
-  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="manifest" href="./manifest.webmanifest?v=20260101">
   <meta name="theme-color" content="#0b1c2d">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=20260101">
 
   <!-- Préchargement -->
   <link rel="preload" as="image" href="assets/logo-header.png">
@@ -231,7 +231,6 @@
       border-color: rgba(255,255,255,.12);
       color: rgba(255,255,255,.92);
     }
-    .ageTimer{ display:none; } /* on ne révèle jamais la durée */
     .ageFine{
       margin:12px 0 0;
       color: rgba(255,255,255,.60);
@@ -245,9 +244,8 @@
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
-  <link rel="preload" as="script" href="./status-popup.js">
-  <script src="./status-popup.js"></script>
-
+  <link rel="preload" as="script" href="./status-popup.js?v=20260101">
+  <script src="./status-popup.js?v=20260101"></script>
 </head>
 
 <body>
@@ -365,10 +363,10 @@
   </div>
 
   <script>
-    // ✅ Service worker
+    // ✅ Service worker (cache-bust pour forcer la MAJ)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js?v=20260101").catch(() => {});
       });
     }
 
@@ -496,12 +494,12 @@
     });
 
     /* =========================
-       🔞 AGE GATE (48h silencieuses si mineur)
+       🔞 AGE GATE (48h silencieuses) — localStorage + cookie fallback
        ========================= */
     const AGE = {
-      KEY_MAJOR_UNTIL: "ad_major_until",
-      KEY_LAST: "ad_last_choice",
-      KEY_MINOR_UNTIL: "ad_minor_until",
+      KEY_MAJOR_UNTIL: "adn_major_until",
+      KEY_LAST: "adn_last_choice",
+      KEY_MINOR_UNTIL: "adn_minor_until",
       MAJOR_MS: 20 * 24 * 60 * 60 * 1000, // 20 jours
       MINOR_MS: 48 * 60 * 60 * 1000,      // 48h
       commanderUrl: "https://aperodenuit.com/commander"
@@ -517,14 +515,62 @@
 
     function ageNow(){ return Date.now(); }
 
-    function ageGetInt(key){
-      const v = localStorage.getItem(key);
+    // ---- Storage helpers (LS if possible, else cookies)
+    function storageAvailable(){
+      try{
+        const k="__t";
+        localStorage.setItem(k,"1");
+        localStorage.removeItem(k);
+        return true;
+      }catch(e){
+        return false;
+      }
+    }
+    const CAN_LS = storageAvailable();
+
+    function cookieSet(name, value, maxAgeSeconds){
+      const v = encodeURIComponent(String(value));
+      const max = Number.isFinite(maxAgeSeconds) ? `; Max-Age=${Math.max(0, Math.floor(maxAgeSeconds))}` : "";
+      document.cookie = `${name}=${v}${max}; Path=/; SameSite=Lax`;
+    }
+    function cookieGet(name){
+      const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&') + '=([^;]*)'));
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+    function cookieDel(name){
+      document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+    }
+
+    function storeSetInt(key, n, maxAgeSeconds){
+      if (CAN_LS){
+        try { localStorage.setItem(key, String(n)); return; } catch(e){}
+      }
+      cookieSet(key, String(n), maxAgeSeconds);
+    }
+    function storeGetInt(key){
+      let v = null;
+      if (CAN_LS){
+        try { v = localStorage.getItem(key); } catch(e){ v = null; }
+      }
+      if (v === null) v = cookieGet(key);
       const n = v ? parseInt(v, 10) : 0;
       return Number.isFinite(n) ? n : 0;
     }
+    function storeSetStr(key, s, maxAgeSeconds){
+      if (CAN_LS){
+        try { localStorage.setItem(key, String(s)); return; } catch(e){}
+      }
+      cookieSet(key, String(s), maxAgeSeconds);
+    }
+    function storeDel(key){
+      if (CAN_LS){
+        try { localStorage.removeItem(key); } catch(e){}
+      }
+      cookieDel(key);
+    }
 
-    function ageIsMajorValid(){ return ageGetInt(AGE.KEY_MAJOR_UNTIL) > ageNow(); }
-    function ageIsMinorBlocked(){ return ageGetInt(AGE.KEY_MINOR_UNTIL) > ageNow(); }
+    function ageIsMajorValid(){ return storeGetInt(AGE.KEY_MAJOR_UNTIL) > ageNow(); }
+    function ageIsMinorBlocked(){ return storeGetInt(AGE.KEY_MINOR_UNTIL) > ageNow(); }
 
     function ageShow(el){
       el.classList.add("show");
@@ -538,42 +584,38 @@
         document.body.style.overflow = "";
       }
     }
-
     function ageShowQuestion(){
       ageHide(ageBlocked);
       ageShow(ageQuestion);
     }
-
     function ageShowBlocked(){
       ageHide(ageQuestion);
       ageShow(ageBlocked);
 
-      // timer silencieux : on ne montre rien, mais on vérifie l'expiration
       if(ageInterval) clearInterval(ageInterval);
 
       const tick = () => {
-        const until = ageGetInt(AGE.KEY_MINOR_UNTIL);
-        const left = until - ageNow();
-        if(left <= 0){
+        const until = storeGetInt(AGE.KEY_MINOR_UNTIL);
+        if (until <= ageNow()){
           clearInterval(ageInterval);
           ageInterval = null;
-          localStorage.removeItem(AGE.KEY_MINOR_UNTIL);
+          storeDel(AGE.KEY_MINOR_UNTIL);
           ageShowQuestion();
         }
       };
+
       tick();
       ageInterval = setInterval(tick, 1000);
     }
 
     function ageSetMajor(){
-      localStorage.setItem(AGE.KEY_LAST, "major");
-      localStorage.setItem(AGE.KEY_MAJOR_UNTIL, String(ageNow() + AGE.MAJOR_MS));
-      localStorage.removeItem(AGE.KEY_MINOR_UNTIL);
+      storeSetStr(AGE.KEY_LAST, "major", 60*60*24*30);
+      storeSetInt(AGE.KEY_MAJOR_UNTIL, ageNow() + AGE.MAJOR_MS, Math.floor(AGE.MAJOR_MS/1000));
+      storeDel(AGE.KEY_MINOR_UNTIL);
     }
-
     function ageSetMinorBlock(){
-      localStorage.setItem(AGE.KEY_LAST, "minor");
-      localStorage.setItem(AGE.KEY_MINOR_UNTIL, String(ageNow() + AGE.MINOR_MS));
+      storeSetStr(AGE.KEY_LAST, "minor", 60*60*24*3);
+      storeSetInt(AGE.KEY_MINOR_UNTIL, ageNow() + AGE.MINOR_MS, Math.floor(AGE.MINOR_MS/1000));
     }
 
     // Empêche fermeture via overlay / escape
@@ -587,20 +629,15 @@
     });
 
     function requireMajorThen(actionFn){
-      // Si mineur et encore dans la fenêtre 48h => bloqué direct (persistant)
       if(ageIsMinorBlocked()){
         agePendingAction = null;
         ageShowBlocked();
         return;
       }
-
-      // Si majeur valide => go
       if(ageIsMajorValid()){
         actionFn();
         return;
       }
-
-      // Sinon on demande
       agePendingAction = actionFn;
       ageShowQuestion();
     }
@@ -620,7 +657,7 @@
       ageShowBlocked();
     });
 
-    // Si on arrive sur la page déjà bloqué => on force le blocage
+    // Au chargement : si bloqué -> on force le blocage
     if(ageIsMinorBlocked()){
       ageShowBlocked();
     }
