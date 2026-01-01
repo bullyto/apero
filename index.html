@@ -243,7 +243,16 @@
 
     /* =========================
        ✅ Anti-flash status admin (FOUC)
+       IMPORTANT: ton status-popup.js utilise adStatusOverlay
        ========================= */
+    html[data-status-boot="1"] #adStatusOverlay,
+    html[data-status-boot="1"] .adStatusOverlay{
+      display:none !important;
+      opacity:0 !important;
+      visibility:hidden !important;
+    }
+
+    /* (on garde tes anciens sélecteurs, ça ne gêne pas) */
     html[data-status-boot="1"] .statusOverlay,
     html[data-status-boot="1"] #statusOverlay,
     html[data-status-boot="1"] .statusModal,
@@ -259,12 +268,12 @@
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
 
-  <link rel="preload" as="script" href="./status-popup.js?v=20260101">
+  <link rel="preload" as="script" href="./status-popup.js?v=20260101a">
   <script>
     // ✅ démarre en "boot" : on cache toute popup status tant que status-popup.js n'a pas décidé
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
-  <script defer src="./status-popup.js?v=20260101"></script>
+  <script defer src="./status-popup.js?v=20260101a"></script>
 </head>
 
 <body>
