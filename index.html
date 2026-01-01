@@ -33,6 +33,61 @@
       background:#fff; color:var(--text); overflow-x:hidden; overflow-y:hidden;
     }
 
+    /* =========================
+       ⏳ SPLASH LOADER (2.5s)
+       (Ajouté, ne supprime rien)
+       ========================= */
+    #splashLoader{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:#0b1c2d;
+      z-index:900000; /* sous status overlay (999999), au-dessus du reste */
+      padding:24px;
+    }
+    #splashLoader.hide{
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .30s ease;
+    }
+    #splashBox{
+      width:min(520px, 92vw);
+      text-align:center;
+      color:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    #splashTitle{
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:13px;
+      opacity:.80;
+      margin:0;
+    }
+    #splashBrand{
+      margin:10px 0 18px;
+      font-size:26px;
+      font-weight:950;
+    }
+    #splashBar{
+      height:14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    #splashFill{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:#5db7ee;
+    }
+    #splashHint{
+      margin:12px 0 0;
+      font-size:13px;
+      font-weight:800;
+      opacity:.70;
+    }
+
     /* HEADER */
     .top{background:var(--blue);padding-bottom:8px}
     .top img{width:100%;max-height:26vh;object-fit:contain;display:block}
@@ -277,6 +332,19 @@
 </head>
 
 <body>
+
+  <!-- =========================
+       ⏳ SPLASH LOADER (AJOUT)
+       ========================= -->
+  <div id="splashLoader" aria-hidden="true">
+    <div id="splashBox">
+      <div id="splashTitle">Chargement</div>
+      <div id="splashBrand">APÉRO DE NUIT 66®</div>
+      <div id="splashBar"><div id="splashFill"></div></div>
+      <div id="splashHint">Préparation de l’expérience…</div>
+    </div>
+  </div>
+
   <header class="top">
     <img src="assets/logo-header.png" alt="">
   </header>
@@ -391,6 +459,42 @@
   </div>
 
   <script>
+    /* =========================
+       ⏳ SPLASH LOADER JS (AJOUT)
+       - 2.5s minimum
+       - ne supprime rien du reste
+       ========================= */
+    (function(){
+      const splash = document.getElementById("splashLoader");
+      const fill = document.getElementById("splashFill");
+      if(!splash || !fill) return;
+
+      const DURATION = 2500;
+      const start = performance.now();
+      let done = false;
+
+      function animate(){
+        const t = performance.now() - start;
+        const p = Math.min(1, t / DURATION);
+        const eased = 1 - Math.pow(1 - p, 2.2);
+        fill.style.width = Math.round(eased * 100) + "%";
+        if(p < 1) requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+
+      function hide(){
+        if(done) return;
+        done = true;
+        fill.style.width = "100%";
+        splash.classList.add("hide");
+        setTimeout(() => {
+          try { splash.remove(); } catch(e){ splash.style.display = "none"; }
+        }, 360);
+      }
+
+      setTimeout(hide, DURATION);
+    })();
+
     // ✅ Service worker (cache-bust)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
