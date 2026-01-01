@@ -2,7 +2,7 @@
    Minimal cache pour rendre la PWA installable + offline basique.
    (Ne change rien à ton UI, juste support PWA.)
 */
-const CACHE_NAME = "aperodenuit-v3";
+const CACHE_NAME = "aperodenuit-v3.2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -38,7 +38,12 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  
+  // ✅ Ne jamais mettre en cache status-popup.js (mise à jour instant)
+  if (req.method === "GET" && url.pathname.endsWith("/status-popup.js")) {
+    event.respondWith(fetch(req, { cache: "no-store" }));
+    return;
+  }
+
   // ✅ Ne jamais mettre en cache les images du status (URL absolues ou GitHub)
   if (req.method === "GET" && url.href.includes("bullyto.github.io/status/")) {
     event.respondWith(fetch(req, { cache: "no-store" }));

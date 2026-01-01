@@ -1,209 +1,299 @@
-// status-popup.js
-// Injecte un pop-up global piloté par https://bullyto.github.io/status/status.json
-// Affiche si active === true. Les clients peuvent fermer (croix), mais ça revient au prochain chargement tant que c'est actif.
-
-(() => {
+/* =========================================================
+   Status Popup (Apéro de Nuit 66) — v3.2
+   Objectif:
+   - Afficher IMMÉDIATEMENT un overlay "Chargement..." (avant que la page finisse de charger)
+   - Puis lire https://bullyto.github.io/status/status.json
+   - Modes : info / warning
+   - INFO    : fermeture impossible pendant ok_delay_seconds (OK + croix + clic dehors + ESC)
+   - WARNING : impossible de fermer + message secondaire au clic ; commande bloquée selon planning
+   - Images  : accepte URL absolue OU chemin relatif au dépôt status
+   ========================================================= */
+(function(){
   const STATUS_URL = "https://bullyto.github.io/status/status.json";
-  const SESSION_KEY = "status_popup_dismissed";
+  const FETCH_TIMEOUT_MS = 4500; // évite les attentes infinies sur réseau lent
 
-  function el(tag, attrs = {}, children = []) {
-    const n = document.createElement(tag);
-    for (const [k, v] of Object.entries(attrs)) {
-      if (k === "class") n.className = v;
-      else if (k === "html") n.innerHTML = v;
-      else n.setAttribute(k, v);
+  function withinSchedule(schedule, now = new Date()){
+    if(!schedule || !schedule.enabled) return true; // enabled=false => bloqué tout le temps
+    const days = Array.isArray(schedule.days) ? schedule.days : [];
+    const day = now.getDay();
+    if(days.length && !days.includes(day)) return false;
+
+    const [sh, sm] = String(schedule.start||"00:00").split(":").map(n=>parseInt(n,10));
+    const [eh, em] = String(schedule.end||"00:00").split(":").map(n=>parseInt(n,10));
+    if(!Number.isFinite(sh)||!Number.isFinite(sm)||!Number.isFinite(eh)||!Number.isFinite(em)) return true;
+
+    const startMin = sh*60+sm;
+    const endMin = eh*60+em;
+    const nowMin = now.getHours()*60+now.getMinutes();
+
+    if(startMin === endMin) return true;
+    if(startMin < endMin){
+      return nowMin >= startMin && nowMin < endMin;
+    } else {
+      return (nowMin >= startMin) || (nowMin < endMin);
     }
-    for (const c of children) n.appendChild(c);
-    return n;
   }
 
-  function injectStyles() {
-    if (document.getElementById("statusPopupStyles")) return;
-    const css = `
-      .spxOverlay{
-        position:fixed; inset:0;
-        display:none;
-        align-items:center; justify-content:center;
-        padding:18px;
-        z-index: 999999;
-        background: rgba(0,0,0,.62);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-      }
-      .spxOverlay.show{display:flex;}
-      .spxCard{
-        width:min(560px, 94vw);
-        border-radius:22px;
-        background: #0b1c2d;
-        color:#fff;
-        border:1px solid rgba(255,255,255,.14);
-        box-shadow:0 30px 80px rgba(0,0,0,.55);
-        overflow:hidden;
-      }
-      .spxTop{
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:12px;
-        padding:14px 14px 10px;
-        border-bottom:1px solid rgba(255,255,255,.10);
-        background: rgba(255,255,255,.03);
-      }
-      .spxTitle{
-        margin:0;
-        font-size:18px;
-        font-weight:950;
-        line-height:1.15;
-      }
-      .spxClose{
-        appearance:none;
-        border:1px solid rgba(255,255,255,.16);
-        background: rgba(255,255,255,.06);
-        color:#fff;
-        width:38px;height:38px;
-        border-radius:14px;
-        cursor:pointer;
-        font-weight:950;
-        display:grid;place-items:center;
-      }
-      .spxBody{padding:14px;}
-      .spxImg{
-        width:100%;
-        height:auto;
-        border-radius:16px;
-        display:block;
-        border:1px solid rgba(255,255,255,.12);
-        background: rgba(255,255,255,.06);
-      }
-      .spxMsg{
-        margin:12px 0 0;
-        color: rgba(255,255,255,.86);
-        font-size:14px;
-        line-height:1.4;
-      }
-      .spxFooter{
-        padding:12px 14px 14px;
-        display:flex;
-        gap:10px;
-        align-items:center;
-        justify-content:flex-end;
-      }
-      .spxBtn{
-        border:none;
-        border-radius:14px;
-        padding:12px 14px;
-        font-weight:950;
-        cursor:pointer;
-        background:#5db7ee;
-        color:#fff;
-        min-width:110px;
-      }
-      .spxMeta{
-        margin:0;
-        font-size:12px;
-        color: rgba(255,255,255,.62);
-      }
-    `;
+  function setOrderEnabled(enabled){
+    const btn = document.getElementById("goBtn");
+    if(!btn) return;
+    btn.disabled = !enabled;
+    btn.style.opacity = enabled ? "" : "0.55";
+    btn.style.cursor = enabled ? "" : "not-allowed";
+  }
+
+  function injectOverlay(){
+    if(document.getElementById("adStatusOverlay")) return;
+
     const style = document.createElement("style");
-    style.id = "statusPopupStyles";
-    style.textContent = css;
+    style.textContent = `
+      .adStatusOverlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.62); z-index:999999; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);}
+      .adStatusOverlay.show{display:flex;}
+      .adStatusCard{width:min(560px,94vw); border-radius:26px; overflow:hidden; background: linear-gradient(180deg, rgba(20,35,56,.96), rgba(10,20,33,.96)); border:1px solid rgba(255,255,255,.12); box-shadow:0 30px 80px rgba(0,0,0,.55); color:#fff; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+      .adStatusTop{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px 12px; background: rgba(255,255,255,.02); border-bottom:1px solid rgba(255,255,255,.08);}
+      .adStatusBrand{display:flex; align-items:center; gap:10px; min-width:0;}
+      .adStatusDot{width:34px; height:34px; border-radius:14px; display:grid; place-items:center; border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); font-weight:950;}
+      .adStatusHead{min-width:0;}
+      .adStatusHead b{display:block; letter-spacing:.14em; text-transform:uppercase; font-size:14px; color:rgba(255,255,255,.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+      .adStatusHead span{display:block; font-size:13px; color:rgba(255,255,255,.70); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+      .adStatusClose{width:44px; height:44px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.25); color:#fff; font-size:20px; line-height:1; cursor:pointer;}
+      .adStatusClose[disabled]{opacity:.5; cursor:not-allowed;}
+      .adStatusImg{width:100%; display:block; max-height:38vh; object-fit:cover;}
+      .adStatusBody{padding:16px 16px 14px;}
+      .adStatusTitle{margin:0; font-size:30px; line-height:1.05; font-weight:950;}
+      .adStatusMsg{margin:10px 0 0; color:rgba(255,255,255,.78); font-size:15px; line-height:1.45;}
+      .adStatusSecondary{margin-top:12px; display:none; color:rgba(255,255,255,.92); font-weight:950; text-align:center;}
+      .adStatusBtn{margin-top:16px; width:100%; border:none; border-radius:16px; padding:14px; font-size:18px; font-weight:950; cursor:pointer; background:#c81515; color:#fff;}
+      .adStatusBtn[disabled]{opacity:.65; cursor:not-allowed;}
+      .adStatusLegal{margin-top:14px; text-align:center; font-size:12.5px; color:rgba(255,255,255,.55);}
+      .adStatusSpinner{display:inline-block; width:14px; height:14px; border-radius:999px; border:2px solid rgba(255,255,255,.25); border-top-color:rgba(255,255,255,.85); animation: adspin 1s linear infinite; vertical-align:-2px; margin-right:8px;}
+      @keyframes adspin { to { transform: rotate(360deg);} }
+    `;
     document.head.appendChild(style);
+
+    const wrap = document.createElement("div");
+    wrap.id = "adStatusOverlay";
+    wrap.className = "adStatusOverlay";
+    wrap.innerHTML = `
+      <div class="adStatusCard" role="dialog" aria-modal="true">
+        <div class="adStatusTop">
+          <div class="adStatusBrand">
+            <div class="adStatusDot" id="adStatusIcon">!</div>
+            <div class="adStatusHead">
+              <b id="adStatusBarTitle">INFORMATION SERVICE</b>
+              <span id="adStatusBarSub"><span class="adStatusSpinner"></span>Chargement du statut…</span>
+            </div>
+          </div>
+          <button class="adStatusClose" id="adStatusClose" aria-label="Fermer">×</button>
+        </div>
+        <img class="adStatusImg" id="adStatusImg" alt="">
+        <div class="adStatusBody">
+          <div class="adStatusTitle" id="adStatusTitle">—</div>
+          <div class="adStatusMsg" id="adStatusMsg">—</div>
+          <div class="adStatusSecondary" id="adStatusSecondary"></div>
+          <button class="adStatusBtn" id="adStatusOk">OK, j'ai compris</button>
+          <div class="adStatusLegal">L'abus d'alcool est dangereux pour la santé, à consommer avec modération.</div>
+        </div>
+      </div>
+    `;
+    // append ASAP even if body not ready
+    (document.body || document.documentElement).appendChild(wrap);
   }
 
-  async function fetchStatus() {
-    // cache-bust + no-store pour éviter le SW
-    const url = `${STATUS_URL}?t=${Date.now()}`;
-    const r = await fetch(url, { cache: "no-store" });
-    if (!r.ok) throw new Error("status fetch failed: " + r.status);
-    return await r.json();
+  function showOverlay(){
+    const o = document.getElementById("adStatusOverlay");
+    if(!o) return;
+    o.classList.add("show");
+    document.documentElement.style.overflow = "hidden";
+    document.body && (document.body.style.overflow = "hidden");
+  }
+  function hideOverlay(){
+    const o = document.getElementById("adStatusOverlay");
+    if(!o) return;
+    o.classList.remove("show");
+    document.documentElement.style.overflow = "";
+    document.body && (document.body.style.overflow = "");
   }
 
-  function getCfg(data) {
-    const mode = data?.mode || "none";
-    const cfg = (data?.modes && data.modes[mode]) ? data.modes[mode] : {};
-    return { mode, cfg };
-  }
+  function run(){
+    injectOverlay();
 
-  function showPopup({ title, message, image, lastUpdate }) {
-    if (sessionStorage.getItem(SESSION_KEY) === "1") return;
+    const overlay = document.getElementById("adStatusOverlay");
+    const imgEl = document.getElementById("adStatusImg");
+    const titleEl = document.getElementById("adStatusTitle");
+    const msgEl = document.getElementById("adStatusMsg");
+    const okBtn = document.getElementById("adStatusOk");
+    const xBtn = document.getElementById("adStatusClose");
+    const barSub = document.getElementById("adStatusBarSub");
+    const secondary = document.getElementById("adStatusSecondary");
 
-    injectStyles();
+    if(!overlay || !imgEl || !titleEl || !msgEl || !okBtn) return;
 
-    const overlay = el("div", { class: "spxOverlay", id: "statusPopupOverlay" });
-    const card = el("div", { class: "spxCard", role: "dialog", "aria-modal": "true" });
+    // Affiche tout de suite (c’est le but)
+    showOverlay();
 
-    const top = el("div", { class: "spxTop" });
-    const titleEl = el("div", { html: `<div class="spxTitle">${escapeHtml(title || "Information")}</div>` });
-    const closeBtn = el("button", { class: "spxClose", type: "button", "aria-label": "Fermer" });
-    closeBtn.textContent = "✕";
+    let canClose = true;
+    let mode = "none";
+    let warningClickMsg = "Ce n'est actuellement pas possible de commander.";
 
-    top.appendChild(titleEl);
-    top.appendChild(closeBtn);
+    function setCloseEnabled(on, m){
+      canClose = !!on;
+      mode = m || mode;
 
-    const body = el("div", { class: "spxBody" });
-    const imgEl = el("img", { class: "spxImg", alt: "", src: image || "" });
-    if (!image) imgEl.style.display = "none";
-
-    const msgEl = el("div", { class: "spxMsg", html: (message ? escapeHtml(message).replace(/\n/g, "<br>") : "") });
-
-    body.appendChild(imgEl);
-    body.appendChild(msgEl);
-
-    const footer = el("div", { class: "spxFooter" });
-    const meta = el("p", { class: "spxMeta" });
-    meta.textContent = lastUpdate ? `Dernière mise à jour : ${lastUpdate}` : "";
-
-    const okBtn = el("button", { class: "spxBtn", type: "button" });
-    okBtn.textContent = "OK";
-
-    footer.appendChild(meta);
-    footer.appendChild(okBtn);
-
-    card.appendChild(top);
-    card.appendChild(body);
-    card.appendChild(footer);
-    overlay.appendChild(card);
-    document.body.appendChild(overlay);
-
-    function close() {
-      overlay.classList.remove("show");
-      sessionStorage.setItem(SESSION_KEY, "1");
-      setTimeout(() => overlay.remove(), 150);
+      if(xBtn){
+        xBtn.disabled = !canClose;
+      }
+      if(okBtn){
+        if(mode === "info"){
+          okBtn.disabled = !canClose;
+        } else if(mode === "warning"){
+          okBtn.disabled = false; // cliquable mais ne ferme pas
+        } else {
+          okBtn.disabled = false;
+        }
+      }
     }
 
-    closeBtn.addEventListener("click", close);
-    okBtn.addEventListener("click", close);
-    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(); });
-
-    overlay.classList.add("show");
-  }
-
-  function escapeHtml(s) {
-    return String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  async function init() {
-    try {
-      const data = await fetchStatus();
-      if (!data || data.active !== true) return;
-
-      const { cfg } = getCfg(data);
-      const title = cfg.title || "Information";
-      const message = cfg.message || "";
-      const image = cfg.image ? `https://bullyto.github.io/status/${cfg.image.replace(/^\.?\//,"")}` : "";
-      showPopup({ title, message, image, lastUpdate: data.last_update || "" });
-    } catch (e) {
-      // silencieux (ne casse pas le site)
-      // console.debug("[status-popup] ignored", e);
+    function setSecondary(text, show){
+      if(!secondary) return;
+      secondary.textContent = text || "";
+      secondary.style.display = show ? "block" : "none";
     }
+
+    function closeIfAllowed(){
+      if(!canClose) return;
+      hideOverlay();
+    }
+
+    // Toujours: pas de fermeture par clic dehors
+    overlay.addEventListener("click", (e) => {
+      if(e.target === overlay){
+        if(!canClose && mode === "warning"){
+          setSecondary(warningClickMsg, true);
+        }
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      const shown = overlay.classList.contains("show");
+      if(!shown) return;
+      if(e.key === "Escape"){
+        if(!canClose){
+          e.preventDefault();
+          e.stopPropagation();
+        } else {
+          closeIfAllowed();
+        }
+      }
+    }, true);
+
+    okBtn.addEventListener("click", () => {
+      if(mode === "warning"){
+        setSecondary(warningClickMsg, true);
+        return;
+      }
+      closeIfAllowed();
+    });
+    if(xBtn) xBtn.addEventListener("click", closeIfAllowed);
+
+    // Pré-état : on bloque la fermeture tant qu'on ne sait pas (évite “flash”)
+    setCloseEnabled(false, "info");
+    okBtn.textContent = "OK, j'ai compris";
+    setSecondary("", false);
+    setOrderEnabled(true);
+
+    // Fetch avec timeout
+    const ctrl = new AbortController();
+    const timer = setTimeout(()=> ctrl.abort(), FETCH_TIMEOUT_MS);
+
+    fetch(STATUS_URL, { cache:"no-store", signal: ctrl.signal })
+      .then(r => r.json())
+      .then(data => {
+        clearTimeout(timer);
+
+        if(!data || !data.active){
+          // pas de popup
+          hideOverlay();
+          setOrderEnabled(true);
+          return;
+        }
+
+        mode = data.mode || "none";
+        const cfg = data.modes?.[mode];
+        if(!cfg){
+          hideOverlay();
+          setOrderEnabled(true);
+          return;
+        }
+
+        // UI
+        const base = STATUS_URL.replace(/\/status\.json$/,'/');
+        const src = (cfg.image || "");
+        const imgUrl = /^https?:\/\//i.test(src) ? src : (base + (src || "images/panne.png"));
+
+        imgEl.src = imgUrl;
+        titleEl.textContent = cfg.title || "Information";
+        msgEl.textContent = cfg.message || "";
+        if(barSub) barSub.textContent = "Mise à jour officielle";
+
+        // INFO
+        if(mode === "info"){
+          const delay = Number.isFinite(cfg.ok_delay_seconds) ? cfg.ok_delay_seconds : 5;
+
+          setOrderEnabled(true);
+          setSecondary("", false);
+
+          let left = delay;
+          setCloseEnabled(false, "info");
+          okBtn.textContent = `OK, j'ai compris (dans ${left}s)`;
+
+          const t = setInterval(() => {
+            left -= 1;
+            if(left <= 0){
+              clearInterval(t);
+              okBtn.textContent = "OK, j'ai compris";
+              setCloseEnabled(true, "info");
+            } else {
+              okBtn.textContent = `OK, j'ai compris (dans ${left}s)`;
+            }
+          }, 1000);
+
+          return;
+        }
+
+        // WARNING
+        if(mode === "warning"){
+          warningClickMsg = cfg.warning_click_message || warningClickMsg;
+
+          const schedule = cfg.block_schedule || { enabled:false };
+          const blockedNow = withinSchedule(schedule, new Date());
+          setOrderEnabled(!blockedNow);
+
+          setSecondary("", false);
+          setCloseEnabled(false, "warning");
+          okBtn.textContent = "OK, j'ai compris";
+          return;
+        }
+
+        // default: ferme
+        hideOverlay();
+        setOrderEnabled(true);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        // réseau lent/HS => on n'affiche pas de popup (pour pas bloquer)
+        hideOverlay();
+        setOrderEnabled(true);
+      });
   }
 
-  // Après le chargement pour ne rien perturber
-  if (document.readyState === "complete") init();
-  else window.addEventListener("load", init, { once: true });
+  // 🚀 Lancer le plus tôt possible
+  if(document.readyState === "loading"){
+    // Si body pas encore là, on attend juste qu'il existe (sans attendre toutes les images)
+    document.addEventListener("readystatechange", () => {
+      if(document.readyState === "interactive") run();
+    }, { once:true });
+  } else {
+    run();
+  }
 })();
