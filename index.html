@@ -536,7 +536,47 @@
       showToast._t = setTimeout(() => toastEl.classList.remove("show"), 3600);
     }
 
-    // ✅ Standalone (PWA)
+    
+
+    // =========================
+    // 📈 TRACKING (stats.aperos.net) — discret, sans redirection
+    // =========================
+    const TRACK = {
+      call: "https://stats.aperos.net/e/apero_nuit.call?to=tel%3A0652336461&src=app",
+      appClick: "https://stats.aperos.net/e/apero_nuit.app.click?to=https%3A%2F%2Faperos.net&src=app"
+    };
+
+    function fireTrack(url){
+      if(!url) return;
+      // 1) Beacon (le plus discret)
+      try{
+        if (navigator.sendBeacon) {
+          const ok = navigator.sendBeacon(url);
+          if (ok) return;
+        }
+      }catch(e){}
+      // 2) Fetch no-cors (ne navigue pas)
+      try{
+        fetch(url, { mode:"no-cors", keepalive:true, credentials:"omit" }).catch(()=>{});
+        return;
+      }catch(e){}
+      // 3) Image beacon (fallback)
+      try{
+        const img = new Image();
+        img.referrerPolicy = "no-referrer";
+        img.src = url + (url.includes("?") ? "&" : "?") + "_t=" + Date.now();
+      }catch(e){}
+    }
+
+    // Tracking auto des clics "tel:" (bouton appeler / liens)
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if(!t || !t.closest) return;
+      const telLink = t.closest('a[href^="tel:"]');
+      const callLike = t.closest("#callBtn,[data-call],[data-action='call']");
+      if (telLink || callLike) fireTrack(TRACK.call);
+    }, true);
+// ✅ Standalone (PWA)
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
@@ -620,6 +660,7 @@
     });
 
     window.addEventListener("appinstalled", () => {
+      fireTrack(TRACK.appClick);
       setInstalledFlag(true);
       showToast("🎉 Apéro de Nuit est ajouté à ton écran d’accueil !");
       updateInstallUI();
@@ -794,7 +835,7 @@
     // =========================
     // 🎁 PROMO
     // =========================
-    const PROMO_URL = "https://stats.aperos.net/go/jeux?src=QR";
+    const PROMO_URL = "https://stats.aperos.net/go/jeux?src=direct";
     const PROMO_REQUIRED_MS = 30000 ; // 30 secondes
     const PROMO_KEYS = {
       enabled: "promo_enabled",
@@ -960,6 +1001,9 @@
 
     // Click "Ajouter l’app"
     document.getElementById("installBtn").addEventListener("click", async () => {
+      // tracking "Ajouter l’app" (sans casser l’installation)
+      fireTrack(TRACK.appClick);
+
       if (isFBInApp) {
         openModal({
           ic:"📣",
