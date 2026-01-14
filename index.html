@@ -3,58 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  
-  <!-- ✅ SEO -->
-  <meta name="description" content="Livraison d’alcool à Perpignan et alentours. Apéro de Nuit 66® : commande rapide, service de nuit, contact direct. Interdit aux mineurs.">
-  <meta name="robots" content="index,follow,max-image-preview:large">
-  <link rel="canonical" href="https://aperos.net/">
-
-  <!-- Open Graph / Social -->
-  <meta property="og:locale" content="fr_FR">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Apéro de Nuit 66®">
-  <meta property="og:title" content="Livraison d’alcool à Perpignan – Apéro de Nuit 66®">
-  <meta property="og:description" content="Livraison d’alcool à Perpignan et alentours. Commande rapide, service de nuit. Interdit aux mineurs.">
-  <meta property="og:url" content="https://aperos.net/">
-  <meta property="og:image" content="https://aperos.net/assets/img/og-image-1200x630.jpg">
-
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Livraison d’alcool à Perpignan – Apéro de Nuit 66®">
-  <meta name="twitter:description" content="Livraison d’alcool à Perpignan et alentours. Commande rapide, service de nuit. Interdit aux mineurs.">
-  <meta name="twitter:image" content="https://aperos.net/assets/img/og-image-1200x630.jpg">
-
-  <!-- ✅ Données structurées (Local SEO) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Apéro de Nuit 66",
-    "url": "https://aperos.net/",
-    "telephone": "+33652336461",
-    "areaServed": ["Perpignan", "Pyrénées-Orientales"],
-    "image": "https://aperos.net/assets/img/og-image-1200x630.jpg",
-    "priceRange": "€€"
-  }
-  </script>
-
-<title>Livraison d’alcool à Perpignan – Apéro de Nuit 66®</title>
+  <title>Apéro de Nuit 66</title>
 
   <!-- ✅ PWA -->
   <link rel="manifest" href="./manifest.webmanifest?v=20260101">
   <meta name="theme-color" content="#0b1c2d">
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=20260101">
-  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png?v=20260101">
-  <link rel="icon" type="image/png" sizes="512x512" href="./assets/icons/icon-512.png?v=20260101">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=20260101">
 
   <!-- Préchargement -->
-  <link rel="preload" as="image" href="assets/img/logo-header.png">
-  <link rel="preload" as="image" href="assets/img/bottle1.png">
-  <link rel="preload" as="image" href="assets/img/bottle2.png">
-  <link rel="preload" as="image" href="assets/img/bottle3.png">
-  <link rel="preload" as="image" href="assets/img/bottle4.png">
-  <link rel="preload" as="image" href="assets/img/bottle5.png">
-  <link rel="preload" as="image" href="assets/img/bottle6.png">
-  <link rel="preload" as="image" href="assets/img/bottle7.png">
+  <link rel="preload" as="image" href="assets/logo-header.png">
+  <link rel="preload" as="image" href="assets/bottle1.png">
+  <link rel="preload" as="image" href="assets/bottle2.png">
+  <link rel="preload" as="image" href="assets/bottle3.png">
+  <link rel="preload" as="image" href="assets/bottle4.png">
+  <link rel="preload" as="image" href="assets/bottle5.png">
+  <link rel="preload" as="image" href="assets/bottle6.png">
+  <link rel="preload" as="image" href="assets/bottle7.png">
 
   <style>
     :root{ --blue:#0b1c2d; --sky:#5db7ee; --text:#0b1c2d; }
@@ -64,7 +30,7 @@
       margin:0; min-height:100dvh; display:flex; flex-direction:column;
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#fff; color:var(--text); overflow-x:hidden; overflow-y:auto;
+      background:#fff; color:var(--text); overflow-x:hidden; overflow-y:hidden;
     }
 
     /* =========================
@@ -129,56 +95,7 @@
     /* TITRE */
     .mid{text-align:center;padding:18px 14px 6px}
     .mid h1{margin:0;font-size:clamp(26px,6vw,40px);color:var(--sky);font-weight:900}
-    
-
-    .seoSub{
-      margin:10px 0 0;
-      font-size:14px;
-      font-weight:800;
-      color:rgba(11,28,45,.85);
-      line-height:1.35;
-    }
-    .seoSub a{color:var(--blue); font-weight:950; text-decoration:none;}
-    .seoSub a:hover{text-decoration:underline;}
-
-    .seoContent{
-      width:min(520px, 92vw);
-      margin:0 auto;
-      padding:10px 14px calc(120px + env(safe-area-inset-bottom));
-      color:rgba(11,28,45,.90);
-    }
-    .seoContent h2{
-      margin:16px 0 8px;
-      font-size:18px;
-      color:var(--blue);
-      letter-spacing:.2px;
-    }
-    .seoContent p, .seoContent li{
-      margin:0 0 10px;
-      font-size:14px;
-      line-height:1.5;
-    }
-    .seoContent ul{margin:0 0 10px 18px; padding:0;}
-    .seoContent details{
-      border:1px solid rgba(11,28,45,.10);
-      background:rgba(11,28,45,.03);
-      border-radius:16px;
-      padding:10px 12px;
-      margin:10px 0;
-    }
-    .seoContent summary{
-      cursor:pointer;
-      font-weight:950;
-      color:var(--blue);
-      list-style:none;
-    }
-    .seoContent summary::-webkit-details-marker{display:none;}
-    .seoContent .fine{
-      font-size:12.5px;
-      color:rgba(11,28,45,.70);
-    }
-
-.brand66{position:relative;display:inline-block}
+    .brand66{position:relative;display:inline-block}
     .brand66 .reg{position:absolute;top:-0.2em;right:-0.4em;font-size:1em;font-weight:800}
 
     /* ZONE BOUTEILLES */
@@ -401,25 +318,7 @@
       opacity:0 !important;
       visibility:hidden !important;
     }
-  
-.sr-only{
-  position:absolute!important;
-  width:1px;height:1px;
-  padding:0;margin:-1px;
-  overflow:hidden;clip:rect(0,0,0,0);
-  white-space:nowrap;border:0;
-}
-.seoDetails{
-  width:min(520px,92vw);
-  margin:10px auto 120px;
-}
-.seoDetails summary{
-  font-size:13px;
-  opacity:.6;
-  cursor:pointer;
-}
-</style>
-
+  </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
@@ -430,26 +329,6 @@
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
   <script defer src="./status-popup.js?v=20260101a"></script>
-
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"FAQPage",
-    "mainEntity":[
-      {
-        "@type":"Question",
-        "name":"Comment commander une livraison d’alcool à Perpignan ?",
-        "acceptedAnswer":{"@type":"Answer","text":"Appuie sur le bouton Commander puis suis les étapes. Tu peux aussi appeler directement le 06 52 33 64 61."}
-      },
-      {
-        "@type":"Question",
-        "name":"Pourquoi confirmer son âge ?",
-        "acceptedAnswer":{"@type":"Answer","text":"La vente d’alcool est interdite aux mineurs. La confirmation d’âge permet de respecter la réglementation."}
-      }
-    ]
-  }
-  </script>
-
 </head>
 
 <body>
@@ -467,24 +346,22 @@
   </div>
 
   <header class="top">
-    <img src="assets/img/logo-header.png" alt="Apéro de Nuit 66 – livraison d’alcool à Perpignan">
+    <img src="assets/logo-header.png" alt="">
   </header>
 
   <section class="mid">
     <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
-  
-    <p class="seoSub sr-only">Livraison d’alcool à Perpignan et alentours • Service de nuit • 06 52 33 64 61</p>
-</section>
+  </section>
 
   <main class="stage">
     <div class="bottleWrap" id="bottles">
-      <img src="assets/img/bottle1.png" class="active" alt="">
-      <img src="assets/img/bottle2.png" alt="Sélection de boissons – Apéro de Nuit 66">
-      <img src="assets/img/bottle3.png" alt="Sélection de boissons – Apéro de Nuit 66">
-      <img src="assets/img/bottle4.png" alt="Sélection de boissons – Apéro de Nuit 66">
-      <img src="assets/img/bottle5.png" alt="Sélection de boissons – Apéro de Nuit 66">
-      <img src="assets/img/bottle6.png" alt="Sélection de boissons – Apéro de Nuit 66">
-      <img src="assets/img/bottle7.png" alt="Sélection de boissons – Apéro de Nuit 66">
+      <img src="assets/bottle1.png" class="active" alt="">
+      <img src="assets/bottle2.png" alt="">
+      <img src="assets/bottle3.png" alt="">
+      <img src="assets/bottle4.png" alt="">
+      <img src="assets/bottle5.png" alt="">
+      <img src="assets/bottle6.png" alt="">
+      <img src="assets/bottle7.png" alt="">
 
       <div class="btnStack">
         <button class="btn primary" id="goBtn">Commander</button>
@@ -502,39 +379,7 @@
     </div>
   </main>
 
-
-  
-<!-- ✅ Contenu SEO (discret, indexable) -->
-<details class="seoDetails" aria-label="Informations livraison">
-  <summary>Informations légales & service</summary>
-  <section class="seoContent">
-    <h2>Apéro de nuit à Perpignan</h2>
-    <p>Apéro de Nuit 66® propose un service de <strong>livraison d’alcool à Perpignan</strong>. Commande simple et contact direct.</p>
-
-    <h2>Livraison d’alcool : informations utiles</h2>
-    <ul>
-      <li><strong>Zone</strong> : Perpignan et alentours (66).</li>
-      <li><strong>Contact</strong> : <a href="tel:+33652336461">06 52 33 64 61</a> • <a href="mailto:contact@aperos.net">contact@aperos.net</a></li>
-      <li><strong>Rappel légal</strong> : vente d’alcool interdite aux mineurs.</li>
-    </ul>
-
-    <h2>SOS apéro / Allo apéro</h2>
-    <p>Si tu cherches “SOS apéro” ou “Allo apéro” à Perpignan, ce service répond à la demande.</p>
-
-    <details>
-      <summary>FAQ – Comment commander ?</summary>
-      <p>Appuie sur <strong>Commander</strong>, puis suis les étapes.</p>
-    </details>
-
-    <details>
-      <summary>FAQ – Pourquoi confirmer son âge ?</summary>
-      <p>La vente d’alcool est interdite aux mineurs.</p>
-    </details>
-  </section>
-</details>
-
-
-<!-- Toast -->
+  <!-- Toast -->
   <div class="toast" id="toast">✅ Apéro de Nuit 66® est ajouté à ton écran d’accueil !</div>
 
   <!-- Modale help install -->
