@@ -401,7 +401,25 @@
       opacity:0 !important;
       visibility:hidden !important;
     }
-  </style>
+  
+.sr-only{
+  position:absolute!important;
+  width:1px;height:1px;
+  padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0,0,0,0);
+  white-space:nowrap;border:0;
+}
+.seoDetails{
+  width:min(520px,92vw);
+  margin:10px auto 120px;
+}
+.seoDetails summary{
+  font-size:13px;
+  opacity:.6;
+  cursor:pointer;
+}
+</style>
+
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
@@ -455,10 +473,7 @@
   <section class="mid">
     <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
   
-    <p class="seoSub">
-      <strong>Livraison d’alcool à Perpignan</strong> et alentours • Service de nuit •
-      <a href="tel:+33652336461" aria-label="Appeler Apéro de Nuit 66">06 52 33 64 61</a>
-    </p>
+    <p class="seoSub sr-only">Livraison d’alcool à Perpignan et alentours • Service de nuit • 06 52 33 64 61</p>
 </section>
 
   <main class="stage">
@@ -488,13 +503,13 @@
   </main>
 
 
-  <!-- ✅ Contenu SEO (visible, sans casser l’UX) -->
-  <section class="seoContent" aria-label="Informations livraison">
+  
+<!-- ✅ Contenu SEO (discret, indexable) -->
+<details class="seoDetails" aria-label="Informations livraison">
+  <summary>Informations légales & service</summary>
+  <section class="seoContent">
     <h2>Apéro de nuit à Perpignan</h2>
-    <p>
-      Apéro de Nuit 66® propose un service de <strong>livraison d’alcool à Perpignan</strong>.
-      L’objectif : une commande simple, un contact direct, et une expérience fluide depuis ton téléphone.
-    </p>
+    <p>Apéro de Nuit 66® propose un service de <strong>livraison d’alcool à Perpignan</strong>. Commande simple et contact direct.</p>
 
     <h2>Livraison d’alcool : informations utiles</h2>
     <ul>
@@ -504,23 +519,20 @@
     </ul>
 
     <h2>SOS apéro / Allo apéro</h2>
-    <p>
-      Si tu cherches “<em>SOS apéro</em>” ou “<em>Allo apéro</em>” à Perpignan, tu es au bon endroit :
-      ici tu peux commander ou nous appeler rapidement.
-    </p>
+    <p>Si tu cherches “SOS apéro” ou “Allo apéro” à Perpignan, ce service répond à la demande.</p>
 
     <details>
       <summary>FAQ – Comment commander ?</summary>
-      <p>Appuie sur <strong>Commander</strong>, puis suis les étapes. Si besoin, tu peux aussi appeler directement.</p>
+      <p>Appuie sur <strong>Commander</strong>, puis suis les étapes.</p>
     </details>
 
     <details>
-      <summary>FAQ – Pourquoi je dois confirmer mon âge ?</summary>
-      <p>Ce site présente des boissons alcoolisées : la confirmation d’âge aide à respecter la réglementation.</p>
+      <summary>FAQ – Pourquoi confirmer son âge ?</summary>
+      <p>La vente d’alcool est interdite aux mineurs.</p>
     </details>
-
-    <p class="fine">L’abus d’alcool est dangereux pour la santé, à consommer avec modération.</p>
   </section>
+</details>
+
 
 <!-- Toast -->
   <div class="toast" id="toast">✅ Apéro de Nuit 66® est ajouté à ton écran d’accueil !</div>
