@@ -14,8 +14,8 @@ const CORE_ASSETS = [
 
   // (optionnel) si présents
   "./style.css",
-  "./logo.png",
-  "./partage.png",
+  "./assets/img/logo.png",
+  "./assets/img/partage.png",
 
   // icônes possibles (selon tes noms de fichiers)
   "./icon-192.png",
@@ -26,14 +26,14 @@ const CORE_ASSETS = [
   "./assets/apple-touch-icon.png",
 
   // assets possibles
-  "./assets/logo-header.png",
-  "./assets/bottle1.png",
-  "./assets/bottle2.png",
-  "./assets/bottle3.png",
-  "./assets/bottle4.png",
-  "./assets/bottle5.png",
-  "./assets/bottle6.png",
-  "./assets/bottle7.png",
+  "./assets/img/logo-header.png",
+  "./assets/img/bottle1.png",
+  "./assets/img/bottle2.png",
+  "./assets/img/bottle3.png",
+  "./assets/img/bottle4.png",
+  "./assets/img/bottle5.png",
+  "./assets/img/bottle6.png",
+  "./assets/img/bottle7.png",
 ];
 
 // Ajout tolérant: si 1 fichier manque, on n’annule pas tout le SW
