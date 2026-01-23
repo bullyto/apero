@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Suivi de commande • Apéro de Nuit 66</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="icon" href="./assets/icon-192.png">
+  <!-- IMPORTANT: pas de manifest ici -> le navigateur ne proposera pas d'installer la PWA côté client -->
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body class="client">
+  <div class="clientShell">
+    <!-- La carte occupe tout l’écran. Le bandeau + popup passent AU-DESSUS. -->
+    <div class="mapWrap clientMapWrap" aria-label="Carte">
+      <div id="map" class="clientMap"></div>
+
+      <header class="clientTopbar" aria-label="Bandeau suivi">
+        <div class="topBrand" aria-label="Marque">
+          <img class="topBrandLogo" alt="Apéro de Nuit 66" src="../assets/logo-header.png">
+        </div>
+
+        <div class="topTimer" aria-label="Temps restant">
+          <span class="topIcon" aria-hidden="true">⏱️</span>
+          <span id="countdown">—</span>
+        </div>
+
+        <div class="topState" aria-label="État">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="stateText">—</span>
+        </div>
+      </header>
+
+      <!-- Popup minimaliste au-dessus de la carte -->
+      <section class="clientPopup" aria-label="Panneau de suivi" aria-live="polite">
+        <div class="clientPopupCard">
+          <h1 class="clientPopupTitle">Suivi en direct</h1>
+          <p class="clientPopupSub">Indiquez votre prénom pour activer le suivi.</p>
+
+          <div class="clientPopupRow" aria-label="Statut géolocalisation">
+            <span class="clientPopupRowI" aria-hidden="true">📍</span>
+            <span id="geoText">en attente…</span>
+          </div>
+
+          <div class="clientForm">
+            <label class="clientLabel" for="name"> </label>
+            <input id="name" class="clientInput" maxlength="24" autocomplete="given-name" placeholder="Ex: Lucas">
+          </div>
+
+          <div class="clientBtnRow">
+            <button id="btnRequest" class="clientBtn" type="button">Activer le suivi</button>
+            <button id="btnReset" class="clientBtn secondary" type="button" style="display:none">Relancer</button>
+          </div>
+
+          <div class="clientHint">  </div>
+        </div>
+      </section>
+
+      <div class="legal">L’abus d’alcool est dangereux pour la santé, à consommer avec modération.</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="./client.js"></script>
+</body>
+</html>
