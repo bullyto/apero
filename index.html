@@ -9,8 +9,8 @@
   <link rel="manifest" href="./manifest.webmanifest?v=20260101">
   <meta name="theme-color" content="#0b1c2d">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260101">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png?v=20260101">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png?v=20260101">
 
   <!-- Préchargement -->
   <link rel="preload" as="image" href="assets/logo-header.png">
@@ -155,16 +155,7 @@
       pointer-events:none;
     }
 
-    
-
-    .badge-new.invert{
-      background:#fff;
-      color:var(--sky);
-      border:2px solid rgba(93,183,238,.65);
-      box-shadow:0 10px 22px rgba(255,255,255,.25);
-    }
-
-/* MODALE */
+    /* MODALE */
     .modal{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
       padding:18px;background:rgba(0,0,0,.55);z-index:999;
@@ -384,12 +375,6 @@
           Code promo
           <span class="badge-new" id="promoBadge">Nouveau</span>
         </button>
-
-        <button class="btn primary" id="followBtn" style="display:none">
-          Suivre le livreur
-          <span class="badge-new invert" id="followBadge">Nouveau</span>
-        </button>
-
       </div>
     </div>
   </main>
@@ -851,8 +836,6 @@
     // 🎁 PROMO
     // =========================
     const PROMO_URL = "https://stats.aperos.net/go/jeux?src=direct";
-    const FOLLOW_URL = "./suivi/client.html";
-
     const PROMO_REQUIRED_MS = 30000 ; // 30 secondes
     const PROMO_KEYS = {
       enabled: "promo_enabled",
@@ -861,10 +844,6 @@
       unlockedTs: "promo_unlocked_ts",
       expiryTs: "promo_expiry_ts",
       clicked: "promo_clicked"
-    };
-
-    const FOLLOW_KEYS = {
-      clicked: "follow_clicked"
     };
 
     function addMonths(ts, months){
@@ -915,22 +894,7 @@
       if (promoBadge){
         promoBadge.style.display = lsGetBool(PROMO_KEYS.clicked) ? "none" : "inline-block";
       }
-    
-
-    function followUpdateUI(){
-      const followBtn = document.getElementById("followBtn");
-      const followBadge = document.getElementById("followBadge");
-      if (!followBtn) return;
-
-      // Toujours visible (site + PWA) : la page de suivi est utile pendant la livraison
-      followBtn.style.display = "block";
-
-      if (followBadge){
-        followBadge.style.display = lsGetBool(FOLLOW_KEYS.clicked) ? "none" : "inline-block";
-      }
     }
-
-}
 
     function promoUnlockNow(){
       const now = Date.now();
@@ -995,20 +959,8 @@
       });
     }
 
-    
-
-    const followBtnEl = document.getElementById("followBtn");
-    if (followBtnEl){
-      followBtnEl.addEventListener("click", () => {
-        lsSetBool(FOLLOW_KEYS.clicked, true);
-        followUpdateUI();
-        window.location.href = FOLLOW_URL;
-      });
-    }
-promoUpdateUI();
+    promoUpdateUI();
     promoStartSession();
-
-    followUpdateUI();
 
     // Modale helpers
     const modal = document.getElementById("helpModal");
