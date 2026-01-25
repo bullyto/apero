@@ -417,7 +417,9 @@
 
     /* ADN66 — Menu top-right + footer legal (discret) */
     .adn-menu-btn{
-      position:fixed; top:14px; right:14px;
+      position:fixed;
+      top: calc(26vh + 10px); /* ✅ sous le logo (max-height:26vh), n’empiète jamais */
+      right:14px;
       z-index:9999;
       padding:9px 12px;
       border-radius:12px;
@@ -430,6 +432,50 @@
       -webkit-backdrop-filter: blur(10px);
       box-shadow:0 10px 30px rgba(0,0,0,.25);
       cursor:pointer;
+      overflow:hidden;
+      isolation:isolate; /* garantit les z-index internes */
+    }
+
+    .adn-menu-label{
+      position:relative;
+      z-index:3;
+    }
+
+    /* ✨ Reflet lumineux blanc (toutes les 2s) */
+    .adn-menu-btn::before{
+      content:"";
+      position:absolute;
+      inset:-3px;
+      border-radius:inherit;
+      background:conic-gradient(
+        from 0deg,
+        transparent 0deg,
+        rgba(255,255,255,0.95) 55deg,
+        transparent 120deg
+      );
+      opacity:0;
+      pointer-events:none;
+      animation:adnGlowSpin 2s infinite;
+      z-index:1;
+    }
+
+    /* masque intérieur pour ne garder que l’effet sur les bords */
+    .adn-menu-btn::after{
+      content:"";
+      position:absolute;
+      inset:2px;
+      border-radius:inherit;
+      background:rgba(10,18,30,.55);
+      pointer-events:none;
+      z-index:2;
+    }
+
+    @keyframes adnGlowSpin{
+      0%   {opacity:0; transform:rotate(0deg);}
+      8%   {opacity:1;}
+      45%  {opacity:1; transform:rotate(360deg);}
+      60%  {opacity:0;}
+      100% {opacity:0; transform:rotate(360deg);}
     }
     .adn-menu-btn:active{ transform:translateY(1px); }
 
@@ -1313,7 +1359,7 @@
   </script>
 
     <!-- ADN66: Menu (top-right) + footer legal links -->
-  <button class="adn-menu-btn" id="adnMenuBtn" type="button" aria-haspopup="dialog" aria-controls="adnMenuSheet" aria-expanded="false">Menus</button>
+  <button class="adn-menu-btn" id="adnMenuBtn" type="button" aria-haspopup="dialog" aria-controls="adnMenuSheet" aria-expanded="false"><span class="adn-menu-label">Menus</span></button>
 
   <div class="adn-menu-backdrop" id="adnMenuBackdrop" aria-hidden="true"></div>
 
