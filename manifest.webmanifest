@@ -1,29 +1,21 @@
 {
-  "name": "Apéro de Nuit 66®",
-  "short_name": "Apéro Nuit 66",
-  "description": "Livraison de boissons la nuit à Perpignan et Pyrénées-Orientales (66). Service 7j/7 de 19h à 6h. Accès rapide, suivi de demande et informations du service. Réservé aux personnes majeures.",
-  "id": "/?src=pwa",
-  "start_url": "./?src=pwa",
-  "scope": "./",
-  "display": "standalone",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
-  "orientation": "portrait",
+  "name": "Apéro de nuit 66®",
+  "short_name": "Apéro de nuit 66®",
+  "description": "Livraison de boissons la nuit à Perpignan et dans les Pyrénées-Orientales (66). Service 7j/7 de 19h à 6h. Accès rapide aux informations, suivi du service et expérience mobile optimisée. Réservé aux personnes majeures.",
   "lang": "fr-FR",
   "dir": "ltr",
-  "theme_color": "#0b4bff",
+
+  "start_url": "/?src=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+
   "background_color": "#ffffff",
-  "categories": [
-    "food",
-    "shopping",
-    "business"
-  ],
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  },
-  "prefer_related_applications": false,
+  "theme_color": "#0b2a5a",
+
+  "categories": ["food", "shopping", "business"],
+
   "icons": [
     {
       "src": "/icons/icon-192.png",
@@ -38,32 +30,30 @@
       "purpose": "any maskable"
     }
   ],
+
   "screenshots": [
     {
-      "src": "/screenshots/screen1.png",
+      "src": "/screenshots/narrow-1080x1920.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Apéro de Nuit – interface mobile"
     },
     {
-      "src": "/screenshots/screen2.png",
-      "sizes": "1080x1920",
+      "src": "/screenshots/wide-1920x1080.png",
+      "sizes": "1920x1080",
       "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshots/screen3.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "wide",
+      "label": "Apéro de Nuit – vue paysage"
     }
   ],
+
   "shortcuts": [
     {
       "name": "Appeler",
-      "short_name": "Appel",
-      "description": "Appeler Apéro de Nuit 66",
-      "url": "./?src=pwa#call",
+      "short_name": "Appeler",
+      "description": "Appeler le service Apéro de Nuit",
+      "url": "#call",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -75,8 +65,8 @@
     {
       "name": "Horaires & zone",
       "short_name": "Infos",
-      "description": "Voir horaires (19h-6h) et infos du service",
-      "url": "./?src=pwa#infos",
+      "description": "Horaires et zone de livraison",
+      "url": "#infos",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -88,8 +78,8 @@
     {
       "name": "Confidentialité",
       "short_name": "Privacy",
-      "description": "Lire la politique de confidentialité",
-      "url": "./privacy.html",
+      "description": "Politique de confidentialité",
+      "url": "/privacy.html",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -98,5 +88,9 @@
         }
       ]
     }
-  ]
+  ],
+
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  }
 }
