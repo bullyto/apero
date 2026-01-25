@@ -1,103 +1,116 @@
 {
   "name": "Apéro de nuit 66®",
-  "short_name": "Apéro de nuit 66®",
-  "description": "Livraison de boissons la nuit à Perpignan et dans les Pyrénées-Orientales (66). Service 7j/7 de 19h à 6h. Accès rapide aux informations, suivi du service et expérience mobile optimisée. Réservé aux personnes majeures.",
+  "short_name": "Apéro 66",
+  "description": "Service de livraison de boissons alcoolisées la nuit à Perpignan et dans les Pyrénées-Orientales (66). Ouvert 7j/7 de 19h à 6h. Application réservée aux personnes majeures.",
   "lang": "fr-FR",
   "dir": "ltr",
+
+  "id": "/?src=pwa",
   "start_url": "/?src=pwa",
   "scope": "/",
+
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0a4cff",
-  "orientation": "portrait",
-  "id": "/",
   "display_override": [
     "standalone",
     "minimal-ui",
     "browser"
   ],
+  "orientation": "portrait",
+
+  "theme_color": "#0b49ff",
+  "background_color": "#ffffff",
+
   "categories": [
     "food",
     "shopping",
-    "business"
+    "business",
+    "lifestyle"
   ],
+
   "prefer_related_applications": false,
+
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "/icons/icon-256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
+
   "screenshots": [
     {
-      "src": "screenshots/narrow-1080x1920.png",
+      "src": "/screenshots/narrow-1080x1920.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "label": "Accueil (mobile)"
+      "form_factor": "narrow",
+      "label": "Application mobile Apéro de nuit 66"
     },
     {
-      "src": "screenshots/wide-1920x1080.png",
+      "src": "/screenshots/wide-1920x1080.png",
       "sizes": "1920x1080",
       "type": "image/png",
-      "label": "Accueil (paysage)"
+      "form_factor": "wide",
+      "label": "Vue paysage Apéro de nuit 66"
     }
   ],
+
   "shortcuts": [
     {
-      "name": "Commander",
-      "short_name": "Commander",
-      "description": "Accéder rapidement à l’application.",
-      "url": "/?src=shortcut",
+      "name": "Appeler",
+      "short_name": "Appeler",
+      "description": "Appeler directement Apéro de nuit 66",
+      "url": "/?src=shortcut-call",
       "icons": [
         {
-          "src": "icons/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png",
-          "purpose": "any"
-        }
-      ]
-    },
-    {
-      "name": "Suivi commande",
-      "short_name": "Suivi",
-      "description": "Suivre l’état de la demande et le livreur (si disponible).",
-      "url": "suivi/",
-      "icons": [
-        {
-          "src": "icons/icon-192.png",
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
       ]
     },
     {
-      "name": "Jeu promo",
-      "short_name": "Jeu",
-      "description": "Accéder au mini-jeu promotionnel (réservé aux majeurs).",
-      "url": "game/",
+      "name": "Suivi",
+      "short_name": "Suivi",
+      "description": "Accéder au suivi de commande",
+      "url": "/suivi/?src=shortcut-suivi",
       "icons": [
         {
-          "src": "icons/icon-192.png",
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Jeu",
+      "short_name": "Jeu",
+      "description": "Accéder au jeu promotionnel",
+      "url": "/game/?src=shortcut-game",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
