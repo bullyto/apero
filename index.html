@@ -329,15 +329,39 @@
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
   <script>
-  // ✅ STATUS central (nouvelle URL)
+  // ✅ PATCH STATUS: force la PWA à lire /outil/apps/status/status.json (et plus l'ancien repo /status)
   (function(){
-    var u = "https://bullyto.github.io/outil/apps/status/status.json";
-    window.AD_STATUS_URL = u;
-    window.AD_STATUS_JSON_URL = u;
-    window.STATUS_URL = u;
-    window.STATUS_JSON_URL = u;
-    window.statusJsonUrl = u;
-    try { document.documentElement.setAttribute("data-status-url", u); } catch(e) {}
+    var NEW_STATUS_URL = "https://bullyto.github.io/outil/apps/status/status.json";
+    // Expose/compat
+    window.AD_STATUS_URL = NEW_STATUS_URL;
+    window.AD_STATUS_JSON_URL = NEW_STATUS_URL;
+    window.STATUS_URL = NEW_STATUS_URL;
+    window.STATUS_JSON_URL = NEW_STATUS_URL;
+    window.statusJsonUrl = NEW_STATUS_URL;
+    try { document.documentElement.setAttribute('data-status-url', NEW_STATUS_URL); } catch(e) {}
+
+    // Interception fetch() pour réécrire toute requête vers l'ancien status.json
+    var _fetch = window.fetch ? window.fetch.bind(window) : null;
+    if (_fetch) {
+      window.fetch = function(input, init){
+        try {
+          var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
+          if (url) {
+            var u = url;
+            // Remplace plusieurs variantes connues de l'ancien status
+            if (u.indexOf('bullyto.github.io/status/status.json') !== -1) u = NEW_STATUS_URL;
+            if (u.indexOf('raw.githubusercontent.com/bullyto/status') !== -1) u = NEW_STATUS_URL;
+            // Si quelqu’un appelle /status.json en relatif, on le force aussi
+            if (/\/status\.json(\?|$)/i.test(u) && u.indexOf('/outil/apps/status/status.json') === -1) u = NEW_STATUS_URL;
+            if (u !== url) {
+              if (typeof input === 'string') input = u;
+              else if (input && input.url) input = new Request(u, input);
+            }
+          }
+        } catch(e) {}
+        return _fetch(input, init);
+      };
+    }
   })();
 </script>
 <script defer src="./status-popup.js?v=20260101a"></script>
