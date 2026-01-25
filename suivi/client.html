@@ -402,38 +402,20 @@
     });
   
 
-/* ===== ADN66 UI PATCH: popup état + chrono (v4 STOP SAFE) ===== */
+</script>
+
+<script>
+
+/* ===== ADN66 UI PATCH: LIGHT (no fetch/setInterval override) ===== */
 (() => {
   const elPopup = document.getElementById('clientPopup');
   const elStateText = document.getElementById('stateText');
   const elStateDot = document.getElementById('stateDot');
   const elCountdown = document.getElementById('countdown');
+  const elGeoText = document.getElementById('geoText');
 
   const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
   const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
-
-  let lockMode = null; // null | 'accepted' | 'ended' | 'refused' | 'pending'
-  const intervalIds = new Set();
-
-  // Capture all intervals created by the page (to stop countdown when needed)
-  const _setInterval = window.setInterval.bind(window);
-  const _clearInterval = window.clearInterval.bind(window);
-  window.setInterval = (fn, ms, ...rest) => {
-    const id = _setInterval(fn, ms, ...rest);
-    intervalIds.add(id);
-    return id;
-  };
-  window.clearInterval = (id) => {
-    intervalIds.delete(id);
-    return _clearInterval(id);
-  };
-
-  const killAllIntervals = () => {
-    intervalIds.forEach((id) => {
-      try { _clearInterval(id); } catch (e) {}
-    });
-    intervalIds.clear();
-  };
 
   const setDot = (mode) => {
     if (!elStateDot) return;
@@ -451,122 +433,131 @@
     }
   };
 
-  const normalizeState = (raw) => {
-    const s = (raw ?? '').toString().toLowerCase().trim();
-    if (['accepted','accept','ok','active','granted','autorise','autorisé','allowed','running'].includes(s)) return 'accepted';
-    if (['refused','reject','rejected','denied','ko','blocked','refuse','refusé'].includes(s)) return 'refused';
-    if (['stopped','stop','ended','expired','timeout','finished','done','closed','revoked','revoke','revoké'].includes(s)) return 'ended';
-    if (['pending','wait','waiting','attente','request','requested'].includes(s)) return 'pending';
-    if (s.includes('refus')) return 'refused';
-    if (s.includes('accept') || s.includes('actif')) return 'accepted';
-    if (s.includes('stop') || s.includes('expir') || s.includes('termin') || s.includes('revok')) return 'ended';
-    if (s) return s;
-    return 'pending';
+  const parseToSeconds = (txt) => {
+    const t = (txt || '').trim();
+    if (!t) return 0;
+    const parts = t.split(':').map(p => p.trim());
+    if (parts.length === 2) {
+      const m = parseInt(parts[0], 10);
+      const s = parseInt(parts[1], 10);
+      if (Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, m * 60 + s);
+    }
+    if (parts.length === 3) {
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const s = parseInt(parts[2], 10);
+      if (Number.isFinite(h) && Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, h * 3600 + m * 60 + s);
+    }
+    return 0;
   };
 
-  const forceCountdownZero = () => {
-    if (elCountdown) elCountdown.textContent = '0:00';
-  };
+  let lastMode = 'pending'; // pending | waiting | active | refused | ended
 
-  const lockTo = (mode) => {
-    lockMode = mode;
-    if (mode === 'accepted') {
-      if (elStateText) elStateText.textContent = 'Suivi actif';
+  const setMode = (mode) => {
+    if (!elStateText) return;
+
+    lastMode = mode;
+
+    if (mode === 'active') {
+      elStateText.textContent = 'Suivi actif';
       setDot('ok');
       hidePopup();
       return;
     }
+    if (mode === 'waiting') {
+      elStateText.textContent = 'En attente de décision';
+      setDot('warn');
+      showPopup();
+      return;
+    }
     if (mode === 'refused') {
-      if (elStateText) elStateText.textContent = 'Accès refusé';
+      elStateText.textContent = 'Accès refusé';
       setDot('bad');
       showPopup();
-      forceCountdownZero();
-      killAllIntervals();
+      if (elCountdown) elCountdown.textContent = '0:00';
       return;
     }
     if (mode === 'ended') {
-      if (elStateText) elStateText.textContent = 'Suivi terminé';
+      elStateText.textContent = 'Suivi terminé';
       setDot('warn');
       showPopup();
-      forceCountdownZero();
-      killAllIntervals(); // IMPORTANT: stop any running countdown interval
+      if (elCountdown) elCountdown.textContent = '0:00';
       return;
     }
-    // pending
-    if (elStateText) elStateText.textContent = 'En attente';
+    // pending default
+    elStateText.textContent = 'En attente';
     setDot('warn');
     showPopup();
-    forceCountdownZero();
+    if (elCountdown) elCountdown.textContent = '0:00';
   };
 
-  const applyState = (stateRaw) => {
-    const st = normalizeState(stateRaw);
+  // Hook for your existing JS (if present)
+  // You can call: window.ADN66_UI.set('waiting'|'active'|'refused'|'ended'|'pending')
+  window.ADN66_UI = { set: setMode };
 
-    // If we are already ended/refused, never allow to go back to active unless backend truly says accepted
-    if (lockMode === 'ended' && st !== 'accepted') return;
-    if (lockMode === 'refused' && st !== 'accepted') return;
+  // === Observers: we infer states from DOM changes made by the existing logic ===
 
-    if (st === 'accepted') return lockTo('accepted');
-    if (st === 'refused') return lockTo('refused');
-    if (st === 'ended') return lockTo('ended');
-    return lockTo('pending');
+  // 1) If countdown > 0 => ACTIVE (even if another script forgot to change the label)
+  const applyFromCountdown = () => {
+    if (!elCountdown) return;
+    const sec = parseToSeconds(elCountdown.textContent);
+    if (sec > 0) {
+      if (lastMode !== 'active') setMode('active');
+      return;
+    }
+    // countdown == 0
+    if (lastMode === 'active') {
+      // if we were active and now 0:00 => ended (STOP or TIMEOUT)
+      setMode('ended');
+      return;
+    }
+    // if not active, keep current mode
   };
 
-  window.__ADN66_UI_SET = applyState;
+  // 2) If geoText indicates "demande" => WAITING, if indicates "refus" => REFUSED
+  const applyFromGeo = () => {
+    if (!elGeoText) return;
+    const t = (elGeoText.textContent || '').toLowerCase();
+    if (t.includes('décision') || t.includes('demande') || t.includes('envoi') || t.includes('envoy')) {
+      if (lastMode !== 'active') setMode('waiting');
+      return;
+    }
+    if (t.includes('refus')) {
+      setMode('refused');
+      return;
+    }
+  };
 
-  // STOP-SAFE: if countdown changes while ended/refused -> reset to 0:00
+  // 3) If another script writes in stateText, we respect strong signals but countdown still wins for ACTIVE
+  const applyFromStateText = () => {
+    if (!elStateText) return;
+    const t = (elStateText.textContent || '').toLowerCase();
+    if (t.includes('refus')) return setMode('refused');
+    if (t.includes('termin') || t.includes('stop') || t.includes('expir')) return setMode('ended');
+    if (t.includes('décision')) return setMode('waiting');
+    if (t.includes('actif') || t.includes('accept')) return setMode('active');
+    if (t.includes('attente')) return setMode('pending');
+  };
+
   if (elCountdown) {
-    const obsC = new MutationObserver(() => {
-      const mode = lockMode;
-      if (mode === 'ended' || mode === 'refused') {
-        const t = (elCountdown.textContent || '').trim();
-        if (t !== '0:00') forceCountdownZero();
-      }
-    });
-    obsC.observe(elCountdown, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(() => applyFromCountdown()).observe(elCountdown, { childList:true, subtree:true, characterData:true });
   }
-
-  // STOP-SAFE: if state text is modified by other code, re-assert lock
+  if (elGeoText) {
+    new MutationObserver(() => { applyFromGeo(); applyFromCountdown(); }).observe(elGeoText, { childList:true, subtree:true, characterData:true });
+  }
   if (elStateText) {
-    const obsS = new MutationObserver(() => {
-      const mode = lockMode;
-      if (mode === 'ended') lockTo('ended');
-      if (mode === 'refused') lockTo('refused');
-      if (mode === 'accepted') lockTo('accepted');
-      if (mode === 'pending') lockTo('pending');
-    });
-    obsS.observe(elStateText, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(() => { applyFromStateText(); applyFromCountdown(); }).observe(elStateText, { childList:true, subtree:true, characterData:true });
   }
 
-  // Patch fetch on /client/status to enforce end/stop immediately
-  const _fetch = window.fetch;
-  window.fetch = async (...args) => {
-    const res = await _fetch(...args);
-    try {
-      const url = (args[0] && args[0].toString) ? args[0].toString() : '';
-      if (url.includes('/client/status')) {
-        res.clone().json().then((data) => {
-          const state =
-            data?.status ?? data?.state ?? data?.access ?? data?.result ?? data?.decision ??
-            data?.mode ?? data?.allowed ?? data?.tracking ?? data?.driverStatus ?? data?.clientStatus;
-          if (state !== undefined) applyState(state);
-
-          // Heuristique: si le backend renvoie explicitement un "stop" (flag), on termine
-          const stopped = data?.stopped ?? data?.stop ?? data?.ended ?? data?.expired ?? data?.revoked;
-          if (stopped === true) applyState('ended');
-        }).catch(()=>{});
-      }
-    } catch (e) {}
-    return res;
-  };
-
-  // init pending
-  lockTo('pending');
+  // Initial: only set if empty (do NOT fight the real logic)
+  if (elStateText && !elStateText.textContent.trim()) {
+    setMode('pending');
+  } else {
+    // still ensure countdown rule is applied
+    applyFromCountdown();
+  }
 })();
 
-
-
 </script>
-
 </body>
 </html>
