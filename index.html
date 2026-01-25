@@ -609,7 +609,8 @@
       <img src="assets/bottle7.png" alt="">
 
       <div class="btnStack">
-        <button class="btn primary" id="goBtn">Commander</button>
+        <!-- ✅ PLAY STORE SAFE: pas de bouton commander -->
+        <button class="btn primary" id="callBtn" data-call>📞 Appeler</button>
 
         <button class="btn secondary pulse" id="installBtn" style="display:none">
           Ajouter l’app
@@ -821,7 +822,8 @@
       const callLike = t.closest("#callBtn,[data-call],[data-action='call']");
       if (telLink || callLike) fireTrack(TRACK.call);
     }, true);
-// ✅ Standalone (PWA)
+
+    // ✅ Standalone (PWA)
     function isStandalone(){
       return window.matchMedia("(display-mode: standalone)").matches
         || window.navigator.standalone === true; // iOS
@@ -920,6 +922,7 @@
       KEY_MINOR_UNTIL: "adn_minor_until",
       MAJOR_MS: 20 * 24 * 60 * 60 * 1000, // 20 jours
       MINOR_MS: 48 * 60 * 60 * 1000,      // 48h
+      // garder l'URL (ne sert plus ici), pour futur si besoin
       commanderUrl: "https://aperodenuit.com/commander"
     };
 
@@ -1171,6 +1174,7 @@
       if (!existing) localStorage.setItem(PROMO_KEYS.visibleStart, String(Date.now()));
     }
 
+    // ⚠️ Promo kickoff conservé (mais ne sera jamais déclenché sans "Commander")
     function promoKickoffAfterCommander(){
       if (!isStandalone()) return;
 
@@ -1297,13 +1301,15 @@
       });
     });
 
-    // ✅ Commander -> passe par Age Gate + promo
-    document.getElementById("goBtn").addEventListener("click", () => {
-      requireMajorThen(() => {
-        promoKickoffAfterCommander();
-        window.location.href = AGE.commanderUrl;
+    // ✅ ACTION PRINCIPALE: APPELER (pas de commander)
+    const callBtn = document.getElementById("callBtn");
+    if (callBtn){
+      callBtn.addEventListener("click", () => {
+        // tracking appel
+        fireTrack(TRACK.call);
+        window.location.href = "tel:0652336461";
       });
-    });
+    }
   </script>
 
     <!-- ADN66: Menu (top-right) + footer legal links -->
