@@ -4,137 +4,495 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0a0f1a"/>
-  <title>Politique de confidentialité — Apéro de Nuit 66</title>
+  <meta name="description" content="Politique de confidentialité — Apéro de Nuit 66"/>
+  <title>Confidentialité — Apéro de Nuit 66</title>
+
+  <!-- Optionnel: si tu as déjà Inter ailleurs, sinon system fonts suffisent -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root{
+      /* Couleurs index Apéro de Nuit 66 */
       --bg:#070b12;
+      --bg2:#050812;
       --card:#0d1422;
+      --line:rgba(255,255,255,.10);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.68);
-      --line:rgba(255,255,255,.10);
-      --accent:#5db7ee;
+      --muted2:rgba(255,255,255,.55);
+      --accent:#5db7ee; /* bleu ADN */
+      --ring: rgba(93,183,238,.22);
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --shadow2: 0 10px 25px rgba(0,0,0,.28);
     }
+
     *{box-sizing:border-box}
-    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#070b12,#050812); color:var(--text);}
-    .wrap{max-width:900px; margin:0 auto; padding:18px 14px 40px;}
-    .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
-    .back{display:inline-flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); text-decoration:none; font-weight:800;}
-    .title{font-weight:1000; font-size:18px; letter-spacing:.2px;}
-    .card{border:1px solid var(--line); background:rgba(13,20,34,.88); border-radius:18px; padding:16px; box-shadow: 0 18px 60px rgba(0,0,0,.35);}
-    h2{margin:18px 0 10px; font-size:16px;}
-    p,li{color:var(--muted); line-height:1.55}
-    ul{margin:8px 0 0 18px}
-    .hr{height:1px; background:var(--line); margin:14px 0}
-    .note{padding:12px; border-radius:14px; border:1px solid rgba(93,183,238,.25); background:rgba(93,183,238,.10); color:rgba(255,255,255,.86);}
-    .footer{margin-top:14px; color:rgba(255,255,255,.55); font-size:12px;}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(93,183,238,.20), transparent 55%),
+        radial-gradient(900px 650px at 110% 0%, rgba(93,183,238,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      color:var(--text);
+    }
+
+    /* Topbar (inspirée Apéro Catalan, mais en dark ADN) */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background: rgba(13,20,34,.86);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .topbar-inner{
+      max-width:900px;
+      margin:0 auto;
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .logo{
+      width:40px;height:40px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(93,183,238,.22);
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      overflow:hidden;
+    }
+    .logo span{
+      font-weight:1000;
+      color:var(--accent);
+      letter-spacing:.5px;
+    }
+    .brand-title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+    .brand-title strong{
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand-title span{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      color:var(--text);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow: none;
+      flex:0 0 auto;
+    }
+    .btn:hover{border-color: rgba(93,183,238,.30)}
+    .btn:active{transform:translateY(1px)}
+
+    /* Layout */
+    .wrap{
+      max-width:900px;
+      margin:0 auto;
+      padding:16px 14px 40px;
+    }
+
+    .hero{
+      margin-top:14px;
+      padding:16px 16px 14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
+    }
+    .hero h1{
+      margin:0 0 8px;
+      font-size:18px;
+      letter-spacing:.2px;
+      font-weight:1000;
+    }
+    .hero p{
+      margin:0;
+      color: var(--muted);
+      font-size:13.5px;
+      line-height:1.55;
+    }
+
+    .card{
+      margin-top:14px;
+      background: rgba(13,20,34,.88);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .pill{
+      width:34px;height:34px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background: rgba(93,183,238,.12);
+      border:1px solid rgba(93,183,238,.22);
+      color: rgba(255,255,255,.92);
+      font-weight:1000;
+      flex:0 0 auto;
+      box-shadow: 0 10px 18px rgba(0,0,0,.20);
+    }
+    .card-hd h2{
+      margin:0;
+      font-size:15px;
+      font-weight:1000;
+      letter-spacing:.2px;
+    }
+    .card-hd p{
+      margin:4px 0 0;
+      color: var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .card-bd{
+      padding:12px 14px 14px;
+      font-size:13.5px;
+      line-height:1.6;
+      color: var(--muted);
+    }
+    .card-bd b, .card-bd strong{color:var(--text)}
+    .card-bd ul{
+      margin:8px 0 0 18px;
+      padding:0;
+    }
+    .card-bd li{margin:6px 0}
+
+    .note{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background: rgba(93,183,238,.10);
+      border:1px solid rgba(93,183,238,.25);
+      color: rgba(255,255,255,.86);
+      font-size:12.8px;
+      line-height:1.5;
+    }
+
+    .hr{height:1px; background:rgba(255,255,255,.10); margin:14px 0}
+
+    .mutedlink{
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .footer{
+      margin-top:18px;
+      color: var(--muted2);
+      font-size:12px;
+      text-align:center;
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="top">
-      <a class="back" href="./index.html">← Retour</a>
-      <div class="title">Politique de confidentialité</div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><span>ADN</span></div>
+        <div class="brand-title">
+          <strong>Apéro de Nuit 66®</strong>
+          <span>Politique de confidentialité</span>
+        </div>
+      </div>
+
+      <a class="btn" href="./index.html">← Retour</a>
     </div>
+  </header>
 
-    <div class="card">
-      
-<p class="note"><b>Résumé :</b> nous collectons uniquement les données nécessaires au traitement des commandes et au service client. Les jeux stockent des informations <b>localement</b> (dans votre navigateur) et ne transfèrent aucune donnée vers nos serveurs via le jeu.</p>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Confidentialité & données (RGPD)</h1>
+      <p>
+        Cette page explique les informations pouvant être traitées lorsque vous utilisez
+        <strong>Apéro de Nuit 66®</strong>, pourquoi, et comment exercer vos droits.
+      </p>
+    </section>
 
-<h2>1. Données personnelles collectées</h2>
-<p>Les données personnelles que nous collectons à votre sujet peuvent inclure :</p>
-<ul>
-  <li>Votre nom</li>
-  <li>Votre adresse e-mail</li>
-  <li>Votre adresse postale</li>
-  <li>Votre numéro de téléphone</li>
-</ul>
+    <section class="note">
+      <b>Résumé :</b> nous collectons uniquement les données nécessaires au traitement des commandes et au service client.
+      Les jeux stockent des informations <b>localement</b> (dans votre navigateur) et ne transfèrent aucune donnée vers nos serveurs via le jeu.
+    </section>
 
-<p>Ces données sont nécessaires pour :</p>
-<ul>
-  <li>Traiter et livrer vos commandes</li>
-  <li>Gérer la facturation et le service client</li>
-  <li>Vous informer de l’état de votre commande</li>
-  <li>Vous proposer nos offres promotionnelles et newsletters (si vous y consentez)</li>
-</ul>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">1</div>
+        <div>
+          <h2>Données personnelles collectées</h2>
+          <p>Données pouvant être collectées lors d’une commande ou d’un contact.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>Les données personnelles que nous collectons à votre sujet peuvent inclure :</p>
+        <ul>
+          <li>Votre nom</li>
+          <li>Votre adresse e-mail</li>
+          <li>Votre adresse postale</li>
+          <li>Votre numéro de téléphone</li>
+        </ul>
 
-<p>Apéro de Nuit 66 s’engage à ne pas divulguer vos informations personnelles à des tiers, hormis les prestataires indispensables (paiement, logistique, etc.).</p>
+        <p style="margin-top:10px">Ces données sont nécessaires pour :</p>
+        <ul>
+          <li>Traiter et livrer vos commandes</li>
+          <li>Gérer la facturation et le service client</li>
+          <li>Vous informer de l’état de votre commande</li>
+          <li>Vous proposer nos offres promotionnelles et newsletters (si vous y consentez)</li>
+        </ul>
 
-<h2>2. Base légale</h2>
-<p>Nous traitons vos données personnelles :</p>
-<ul>
-  <li>Pour l’exécution du contrat de vente (commande, livraison, service client).</li>
-  <li>Sur la base de votre consentement pour l’envoi d’offres commerciales.</li>
-  <li>Pour respecter nos obligations légales (facturation, comptabilité).</li>
-</ul>
+        <p style="margin-top:10px">
+          Apéro de Nuit 66 s’engage à ne pas divulguer vos informations personnelles à des tiers,
+          hormis les prestataires indispensables (paiement, logistique, etc.).
+        </p>
+      </div>
+    </section>
 
-<h2>2.1 Utilisation des données personnelles — SMS</h2>
-<p>En passant commande chez Apéro de Nuit 66, le client accepte que ses données, notamment son numéro de téléphone, puissent être utilisées à des fins commerciales (offres promotionnelles par SMS), <b>uniquement si le client y consent</b>.</p>
-<p>Conformément à la législation en vigueur, les messages sont envoyés uniquement entre <b>8h et 20h</b>, du lundi au samedi. Aucun SMS n’est envoyé les dimanches et jours fériés.</p>
-<p>Vous pouvez refuser ces communications à tout moment en répondant <b>“STOP”</b> au SMS reçu, ou en nous contactant.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">2</div>
+        <div>
+          <h2>Base légale</h2>
+          <p>Pourquoi et sur quelle base nous traitons vos données.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>Nous traitons vos données personnelles :</p>
+        <ul>
+          <li>Pour l’exécution du contrat de vente (commande, livraison, service client).</li>
+          <li>Sur la base de votre consentement pour l’envoi d’offres commerciales.</li>
+          <li>Pour respecter nos obligations légales (facturation, comptabilité).</li>
+        </ul>
+      </div>
+    </section>
 
-<h2>3. Jeux interactifs et stockage local</h2>
-<p>Nous proposons des jeux pour nos clients. Les informations ci-dessous sont stockées <b>uniquement dans votre navigateur</b> (localStorage) :</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">2.1</div>
+        <div>
+          <h2>Utilisation des données — SMS</h2>
+          <p>Offres promotionnelles par SMS (avec consentement).</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          En passant commande chez Apéro de Nuit 66, le client accepte que ses données, notamment son numéro de téléphone,
+          puissent être utilisées à des fins commerciales (offres promotionnelles par SMS),
+          <b>uniquement si le client y consent</b>.
+        </p>
+        <p>
+          Conformément à la législation en vigueur, les messages sont envoyés uniquement entre <b>8h et 20h</b>,
+          du lundi au samedi. Aucun SMS n’est envoyé les dimanches et jours fériés.
+        </p>
+        <p>
+          Vous pouvez refuser ces communications à tout moment en répondant <b>“STOP”</b> au SMS reçu, ou en nous contactant.
+        </p>
+      </div>
+    </section>
 
-<h2>3.1 Carte à gratter (QR code sur le sac)</h2>
-<ul>
-  <li>Date de votre dernière participation</li>
-  <li>Gain obtenu (affichage à la visite suivante)</li>
-</ul>
-<p><b>Probabilités de gains :</b></p>
-<ul>
-  <li>Bouteille de Poliakov : 3%</li>
-  <li>Bon de réduction 25% : 12%</li>
-  <li>Perdu : 22%</li>
-  <li>Bon de réduction 50% : 2%</li>
-  <li>Bon de réduction 20% : 27%</li>
-  <li>Perdu : 22%</li>
-</ul>
-<p>Chaque lot ne peut être utilisé qu’une seule fois par personne et uniquement sur la boutique en ligne. <b>Aucune donnée n’est transférée à nos serveurs via le jeu.</b></p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">3</div>
+        <div>
+          <h2>Jeux interactifs et stockage local</h2>
+          <p>Les jeux stockent uniquement dans votre navigateur (localStorage).</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Nous proposons des jeux pour nos clients. Les informations ci-dessous sont stockées <b>uniquement dans votre navigateur</b> (localStorage).
+        </p>
 
-<h2>3.2 Jeu lors d’événements</h2>
-<p>Possibilité de gagner (exemples) :</p>
-<ul>
-  <li>Livraison offerte : probabilité 35%</li>
-  <li>Bouteille de Poliakov : probabilité 3%</li>
-  <li>Autres codes promo / réductions : selon grille définie localement</li>
-</ul>
-<p>Stockage local identique : date + gain. <b>Aucune collecte de données personnelles via le jeu.</b></p>
+        <div class="hr"></div>
+        <h2 style="margin:0 0 8px;font-size:14px;">3.1 Carte à gratter (QR code sur le sac)</h2>
+        <ul>
+          <li>Date de votre dernière participation</li>
+          <li>Gain obtenu (affichage à la visite suivante)</li>
+        </ul>
+        <p style="margin-top:10px"><b>Probabilités de gains :</b></p>
+        <ul>
+          <li>Bouteille de Poliakov : 3%</li>
+          <li>Bon de réduction 25% : 12%</li>
+          <li>Perdu : 22%</li>
+          <li>Bon de réduction 50% : 2%</li>
+          <li>Bon de réduction 20% : 27%</li>
+          <li>Perdu : 22%</li>
+        </ul>
+        <p style="margin-top:10px">
+          Chaque lot ne peut être utilisé qu’une seule fois par personne et uniquement sur la boutique en ligne.
+          <b>Aucune donnée n’est transférée à nos serveurs via le jeu.</b>
+        </p>
 
-<h2>3.3 Mini-jeu “Hibou — Attrape les bouteilles”</h2>
-<ul>
-  <li>Meilleurs scores</li>
-  <li>Date associée aux scores (horodatage technique)</li>
-</ul>
-<p>Ces données servent à afficher les meilleurs scores et à débloquer des codes promo selon le score atteint. <b>Aucune donnée n’est transférée à nos serveurs via ce jeu.</b></p>
-<p>Le jeu peut contenir des liens externes (boutique en ligne, avis Google). En cliquant, l’utilisateur quitte le jeu : les services tiers appliquent leurs propres règles de confidentialité.</p>
+        <div class="hr"></div>
+        <h2 style="margin:0 0 8px;font-size:14px;">3.2 Jeu lors d’événements</h2>
+        <p>Possibilité de gagner (exemples) :</p>
+        <ul>
+          <li>Livraison offerte : probabilité 35%</li>
+          <li>Bouteille de Poliakov : probabilité 3%</li>
+          <li>Autres codes promo / réductions : selon grille définie localement</li>
+        </ul>
+        <p style="margin-top:10px">
+          Stockage local identique : date + gain. <b>Aucune collecte de données personnelles via le jeu.</b>
+        </p>
 
-<h2>4. Cookies et traceurs</h2>
-<h2>4.1 Cookies fonctionnels</h2>
-<p>Certains cookies nécessaires au fonctionnement du site peuvent être déposés automatiquement (panier, session, paramètres). Vous pouvez configurer votre navigateur pour les refuser, mais cela peut nuire à la navigation.</p>
+        <div class="hr"></div>
+        <h2 style="margin:0 0 8px;font-size:14px;">3.3 Mini-jeu “Hibou — Attrape les bouteilles”</h2>
+        <ul>
+          <li>Meilleurs scores</li>
+          <li>Date associée aux scores (horodatage technique)</li>
+        </ul>
+        <p style="margin-top:10px">
+          Ces données servent à afficher les meilleurs scores et à débloquer des codes promo selon le score atteint.
+          <b>Aucune donnée n’est transférée à nos serveurs via ce jeu.</b>
+        </p>
+        <p style="margin-top:10px">
+          Le jeu peut contenir des liens externes (boutique en ligne, avis Google). En cliquant, l’utilisateur quitte le jeu :
+          les services tiers appliquent leurs propres règles de confidentialité.
+        </p>
+      </div>
+    </section>
 
-<h2>4.2 Cookies analytiques</h2>
-<p>Ce site peut utiliser des outils de mesure d’audience (ex : Google Analytics) afin d’optimiser le service. Les données collectées peuvent inclure des statistiques de navigation (pages visitées, durée de visite) et une adresse IP anonymisée. Les durées de conservation sont celles du fournisseur.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">4</div>
+        <div>
+          <h2>Cookies et traceurs</h2>
+          <p>Fonctionnels et mesure d’audience.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <h2 style="margin:0 0 8px;font-size:14px;">4.1 Cookies fonctionnels</h2>
+        <p>
+          Certains cookies nécessaires au fonctionnement du site peuvent être déposés automatiquement (panier, session, paramètres).
+          Vous pouvez configurer votre navigateur pour les refuser, mais cela peut nuire à la navigation.
+        </p>
 
-<h2>5. Durée de conservation</h2>
-<ul>
-  <li>Données liées aux commandes : durée nécessaire à la relation contractuelle, puis archivage légal.</li>
-  <li>Prospection commerciale : jusqu’à 3 ans après la dernière commande <b>si consentement</b>.</li>
-  <li>Jeux (localStorage) : conservé localement sur votre appareil selon votre navigateur.</li>
-</ul>
+        <div class="hr"></div>
 
-<h2>6. Vos droits</h2>
-<p>Conformément au RGPD, vous disposez des droits : accès, rectification, effacement, limitation, opposition (prospection), portabilité.</p>
-<p>Pour exercer ces droits : <b>apero.nuit.du.66@gmail.com</b>. En cas de litige, vous pouvez saisir la CNIL.</p>
+        <h2 style="margin:0 0 8px;font-size:14px;">4.2 Cookies analytiques</h2>
+        <p>
+          Ce site peut utiliser des outils de mesure d’audience (ex : Google Analytics) afin d’optimiser le service.
+          Les données collectées peuvent inclure des statistiques de navigation (pages visitées, durée de visite) et une adresse IP anonymisée.
+          Les durées de conservation sont celles du fournisseur.
+        </p>
+      </div>
+    </section>
 
-<h2>7. Sécurité</h2>
-<p>Nous mettons en œuvre des mesures techniques et organisationnelles pour protéger vos données contre la perte, la destruction ou l’accès non autorisé.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">5</div>
+        <div>
+          <h2>Durée de conservation</h2>
+          <p>Durées de conservation selon la finalité.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <ul>
+          <li>Données liées aux commandes : durée nécessaire à la relation contractuelle, puis archivage légal.</li>
+          <li>Prospection commerciale : jusqu’à 3 ans après la dernière commande <b>si consentement</b>.</li>
+          <li>Jeux (localStorage) : conservé localement sur votre appareil selon votre navigateur.</li>
+        </ul>
+      </div>
+    </section>
 
-<div class="hr"></div>
-<h2>8. Application mobile / PWA</h2>
-<p>Cette politique s’applique également à l’application mobile / PWA “Apéro de Nuit 66”, distribuée notamment via des stores. Les fonctionnalités (commande, suivi, jeux) respectent les mêmes principes : minimisation des données, stockage local pour les jeux, et accès aux données strictement nécessaires au service.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">6</div>
+        <div>
+          <h2>Vos droits</h2>
+          <p>Accès, rectification, effacement, opposition, portabilité…</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Conformément au RGPD, vous disposez des droits : accès, rectification, effacement, limitation, opposition (prospection), portabilité.
+        </p>
+        <p>
+          Pour exercer ces droits : <b>apero.nuit.du.66@gmail.com</b>. En cas de litige, vous pouvez saisir la CNIL.
+        </p>
+      </div>
+    </section>
 
-      <div class="footer">Apéro de Nuit 66® — Document d’information.</div>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">7</div>
+        <div>
+          <h2>Sécurité</h2>
+          <p>Protection contre perte, destruction ou accès non autorisé.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Nous mettons en œuvre des mesures techniques et organisationnelles pour protéger vos données contre la perte,
+          la destruction ou l’accès non autorisé.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">8</div>
+        <div>
+          <h2>Application mobile / PWA</h2>
+          <p>La même politique s’applique à l’app mobile / PWA.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Cette politique s’applique également à l’application mobile / PWA “Apéro de Nuit 66”, distribuée notamment via des stores.
+          Les fonctionnalités (commande, suivi, jeux) respectent les mêmes principes : minimisation des données,
+          stockage local pour les jeux, et accès aux données strictement nécessaires au service.
+        </p>
+      </div>
+    </section>
+
+    <div class="footer">
+      Apéro de Nuit 66® — Document d’information.
     </div>
-  </div>
+  </main>
 </body>
 </html>
