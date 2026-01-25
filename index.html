@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr" data-status-boot="1" data-status-url="/apps/status/status.json">
+<html lang="fr" data-status-boot="1" data-status-url="https://bullyto.github.io/outil/apps/status/status.json">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -329,11 +329,16 @@
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
   <script>
-  // ✅ Source du status central (nouvelle route)
-  window.AD_STATUS_URL = "/apps/status/status.json";
-  window.AD_STATUS_JSON_URL = window.AD_STATUS_URL;
-  window.STATUS_JSON_URL = window.AD_STATUS_URL;
-  document.documentElement.setAttribute("data-status-url", window.AD_STATUS_URL);
+  // ✅ STATUS central (nouvelle URL)
+  (function(){
+    var u = "https://bullyto.github.io/outil/apps/status/status.json";
+    window.AD_STATUS_URL = u;
+    window.AD_STATUS_JSON_URL = u;
+    window.STATUS_URL = u;
+    window.STATUS_JSON_URL = u;
+    window.statusJsonUrl = u;
+    try { document.documentElement.setAttribute("data-status-url", u); } catch(e) {}
+  })();
 </script>
 <script defer src="./status-popup.js?v=20260101a"></script>
 </head>
