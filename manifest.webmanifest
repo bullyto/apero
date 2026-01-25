@@ -94,7 +94,7 @@
       "name": "Suivi",
       "short_name": "Suivi",
       "description": "Accéder au suivi de commande",
-      "url": "/suivi/?src=shortcut-suivi",
+      "url": "/suivi/client.html?src=shortcut-suivi",
       "icons": [
         {
           "src": "/icons/icon-192.png",
