@@ -4,8 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0a0f1a"/>
-  <meta name="description" content="Mentions légales — Apéro de Nuit 66"/>
-  <title>Mentions légales — Apéro de Nuit 66</title>
+  <title>Mentions légales — Apéro de Nuit 66®</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,215 +15,159 @@
       --bg:#070b12;
       --bg2:#050812;
       --card:#0d1422;
-      --line:rgba(255,255,255,.10);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.68);
-      --muted2:rgba(255,255,255,.55);
+      --line:rgba(255,255,255,.10);
       --accent:#5db7ee;
-      --ring: rgba(93,183,238,.22);
-      --shadow: 0 18px 60px rgba(0,0,0,.35);
-      --shadow2: 0 10px 25px rgba(0,0,0,.28);
     }
-
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:
-        radial-gradient(1200px 700px at 20% -10%, rgba(93,183,238,.20), transparent 55%),
-        radial-gradient(900px 650px at 110% 0%, rgba(93,183,238,.12), transparent 60%),
-        linear-gradient(180deg,var(--bg),var(--bg2));
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:linear-gradient(180deg,var(--bg),var(--bg2));
       color:var(--text);
     }
-
-    .topbar{
-      position:sticky;
-      top:0;
-      z-index:50;
-      background:rgba(13,20,34,.86);
-      backdrop-filter:blur(10px);
-      border-bottom:1px solid rgba(255,255,255,.08);
-      box-shadow:0 10px 25px rgba(0,0,0,.25);
-    }
-    .topbar-inner{
-      max-width:900px;
-      margin:0 auto;
-      padding:14px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-
-    .brand{display:flex;gap:10px;align-items:center}
-    .logo{
-      width:40px;height:40px;border-radius:999px;
+    .wrap{max-width:900px; margin:0 auto; padding:18px 14px 40px;}
+    .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+    .back{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:14px;
+      border:1px solid var(--line);
       background:rgba(255,255,255,.06);
-      border:1px solid rgba(93,183,238,.22);
-      display:grid;place-items:center;
-      font-weight:1000;color:var(--accent);
-    }
-    .brand-title strong{display:block;font-weight:1000}
-    .brand-title span{font-size:12px;color:var(--muted)}
-
-    .btn{
-      padding:10px 12px;
-      border-radius:14px;
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.12);
-      color:var(--text);
-      text-decoration:none;
+      color:var(--text); text-decoration:none;
       font-weight:800;
     }
-
-    .wrap{max-width:900px;margin:0 auto;padding:16px 14px 40px}
-
-    .hero{
-      background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
+    .title{font-weight:1000; font-size:18px; letter-spacing:.2px;}
+    .card{
+      border:1px solid var(--line);
+      background:rgba(13,20,34,.88);
       border-radius:18px;
       padding:16px;
-      box-shadow:var(--shadow2);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
     }
-    .hero h1{margin:0 0 8px;font-size:18px;font-weight:1000}
-    .hero p{margin:0;color:var(--muted);font-size:13.5px}
-
-    .card{
-      margin-top:14px;
-      background:rgba(13,20,34,.88);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-    }
-    .card-hd{
-      padding:14px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex;
-      gap:10px;
-    }
-    .pill{
-      width:34px;height:34px;
-      border-radius:12px;
-      background:rgba(93,183,238,.12);
-      border:1px solid rgba(93,183,238,.22);
-      display:grid;place-items:center;
-      font-weight:1000;
-    }
-    .card-hd h2{margin:0;font-size:15px;font-weight:1000}
-    .card-hd p{margin:4px 0 0;color:var(--muted);font-size:13px}
-
-    .card-bd{
-      padding:12px 14px 14px;
-      font-size:13.5px;
-      line-height:1.6;
-      color:var(--muted);
-    }
-    .card-bd b{color:var(--text)}
+    h2{margin:18px 0 10px; font-size:16px;}
+    p,li{color:var(--muted); line-height:1.55}
     ul{margin:8px 0 0 18px}
-
-    .footer{
-      margin-top:18px;
-      text-align:center;
-      font-size:12px;
-      color:var(--muted2);
+    .hr{height:1px; background:var(--line); margin:14px 0}
+    .note{
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(93,183,238,.25);
+      background:rgba(93,183,238,.10);
+      color:rgba(255,255,255,.86);
     }
+    .footer{margin-top:14px; color:rgba(255,255,255,.55); font-size:12px;}
+    a.link{color:rgba(93,183,238,.95); text-decoration:underline; text-underline-offset:2px;}
   </style>
 </head>
 
 <body>
+  <div class="wrap">
+    <div class="top">
+      <a class="back" href="./index.html">← Retour</a>
+      <div class="title">Mentions légales</div>
+    </div>
 
-<header class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo">ADN</div>
-      <div class="brand-title">
-        <strong>Apéro de Nuit 66®</strong>
-        <span>Mentions légales</span>
+    <div class="card">
+
+      <div class="note">
+        <b>Note :</b> “Apéro de Nuit®” désigne la marque et l’identité commerciale.
+        Le service est disponible via un <b>site web</b> et une <b>application web (PWA)</b> distincte.
       </div>
-    </div>
-    <a class="btn" href="./index.html">← Retour</a>
-  </div>
-</header>
 
-<main class="wrap">
-  <section class="hero">
-    <h1>Mentions légales</h1>
-    <p>Informations légales relatives à l’éditeur, à l’hébergement et à la propriété intellectuelle.</p>
-  </section>
-
-  <section class="card">
-    <div class="card-hd">
-      <div class="pill">1</div>
-      <div><h2>Éditeur du site</h2></div>
-    </div>
-    <div class="card-bd">
-      <p><b>Apéro de Nuit</b> est une EURL représentée par <b>Hauviller Steven</b>.</p>
+      <h2>Éditeur du site</h2>
+      <p><b>Apéro de Nuit®</b> est une SARL représentée par <b>Hauviller Steven</b>.</p>
       <ul>
-        <li>RCS : <b>953 976 099 00010</b></li>
-        <li>Siège : <b>12 rue du Fer à Cheval – 66410 Villelongue-de-la-Salanque</b></li>
+        <li>Immatriculation RCS : <b>879 976 099</b></li>
+        <li>Siège social : <b>12, rue du Fer à Cheval – 66410 Villelongue-de-la-Salanque</b></li>
         <li>Téléphone : <b>06 52 33 64 61</b></li>
         <li>Email : <b>apero.nuit.du.66@gmail.com</b></li>
       </ul>
-      <p>Directeur de publication et créateur du site : <b>Hauviller Steven</b>.</p>
-    </div>
-  </section>
 
-  <section class="card">
-    <div class="card-hd">
-      <div class="pill">2</div>
-      <div><h2>Application mobile / PWA</h2></div>
-    </div>
-    <div class="card-bd">
       <p>
-        L’application mobile / PWA <b>Apéro de Nuit 66</b> est développée et maintenue par
-        <b>Hauviller Steven</b>. Elle est accessible via navigateur ou plateformes de téléchargement.
+        Directeur de la publication : <b>Hauviller Steven</b> (personne physique).<br/>
+        Créateur du site : <b>Hauviller Steven</b>.
       </p>
-    </div>
-  </section>
 
-  <section class="card">
-    <div class="card-hd">
-      <div class="pill">3</div>
-      <div><h2>Hébergement</h2></div>
-    </div>
-    <div class="card-bd">
+      <div class="hr"></div>
+
+      <h2>Sites / URLs officielles</h2>
+      <ul>
+        <li>
+          <b>Site web (vitrine / boutique)</b> : <b>www.aperodenuit.com</b>
+        </li>
+        <li>
+          <b>Application web installable (PWA)</b> : <b>apero.net</b><br/>
+          <span style="color:rgba(255,255,255,.60)">
+            (application web progressive — PWA — accessible via navigateur et installable, hébergée et diffusée via <b>Cloudflare</b>)
+          </span>
+        </li>
+      </ul>
+
+      <div class="hr"></div>
+
+      <h2>Application mobile / PWA</h2>
       <p>
-        Le site est hébergé par <b>WIX</b><br/>
-        500 Terry A François Blvd, San Francisco, CA 94158, États-Unis.
+        L’application web progressive (PWA) <b>Apéro de Nuit®</b> (domaine <b>apero.net</b>) est développée et maintenue par
+        <b>Hauviller Steven</b>. Elle peut être accessible via navigateur en version PWA et/ou distribuée via des plateformes
+        de téléchargement (ex : Google Play) selon les versions.
       </p>
-    </div>
-  </section>
 
-  <section class="card">
-    <div class="card-hd">
-      <div class="pill">4</div>
-      <div><h2>Propriété intellectuelle</h2></div>
-    </div>
-    <div class="card-bd">
-      <p><b>Apéro de Nuit 66®</b> est une marque déposée à l’INPI (n°4838734).</p>
+      <div class="hr"></div>
+
+      <h2>Hébergement</h2>
       <p>
-        Toute reproduction, utilisation ou exploitation sans autorisation est strictement interdite
-        et constitue une contrefaçon au sens du Code de la propriété intellectuelle.
+        Le site web (boutique) est hébergé par :<br/>
+        <b>WIX</b> – 500 Terry A François Blvd, San Francisco, CA 94158, États-Unis.
       </p>
-    </div>
-  </section>
+      <p style="margin-top:10px">
+        L’application web progressive (PWA) <b>apero.net</b> est hébergée et distribuée via <b>Cloudflare</b>.
+      </p>
 
-  <section class="card">
-    <div class="card-hd">
-      <div class="pill">5</div>
-      <div><h2>Litiges et médiation</h2></div>
-    </div>
-    <div class="card-bd">
+      <div class="hr"></div>
+
+      <h2>Propriété intellectuelle</h2>
       <p>
-        En cas de litige, l’utilisateur peut recourir à la plateforme européenne de règlement en ligne
-        des litiges (ODR). Nous ne sommes toutefois ni tenus ni disposés à participer à une médiation.
+        <b>Apéro de Nuit®</b> / <b>Apéro de Nuit 66®</b> est une marque déposée auprès de l’INPI sous le numéro
+        <b>4838734</b>.
       </p>
-    </div>
-  </section>
+      <p>
+        <b>Hauviller Steven</b> est l’<b>unique représentant</b> et titulaire des droits relatifs à la marque,
+        au nom commercial, aux visuels, logos, contenus et éléments graphiques associés à <b>Apéro de Nuit®</b>.
+      </p>
+      <p>
+        Toute reproduction, représentation, utilisation ou exploitation, totale ou partielle, de la marque, du nom commercial,
+        des visuels, logos, contenus ou éléments graphiques, <b>sans l’accord exprès</b> de <b>Hauviller Steven</b>,
+        est strictement interdite et constitue une contrefaçon.
+      </p>
+      <p>
+        <b>Toute copie, imitation, duplication ou réutilisation non autorisée</b> pourra entraîner des
+        <b>poursuites judiciaires</b>.
+      </p>
+      <p>
+        Le site et chacun des éléments qui le composent (textes, images, logos, vidéos, etc.) sont la propriété exclusive d’<b>Apéro de Nuit®</b>,
+        sauf mentions contraires. Toute reproduction, totale ou partielle, sans autorisation expresse est interdite.
+      </p>
+      <p>
+        Les bases de données du site sont protégées. Toute extraction ou réutilisation non autorisée est interdite.
+      </p>
 
-  <div class="footer">
-    Apéro de Nuit 66® — Mentions légales
+      <div class="hr"></div>
+
+      <h2>Plateforme de règlement des litiges en ligne</h2>
+      <p>
+        Conformément à l’article 14 du Règlement (UE) n°524/2013, la Commission européenne met à disposition une plateforme
+        de règlement en ligne des litiges.
+      </p>
+
+      <h2>Litiges et médiation</h2>
+      <p>
+        En cas de litige, l’utilisateur peut s’adresser à un médiateur. Nous ne sommes toutefois ni tenus ni disposés
+        à participer à une procédure de règlement des litiges devant un organisme de médiation des consommateurs.
+      </p>
+
+      <div class="footer">Apéro de Nuit 66® — Document d’information.</div>
+    </div>
   </div>
-</main>
-
 </body>
 </html>
