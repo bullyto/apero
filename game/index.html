@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>APÉRO DE NUIT 66&reg;</title>
+  <meta name="theme-color" content="#000000"/>
+    <link rel="canonical" href="https://game.aperos.net/"/>
+
+  <!-- Social sharing (Facebook/WhatsApp/iMessage/SMS previews/etc.) -->
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="APÉRO DE NUIT 66®"/>
+  <meta property="og:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
+  <meta property="og:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
+  <meta property="og:url" content="https://game.aperos.net/"/>
+  <meta property="og:image" content="https://game.aperos.net/share-1200x630.png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
+  <meta name="twitter:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
+  <meta name="twitter:image" content="https://game.aperos.net/share-1200x630.png"/>
+
+<link rel="manifest" href="manifest.webmanifest"/>
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png"/>
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Baloo&display=swap" rel="stylesheet"/>
+  <style>
+    html, body {
+      margin:0; padding:0; width:100%; height:100%;
+      overflow:hidden; font-family:'Baloo', cursive; background:#000;
+      /* évite les bugs de 100vh sur Chrome mobile */
+      overscroll-behavior: none;
+    }
+    #game-container {
+      position:relative;
+      width:100vw;
+      height:100vh;
+      height:100dvh; /* Chrome/Android : hauteur dynamique */
+      overflow:hidden;
+    }
+
+    /* Désactive les clics sur le canvas et les fonds */
+    #gameCanvas, .bg-layer { pointer-events: none; }
+
+    .bg-layer {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      background-repeat:repeat-x;
+      background-size:auto 100%;
+      transition:opacity 1s ease; opacity:0; z-index:0;
+    }
+    #bgLayer1, #bgLayer2 { background-position:0 0; }
+
+    #gameCanvas {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%; background:transparent; z-index:1;
+    }
+
+    #cloud {
+      position:absolute; opacity:0.5; z-index:5; pointer-events:none;
+    }
+
+    /* HUD */
+    #score, #livesDisplay { position:absolute; z-index:10; pointer-events:none; }
+    #score {
+      top:2vh; left:2vw; color:#fff; font-size:3vh;
+      background:rgba(0,0,0,0.5); padding:0.5vh 1vw; border-radius:1vh;
+    }
+    #livesDisplay { top:2vh; right:2vw; }
+    .heart {
+      width:4vh; height:4vh;
+      background-image:url('https://i.postimg.cc/QCzhYMMB/file-00000000c25061f7b431b34a26caa8d5-1.png');
+      background-size:cover; display:inline-block; margin-left:1vw;
+    }
+
+    /* Bouton son ON/OFF */
+    #soundToggle {
+      position:absolute;
+      top:8vh;
+      right:2vw;
+      z-index:11;
+      background:rgba(0,0,0,0.5);
+      color:#fff;
+      border:none;
+      padding:0.5vh 1vw;
+      border-radius:1vh;
+      font-size:2.2vh;
+      cursor:pointer;
+      pointer-events:auto;
+    }
+
+    /* Overlays */
+    .overlay {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:rgba(0,0,0,0.7); padding:2.7vh 2.7vw; border-radius:2vh;
+      color:#fff; text-align:center; z-index:20; pointer-events:auto;
+      width:78vw; max-width:380px;
+    }
+    .overlay h1, .overlay h2 {
+      margin:0 0 1.8vh;
+      font-size:3.6vh;
+    }
+    .overlay p {
+      font-size:2.3vh;
+      margin-bottom:1.3vh;
+    }
+    .overlay button {
+      display:block; width:100%; padding:1.4vh 0; font-size:2.8vh;
+      margin:0.9vh 0; border:none; border-radius:1vh; cursor:pointer;
+      background:#add8e6; transition:transform .2s;
+    }
+    .overlay button:hover { transform:scale(1.05); }
+
+    /* Liste des meilleurs scores : moins d’espace entre les lignes */
+    #highScoresList p {
+      margin:0.4vh 0;
+      line-height:1.1;
+      font-size:2.3vh;
+    }
+
+    #koEffect {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      background:rgba(255,0,0,0.5); display:none; z-index:30; pointer-events:none;
+    }
+
+    /* Flash léger quand on gagne un point */
+    #pointFlash {
+      position:absolute;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:#ffffff;
+      opacity:0;
+      pointer-events:none;
+      z-index:12;
+      transition:opacity 0.15s linear;
+    }
+
+    /* Barre de progression (robuste sur Chrome/PWA) */
+    #brandProgress {
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      /* évite que Chrome “mange” le bas (barre d'adresse / safe area) */
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      width: min(76vw, 460px);
+      background: rgba(0,0,0,0.6);
+      padding: 10px 14px; /* un peu plus petit */
+      border-radius: 16px;
+      color:#fff;
+      z-index:10;
+      font-size: 14px;
+      pointer-events:none;
+      box-sizing: border-box;
+    }
+    #brandStageTitle {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    #brandStageMessage {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    #brandStageBar {
+      width:100%;
+      height: 8px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 999px;
+      overflow: visible;
+      position: relative;
+    }
+    #brandStageFill {
+      width:0%;
+      height:100%;
+      background: linear-gradient(90deg, #fdd835, #ff9800);
+      transition: width 0.2s ease-out;
+      border-radius: 999px;
+    }
+    .gift-marker {
+      position:absolute;
+      transform: translateX(-50%);
+      pointer-events:none;
+      text-shadow: 0 0 6px rgba(0,0,0,0.9);
+      z-index:5;
+      line-height: 1;
+    }
+    /* 25 pts */
+    #gift25 {
+      left:50%;
+      top:-16px;
+      font-size: 22px;
+    }
+    /* 50 pts */
+    #gift50 {
+      left:100%;
+      top:-20px;
+      font-size: 28px;
+    }
+
+    /* BOUTON D'AVIS DORÉ */
+    .gold-button {
+      background:linear-gradient(135deg, #ffd700, #ffb300);
+      color:#000;
+      font-weight:bold;
+      box-shadow:0 0 12px rgba(255,215,0,0.8);
+    }
+    .gold-button:hover {
+      transform:scale(1.06);
+      box-shadow:0 0 18px rgba(255,215,0,1);
+    }
+
+    /* Texte qui clignote doucement pour "clique sur l'écran" */
+    .tap-blink {
+      animation: slowBlink 1.8s ease-in-out infinite;
+    }
+    @keyframes slowBlink {
+      0%, 60% { opacity: 1; }
+      80% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+  
+    /* === Bouton Info (débloqué à partir de 10 points) === */
+    #infoBtn{
+      position:absolute;
+      top:8vh;
+      left:2vw;
+      z-index:11;
+      width:44px;
+      height:44px;
+      border-radius:999px;
+      border:none;
+      background:rgba(0,0,0,0.5);
+      color:#fff;
+      font-size:22px;
+      cursor:pointer;
+      pointer-events:auto;
+      display:none; /* visible uniquement à partir du score 10 */
+      backdrop-filter: blur(6px);
+    }
+    #infoOverlay{
+      display:none;
+    }
+
+  
+/* Ajustement emoji palier 25 (+6px supplémentaires) */
+.progress-bar [data-score="25"],
+.progress-bar .milestone-25{
+  transform: translateY(12px); /* 6px de plus */
+}
+
+
+/* === Info overlay (au-dessus de tout, carte non transparente) === */
+#infoOverlay{
+  position:fixed;
+  inset:0;
+  z-index: 20000; /* au-dessus du menu + popups existants */
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background: rgba(0,0,0,0.55);
+}
+#infoOverlay .info-card{
+  width:min(560px, 92vw);
+  max-height: 78vh;
+  overflow:auto;
+  border-radius: 22px;
+  padding: 18px 16px;
+  background: #ffffff; /* NON transparent */
+  color:#111;
+  box-shadow: 0 18px 55px rgba(0,0,0,0.55);
+}
+#infoOverlay .info-card div{
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+#infoOverlay .info-card div:first-child{
+  font-weight: 800;
+  font-size: 16px;
+  margin-top: 0;
+}
+
+
+/* bouton ℹ️ au-dessus du menu */
+#infoBtn{ z-index: 20001; }
+
+</style>
+<script>
+      appId: "639b5a31-e09f-4d34-ad0f-d111d66a14ac",
+      serviceWorkerPath: "sw.js",
+      serviceWorkerUpdaterPath: "sw.js",
+      serviceWorkerParam: { scope: "/" }
+    });
+  });
+</script>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Fonds animés -->
+    <div id="bgLayer1" class="bg-layer"></div>
+    <div id="bgLayer2" class="bg-layer"></div>
+
+    <!-- Nuage & Canvas -->
+    <img id="cloud" src="https://i.postimg.cc/zfTZ14kC/NUAGE.png" alt="Nuage animé">
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+
+    <!-- HUD -->
+    <div id="score">Score : 0</div>
+    <div id="livesDisplay">
+      <div class="heart"></div>
+      <div class="heart"></div>
+      <div class="heart"></div>
+    </div>
+
+    <!-- Bouton son ON/OFF -->
+    <button id="soundToggle">🔊</button>
+
+
+    <!-- Bouton Info (visible uniquement à partir du score 10) -->
+    <button id="infoBtn" aria-label="Informations">ℹ️</button>
+
+    <!-- Overlay Info (texte uniquement, maintenir appuyé sur ℹ️ pour lire) -->
+    <div id="infoOverlay">
+      <div class="info-card" role="dialog" aria-modal="true">
+        <div>Informations – Jeu promotionnel</div>
+        <div>Ce jeu est une animation promotionnelle gratuite, sans obligation d’achat.</div>
+        <div>Les gains obtenus correspondent à des avantages promotionnels utilisables sur le site APÉRO DE NUIT 66®.</div>
+        <div>Aucun paiement n’est requis pour jouer.</div>
+        <div>Les règles complètes du jeu, les mentions légales et la politique de confidentialité sont consultables sur le site officiel.</div>
+        <div>© APÉRO DE NUIT 66®</div>
+      </div>
+    </div>
+    </div>
+
+
+    <!-- Barre de progression brandée -->
+    <div id="brandProgress">
+      <div id="brandStageTitle">Commande en attente 💤</div>
+      <div id="brandStageMessage">Attrape des bouteilles pour lancer la nuit.</div>
+      <div id="brandStageBar">
+        <div id="brandStageFill"></div>
+        <div id="gift25" class="gift-marker">🎁</div>
+        <div id="gift50" class="gift-marker">🎁</div>
+      </div>
+    </div>
+
+    <!-- Overlays -->
+    <div id="menu" class="overlay">
+      <h1>APÉRO DE NUIT 66&reg;</h1>
+      <button id="playBtn">Jouer</button>
+      <button id="installBtn">Ajouter le jeu à l’écran d’accueil</button>
+      <button id="instructionsBtn">Instructions</button>
+      <button id="useCodeBtn" style="display:none;">Utiliser mon code</button>
+      <div id="highScores">
+        <h2>Meilleurs scores</h2>
+        <div id="highScoresList"><p>Aucun score.</p></div>
+      </div>
+      <div id="promoCodes">
+        <h2>🎁 SURPRISE</h2>
+        <div id="promoCodesList"><p>Pas disponible.</p></div>
+      </div>
+    </div>
+
+    <div id="instructionsOverlay" class="overlay" style="display:none;">
+      <h2>Instructions</h2>
+      <p>🦉 Votre hibou doit attraper un maximum de bouteilles tout en évitant les avions.</p>
+      <p>❤️ Vous disposez de 3 vies. À chaque collision, vous perdez une vie.</p>
+      <p>💥 Quand vous perdez la dernière vie, la partie se termine et le score est enregistré.</p>
+      <p>🎁 Des surprises attendent les meilleurs joueurs ! Première à <strong>25 points</strong>.</p>
+      <button id="closeInstructionsBtn">Fermer</button>
+    </div>
+
+    <!-- NOUVEAU POPUP "CLIQUE SUR L'ÉCRAN POUR DÉMARRER" -->
+    <div id="tapToStart" class="overlay" style="display:none;">
+      <h2>Prêt à décoller ? 🦉</h2>
+      <p class="tap-blink">Clique brièvement sur l'écran pour faire sauter le hibou.</p>
+    </div>
+
+    <div id="continueScreen" class="overlay" style="display:none;">
+      <h2>Perdu une vie !</h2>
+      <button id="continueBtn">Continuer</button>
+    </div>
+
+    <div id="gameOver" class="overlay" style="display:none;">
+      <h2>Game Over</h2>
+      <p id="finalScore"></p>
+      <p id="gameOverMsg"></p>
+
+      <!-- TEXTE D'AVIS (VISIBLE À PARTIR DE 25 POINTS) -->
+      <p id="reviewText" style="display:none; margin-top:1vh; font-size:2vh;">
+        Soutenez-nous avec un avis! 🙏
+      </p>
+
+      <!-- BOUTON DORÉ D'AVIS (VISIBLE À PARTIR DE 25 POINTS) -->
+      <button id="reviewBtn" class="gold-button" style="display:none;">
+        ⭐ Soutenez-nous avec un avis
+      </button>
+
+      <button id="restartBtn">Rejouer</button>
+      <button id="menuBtn">Menu</button>
+    </div>
+
+    <div id="koEffect"></div>
+    <div id="pointFlash"></div>
+
+    <!-- Sons -->
+    <audio id="jumpSound" src="https://assets.mixkit.co/active_storage/sfx/255/255-preview.mp3" preload="auto"></audio>
+    <audio id="explosionSound" src="https://assets.mixkit.co/active_storage/sfx/235/235-preview.mp3" preload="auto"></audio>
+    <audio id="gameOverSound" src="https://assets.mixkit.co/active_storage/sfx/458/458-preview.mp3" preload="auto"></audio>
+    <audio id="pointSound" src="https://assets.mixkit.co/active_storage/sfx/166/166-preview.mp3" preload="auto"></audio>
+    <audio id="lifeLostSound" src="https://assets.mixkit.co/active_storage/sfx/1781/1781-preview.mp3" preload="auto"></audio>
+    <audio id="rewardSound" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
+    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2574/2574-preview.mp3" preload="auto"></audio>
+    <audio id="bgMusic" src="https://assets.mixkit.co/music/preview/mixkit-8-bit-game-770.mp3" loop preload="auto"></audio>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('game-container');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const livesEls = document.querySelectorAll('.heart');
+    const cloudEl = document.getElementById('cloud');
+    const pointFlash = document.getElementById('pointFlash');
+    const tapToStartOverlay = document.getElementById('tapToStart');
+
+    // Sons
+    const jumpSound = document.getElementById('jumpSound');
+    const explosionSound = document.getElementById('explosionSound');
+    const gameOverSound = document.getElementById('gameOverSound');
+    const pointSound = document.getElementById('pointSound');
+    const bgMusic = document.getElementById('bgMusic');
+    const lifeLostSound = document.getElementById('lifeLostSound');
+    const rewardSound = document.getElementById('rewardSound');
+    const clickSound = document.getElementById('clickSound');
+
+    const soundToggleBtn = document.getElementById('soundToggle');
+    let soundOn = true;
+
+    // Volumes
+    jumpSound.volume = 0.8;
+    explosionSound.volume = 0.7;
+    gameOverSound.volume = 0.8;
+    pointSound.volume = 0.9;
+    lifeLostSound.volume = 0.9;
+    rewardSound.volume = 0.9;
+    clickSound.volume = 0.6;
+    bgMusic.volume = 0.35;
+
+    // --- Pré-chauffage des sons (pour réduire la latence) ---
+    const allSounds = [jumpSound, explosionSound, gameOverSound, pointSound,
+                       lifeLostSound, rewardSound, clickSound, bgMusic];
+    let soundsWarmedUp = false;
+
+    function warmupSounds() {
+      if (soundsWarmedUp || !soundOn) return;
+      soundsWarmedUp = true;
+      allSounds.forEach(a => {
+        if (!a) return;
+        const originalVolume = a.volume;
+        a.volume = 0;
+        a.play().then(() => {
+          setTimeout(() => {
+            a.pause();
+            a.currentTime = 0;
+            a.volume = originalVolume;
+          }, 80);
+        }).catch(() => {
+          a.volume = originalVolume;
+        });
+      });
+    }
+    // -------------------------------------------------------
+
+    function playSound(audioEl){
+      if (!soundOn || !audioEl) return;
+      audioEl.currentTime = 0;
+      audioEl.play().catch(()=>{});
+    }
+
+    soundToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      soundOn = !soundOn;
+      soundToggleBtn.textContent = soundOn ? '🔊' : '🔈';
+      if (!soundOn) {
+        bgMusic.pause();
+      } else if (gameRunning) {
+        bgMusic.play().catch(()=>{});
+      }
+    });
+
+    // Variables de jeu
+    let score = 0, lives = 3, avions = [], bottles = [], frameCount = 0;
+    // =====================
+    // Anti-triche (trop de clics)
+    // Règles : 10 actions en 2s => triche ; +10s => GAME OVER forcé ; image après 'Perdu' verrouillée 5s
+    // =====================
+    const CHEAT_IMAGE_URL = "tricherie.jpeg.gif";
+    
+    // Anti-cheat uniquement sur PC (souris/clavier). Sur mobile/tablette: désactivé.
+    const IS_PC = (() => {
+      const ua = navigator.userAgent || "";
+      const isMobileUA = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+      const hasTouch = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
+      const finePointer = window.matchMedia && window.matchMedia("(pointer:fine)").matches;
+      return !isMobileUA && (!hasTouch || finePointer);
+    })();
+const CHEAT_IMAGE_FALLBACK = "https://image.noelshack.com/fichiers/2025/51/2/1765906495-images-9.jpeg";
+    let clickHistory = [];
+    let cheatDetected = false;
+    let cheatTime = 0;
+    let cheatImageShown = false;
+    let planeSpeedMultiplier = 1;
+
+    function registerUserAction(){
+      const now = Date.now();
+      clickHistory.push(now);
+      // ne garder que 2 secondes d'historique
+      clickHistory = clickHistory.filter(t => now - t <= 2000);
+      if(!cheatDetected && clickHistory.length >= 4){
+        cheatDetected = true;
+        cheatTime = now;
+      }
+    }
+
+    function showCheatOverlayLocked(){
+      if(cheatImageShown) return;
+      cheatImageShown = true;
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.inset = '0';
+      overlay.style.background = 'rgba(0,0,0,0.90)';
+      overlay.style.zIndex = '9999999';
+      overlay.style.display = 'flex';
+      overlay.style.alignItems = 'center';
+      overlay.style.justifyContent = 'center';
+      overlay.style.flexDirection = 'column';
+      overlay.innerHTML = `
+        <img id="cheatImg" src="${CHEAT_IMAGE_URL}" referrerpolicy="no-referrer"
+          style="max-width:92vw;max-height:85vh;border-radius:22px;box-shadow:0 0 60px red;"
+        />
+      `;
+      document.body.appendChild(overlay);
+      // Impossible de fermer avant 5 secondes
+      setTimeout(() => {
+        overlay.addEventListener('click', () => overlay.remove());
+      }, 5000);
+    }
+
+    function forceGameOverFromCheat(){
+      // crash() enlève 1 vie, donc on met 1 pour forcer 0 => Game Over
+      if(!gameRunning) return;
+      lives = 1;
+      // assure qu'on peut crasher
+      justCrashed = false;
+      crash();
+      // afficher l'image AU-DESSUS de l'écran 'Perdu' (après affichage)
+      setTimeout(() => {
+        showCheatOverlayLocked();
+      }, 80);
+    }
+
+    function applyCheatLogic(){
+      if (!IS_PC) return;
+      if(!cheatDetected) return;
+      const now = Date.now();
+      const elapsed = now - cheatTime;
+      // Augmente fortement la vitesse des avions (jusqu'à x4 environ)
+      planeSpeedMultiplier = Math.min(1 + elapsed / 1500, 4.0);
+      // GAME OVER forcé au bout de 10s après détection
+      if(elapsed >= 10000 && gameRunning){
+        forceGameOverFromCheat();
+      }
+    }
+
+    let gameRunning = false, justCrashed = false, groundTimer = null;
+    let blurLevel = 0, lastShake = Date.now(), shaking = false, shakeStart = 0, shakeDuration = 0;
+    let jumpPulse = 0;
+    let lastProgressScore = 0;
+    let waitingForFirstTap = false; // <<< état "hibou en suspension"
+
+    const hibou = { x:10, y:0, width:0, height:0, velocity:0, gravity:0.12, lift:-5.3 };
+
+    const hibouImg = new Image();
+    hibouImg.src = 'https://image.noelshack.com/fichiers/2025/50/2/1765303341-file-000000004a8871f99eb95dd6d98feeda.jpg';
+
+    // Étapes de progression
+    const BRAND_STEPS = [
+      { score: 0,  title: "Commande en attente 💤",        message: "Attrape des bouteilles pour lancer la nuit." },
+      { score: 5,  title: "Commande validée ✅",           message: "Le client a validé sa commande Apéro de Nuit 66®." },
+      { score: 10, title: "Préparation en cours 🍾",       message: "On remplit les sacs : bouteilles, glaçons, softs..." },
+      { score: 20, title: "Livreur en route 🚚",           message: "Le hibou file dans la nuit direction le client." },
+      { score: 30, title: "Livraison presque terminée 🔥", message: "Encore quelques bouteilles à sécuriser, tiens bon !" },
+      { score: 40, title: "Client servi 🎉",               message: "Livraison réussie ! Continue pour battre tous les records." },
+      { score: 50, title: "Tous les codes débloqués 🎁",   message: "Tu as atteint le niveau ultime de l'apéro de nuit !" }
+    ];
+
+    const brandTitleEl = document.getElementById('brandStageTitle');
+    const brandMsgEl   = document.getElementById('brandStageMessage');
+    const brandFillEl  = document.getElementById('brandStageFill');
+
+    function updateBrandProgress(currentScore) {
+      let currentStep = BRAND_STEPS[0];
+      for (let i = 0; i < BRAND_STEPS.length; i++) {
+        if (currentScore >= BRAND_STEPS[i].score) currentStep = BRAND_STEPS[i];
+      }
+      brandTitleEl.textContent = currentStep.title;
+      brandMsgEl.textContent = currentStep.message;
+
+      const capped = Math.min(currentScore, 50);
+      const ratio = capped / 50;
+      brandFillEl.style.width = (ratio * 100) + '%';
+
+      if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
+      if (lastProgressScore < 50 && currentScore >= 50) playSound(rewardSound);
+      lastProgressScore = currentScore;
+    }
+
+    // Fonds animés
+    const levelBackgrounds = [
+      { threshold: 0,  url: 'https://i.postimg.cc/527G0Fx9/file-0000000036c0620aacb1e77bbaa186e1.png' },
+      { threshold: 13, url: 'https://i.postimg.cc/qqQGxLsC/file-000000006a846246a4300fc67ffcc4e0.png' },
+      { threshold: 24, url: 'https://i.postimg.cc/Pq9fPs0C/file-0000000092106246a2177dcebd31a1c6.png' },
+      { threshold: 36, url: 'https://i.postimg.cc/Y0gzJ7BY/file-000000006da0620a8731e1321d49e2a2-1.png' },
+      { threshold: 48, url: 'https://i.postimg.cc/MZR4k2D9/file-000000005b58620aa0ffaa23d3c57622-1.png' }
+    ];
+    levelBackgrounds.forEach(bg=>{ const img=new Image(); img.src=bg.url; });
+
+    let bgOffset = 0, currentBg = levelBackgrounds[0].url;
+    const layers = [document.getElementById('bgLayer1'), document.getElementById('bgLayer2')];
+    let activeLayer = 0;
+    layers[0].style.backgroundImage = `url('${currentBg}')`;
+    layers[0].style.opacity = 1;
+
+    function updateBackground(){
+      let newBg = currentBg;
+      for(let i = levelBackgrounds.length-1; i>=0; i--){
+        if(score >= levelBackgrounds[i].threshold){
+          newBg = levelBackgrounds[i].url;
+          break;
+        }
+      }
+      if(newBg !== currentBg){
+        const next = layers[1-activeLayer];
+        next.style.backgroundImage = `url('${newBg}')`;
+        next.style.backgroundPosition = `${bgOffset}px 0`;
+        next.style.opacity = 1;
+        layers[activeLayer].style.opacity = 0;
+        activeLayer = 1-activeLayer;
+        currentBg = newBg;
+      }
+      bgOffset -= 0.3;
+      layers[activeLayer].style.backgroundPosition = `${bgOffset}px 0`;
+      requestAnimationFrame(updateBackground);
+    }
+
+    // Nuage animé
+    let cloudX = container.clientWidth, cloudW = 0, waiting = false;
+    function pickH(){ return (Math.random()*45+5)+'vh'; }
+    function pickW(){ return (32*(1+Math.random()*0.9))+'vw'; }
+    function respawnCloud(){
+      waiting = true;
+      setTimeout(()=>{
+        cloudX = container.clientWidth;
+        cloudEl.style.top = pickH();
+        cloudEl.style.width = pickW();
+        cloudW = cloudEl.getBoundingClientRect().width;
+        waiting = false;
+      }, Math.random()*40000+2000);
+    }
+    function updateCloud(){
+      if(!waiting){
+        if(!cloudEl.style.top){
+          cloudEl.style.top = pickH();
+          cloudEl.style.width = pickW();
+          cloudW = cloudEl.getBoundingClientRect().width;
+        }
+        cloudX -= 0.5;
+        cloudEl.style.left = cloudX+'px';
+        if(cloudX < -cloudW) respawnCloud();
+      }
+      requestAnimationFrame(updateCloud);
+    }
+
+    // Sprites
+    const avionsImgs = [
+      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000009d4471f4a18d957bd44dc336.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000000e80722fa95c5400fc4fa9c1.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-0000000047f8722fa5676a50442d4c33.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000001230722faf0c2566f21676ae.jpg'
+    ].map(src=>{ const i=new Image(); i.src=src; return i; });
+
+    const bottlesImgs = [
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324367-file-000000003bf47243b504a2b9b1dc72a8.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324476-file-000000001f1871f49e12ae4ea620a531.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324475-file-00000000eea072438e28480eb9d354ec.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324475-file-0000000037e872438fc532c60fd60d13.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324476-file-00000000c12471f49b992bd61a2ee6e1.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-000000008b187243842beb121fb85782.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-00000000819c71f49ae4d45a3e18c3c1.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-000000001b707243aa7ad1b15233dcca.jpg',
+      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-00000000c4c871f49e8f975ed8c906e3.jpg'
+    ].map(src=>{ const i=new Image(); i.src=src; return i; });
+
+    // Hitbox util
+    function getHitbox(x, y, w, h, shrinkX, shrinkY) {
+      const sx = w * shrinkX;
+      const sy = h * shrinkY;
+      return { x: x + sx, y: y + sy, width: w - 2*sx, height: h - 2*sy };
+    }
+    function rectsOverlap(r1, r2) {
+      return (
+        r1.x < r2.x + r2.width  &&
+        r1.x + r1.width  > r2.x &&
+        r1.y < r2.y + r2.height &&
+        r1.y + r1.height > r2.y
+      );
+    }
+
+    function applyEffects(){
+      blurLevel = score>=20 ? Math.min(1+(score-20)*0.3,8) : 0;
+      const now = Date.now();
+      if(score>=2 && !shaking && now-lastShake>=26000){
+        shaking = true; shakeStart = now; shakeDuration = 1000+Math.random()*2000; lastShake = now;
+      }
+      if(shaking && now-shakeStart>=shakeDuration) shaking = false;
+    }
+    function drawWithFakeBlur(img,x,y,w,h){
+      if(blurLevel>0){
+        ctx.globalAlpha = 0.4;
+        [[blurLevel,0],[-blurLevel,0],[0,blurLevel],[0,-blurLevel],
+         [blurLevel,blurLevel],[-blurLevel,blurLevel],[blurLevel,-blurLevel],[-blurLevel,-blurLevel]]
+        .forEach(off=> ctx.drawImage(img,x+off[0],y+off[1],w,h));
+        ctx.globalAlpha = 1;
+      }
+      ctx.drawImage(img,x,y,w,h);
+    }
+    function updateHUD(){
+      scoreEl.textContent = `Score : ${score}`;
+      livesEls.forEach((h,i)=> h.style.visibility = i<lives?'visible':'hidden');
+    }
+
+
+    // === Info (débloqué à partir de 10 points) ===
+    const infoBtn = document.getElementById('infoBtn');
+    const infoOverlay = document.getElementById('infoOverlay');
+
+    function syncInfoButton(currentScore){
+      if (!infoBtn) return;
+      infoBtn.style.display = (currentScore >= 10) ? 'block' : 'none';
+    }
+
+    function showInfo(){
+      if(!infoOverlay) return;
+      infoOverlay.style.display = 'flex';
+      // empêche le scroll derrière
+      document.body.style.overflow = 'hidden';
+    }
+    function hideInfo(){
+      if(!infoOverlay) return;
+      infoOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    if (infoBtn && infoOverlay){
+      // Maintenir appuyé pour lire (press & hold)
+      const down = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showInfo();
+      };
+      const up = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hideInfo();
+      };
+
+      infoBtn.addEventListener('pointerdown', down, {passive:false});
+      infoBtn.addEventListener('pointerup', up, {passive:false});
+      infoBtn.addEventListener('pointercancel', up, {passive:false});
+      infoBtn.addEventListener('pointerleave', up, {passive:false});
+
+      // Si l'utilisateur relâche en dehors du bouton (ex: glisse le doigt)
+      window.addEventListener('pointerup', hideInfo, {passive:true});
+      window.addEventListener('blur', hideInfo);
+    }
+
+
+
+
+    // High scores & codes
+
+    function hasUnlockedCode25(){
+      // Débloqué si un score >= 25 a été atteint (persistant)
+      return localStorage.getItem('unlockedCode25') === '1';
+    }
+    function setUnlockedCode25(){
+      localStorage.setItem('unlockedCode25', '1');
+      if (useCodeBtn) useCodeBtn.style.display = 'block';
+    }
+    function syncUseCodeButton(bestScore){
+      // Montre uniquement après 25 points atteints
+      if (!useCodeBtn) return;
+      if (bestScore >= 25 || hasUnlockedCode25()) useCodeBtn.style.display = 'block';
+      else useCodeBtn.style.display = 'none';
+    }
+    function loadHighScores(){
+      const raw = localStorage.getItem('highScores');
+      if (!raw) return [];
+      try { return JSON.parse(raw); } catch(e){ return []; }
+    }
+    function displayHighScores(){
+      const list = document.getElementById('highScoresList');
+      const promo = document.getElementById('promoCodesList');
+      list.innerHTML = '';
+      promo.innerHTML = '';
+
+      const arr = loadHighScores();
+      if(!arr.length) list.innerHTML='<p>Aucun score.</p>';
+      else arr.sort((a,b)=>b.score-a.score).slice(0,4).forEach(e=>{
+        const d=new Date(e.timestamp);
+        list.innerHTML+=`<p>${e.score} pts – ${d.toLocaleDateString('fr-FR')}</p>`;
+      });
+
+      const best = arr.length ? Math.max(...arr.map(e=>e.score)) : 0;
+      syncUseCodeButton(best);
+      const codes = [];
+      if(best>=25) codes.push('LIVOFRT');
+      if(best>=50) codes.push('POLOFRT');
+      if(codes.length) codes.forEach(c=> promo.innerHTML+=`<p>Code promo : ${c}</p>`);
+      else promo.innerHTML='<p>Pas disponible.</p>';
+    }
+    function saveScore(sc){
+      const arr=loadHighScores();
+      arr.push({score:sc,timestamp:Date.now()});
+      localStorage.setItem('highScores',JSON.stringify(arr));
+    }
+
+    // RÉFÉRENCES BOUTON / TEXTE AVIS
+    const reviewBtn  = document.getElementById('reviewBtn');
+    const reviewText = document.getElementById('reviewText');
+
+    // Crash & game over
+    function crash(){
+      if(justCrashed) return;
+      justCrashed=true;
+      lives--;
+      updateHUD();
+
+      playSound(explosionSound);
+      playSound(lifeLostSound);
+
+      document.getElementById('koEffect').style.display='block';
+      setTimeout(()=>document.getElementById('koEffect').style.display='none',500);
+      gameRunning=false;
+      bgMusic.pause();
+
+      const finalScoreEl = document.getElementById('finalScore');
+      const gameOverMsgEl = document.getElementById('gameOverMsg');
+      finalScoreEl.textContent = `Tu as attrapé ${score} bouteilles !`;
+
+      if (score < 10) {
+        gameOverMsgEl.textContent = "On va dire que tu as commencé l’apéro un peu trop tôt… 🍺😅";
+      } else if (score >= 25) {
+        gameOverMsgEl.textContent = "Toi, on devrait t’embaucher en livreur de nuit ! 🚚🦉";
+      } else {
+        gameOverMsgEl.textContent = "Pas mal ! Encore quelques vols et tu deviendras une légende de l’apéro. 🍾";
+      }
+
+      // Affichage du bouton d'avis à partir de 25 points
+      if (score >= 25) {
+        reviewBtn.style.display  = 'block';
+        reviewText.style.display = 'block';
+      } else {
+        reviewBtn.style.display  = 'none';
+        reviewText.style.display = 'none';
+      }
+
+      if(lives<=0){
+        if (soundOn) {
+          gameOverSound.currentTime = 0;
+          gameOverSound.play().catch(()=>{});
+          setTimeout(()=>{
+            gameOverSound.pause();
+            gameOverSound.currentTime = 0;
+          }, 3500);
+        }
+        saveScore(score); displayHighScores();
+        document.getElementById('gameOver').style.display='block';
+        if (cheatDetected) { setTimeout(() => { showCheatOverlayLocked(); }, 80); }
+      } else {
+        document.getElementById('continueScreen').style.display='block';
+      }
+    }
+
+    function gameLoop(){
+      if(!gameRunning) return;
+      frameCount++;
+      applyEffects();
+      applyCheatLogic();
+
+      // Tant qu'on attend le premier clic : hibou figé en l'air + popup
+      if (waitingForFirstTap) {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        const scale = 1;
+        const angle = 0;
+
+        ctx.save();
+        ctx.translate(hibou.x + hibou.width / 2, hibou.y + hibou.height / 2);
+        ctx.rotate(angle);
+        ctx.scale(scale, scale);
+        ctx.drawImage(hibouImg, -hibou.width / 2, -hibou.height / 2, hibou.width, hibou.height);
+        ctx.restore();
+
+        requestAnimationFrame(gameLoop);
+        return;
+      }
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // Hibou
+      hibou.velocity += hibou.gravity;
+      hibou.y += hibou.velocity;
+      if (hibou.y < 0) hibou.y = 0;
+      if (hibou.y > canvas.height - hibou.height) hibou.y = canvas.height - hibou.height;
+
+      if (jumpPulse > 0) {
+        jumpPulse *= 0.85;
+        if (jumpPulse < 0.01) jumpPulse = 0;
+      }
+      const scale = 1 + jumpPulse;
+      let angle = hibou.velocity * 0.08;
+      if (angle < -0.25) angle = -0.25;
+      if (angle > 0.7)  angle = 0.7;
+
+      ctx.save();
+      ctx.translate(hibou.x + hibou.width / 2, hibou.y + hibou.height / 2);
+      ctx.rotate(angle);
+      ctx.scale(scale, scale);
+      ctx.drawImage(hibouImg, -hibou.width / 2, -hibou.height / 2, hibou.width, hibou.height);
+      ctx.restore();
+
+      if(hibou.y >= canvas.height - hibou.height && !groundTimer){
+        groundTimer = setTimeout(()=>{ crash(); groundTimer=null; },300);
+      } else if(hibou.y < canvas.height - hibou.height && groundTimer){
+        clearTimeout(groundTimer);
+        groundTimer = null;
+      }
+
+      const hibouHit = getHitbox(hibou.x, hibou.y, hibou.width, hibou.height, 0.25, 0.25);
+
+      const baseI = Math.max(30, Math.floor(100 - score*0.3));
+
+      if(frameCount % baseI === 0){
+        avions.push({
+          img: avionsImgs[Math.floor(Math.random()*avionsImgs.length)],
+          x: canvas.width, y: Math.random()*(canvas.height-50),
+          width: canvas.height*0.17, height: canvas.height*0.12
+        });
+      }
+      if(score >= 28 && frameCount % baseI === Math.floor(baseI/2)){
+        avions.push({
+          img: avionsImgs[Math.floor(Math.random()*avionsImgs.length)],
+          x: canvas.width, y: Math.random()*(canvas.height-50),
+          width: canvas.height*0.17, height: canvas.height*0.12
+        });
+      }
+      if(score >= 45 && frameCount % baseI === Math.floor(baseI/3)){
+        avions.push({
+          img: avionsImgs[Math.floor(Math.random()*avionsImgs.length)],
+          x: canvas.width, y: Math.random()*(canvas.height-50),
+          width: canvas.height*0.17, height: canvas.height*0.12
+        });
+      }
+
+      if(frameCount % baseI === 0 && Math.random()<0.5){
+        bottles.push({
+          img: bottlesImgs[Math.floor(Math.random()*bottlesImgs.length)],
+          x: canvas.width, y: Math.random()*(canvas.height-40),
+          width: canvas.height*0.08, height: canvas.height*0.08
+        });
+      }
+
+      // Avions
+      for(let i=avions.length-1;i>=0;i--){
+        const a=avions[i];
+        a.x -= (2 + score*0.1) * planeSpeedMultiplier;
+        drawWithFakeBlur(a.img,a.x,a.y,a.width,a.height);
+        const aHit = getHitbox(a.x, a.y, a.width, a.height, 0.35, 0.35);
+        if(rectsOverlap(hibouHit, aHit)){
+          crash();
+        }
+        if(a.x + a.width < 0) avions.splice(i,1);
+      }
+
+      // Bouteilles
+      for(let i=bottles.length-1;i>=0;i--){
+        const b=bottles[i];
+        b.x -= 2;
+        drawWithFakeBlur(b.img,b.x,b.y,b.width,b.height);
+        const bHit = getHitbox(b.x, b.y, b.width, b.height, 0.2, 0.2);
+        if(rectsOverlap(hibouHit, bHit)){
+          score++;
+          updateHUD();
+          updateBrandProgress(score);
+      syncInfoButton(score);
+          syncInfoButton(score);
+
+          if (score === 25) { setUnlockedCode25(); }
+          playSound(pointSound);
+
+          pointFlash.style.opacity = '0.2';
+          setTimeout(() => { pointFlash.style.opacity = '0'; }, 80);
+
+          bottles.splice(i,1);
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Init & contrôles
+    function initRound(){
+      justCrashed=false; frameCount=0;
+      hibou.velocity=0; hibou.y = canvas.height/2;
+      avions=[]; bottles=[];
+      blurLevel=0; lastShake=Date.now(); groundTimer=null;
+      document.getElementById('continueScreen').style.display='none';
+
+      // On met le hibou en pause + popup
+      waitingForFirstTap = true;
+      tapToStartOverlay.style.display = 'block';
+
+      gameRunning=true;
+      if (soundOn) bgMusic.play().catch(()=>{});
+      requestAnimationFrame(gameLoop);
+    }
+
+    function startGame(){
+      score=0;
+      lives=3;
+      // Reset anti-triche
+      clickHistory = [];
+      cheatDetected = false;
+      cheatTime = 0;
+      cheatImageShown = false;
+      planeSpeedMultiplier = 1;
+
+      lastProgressScore = 0;
+      updateHUD();
+      updateBrandProgress(score);
+
+      const ratio = window.innerHeight / 640;
+      hibou.width  = 640 * 0.16 * ratio;
+      hibou.height = 640 * 0.16 * ratio;
+
+      displayHighScores();
+      document.getElementById('menu').style.display='none';
+      document.getElementById('gameOver').style.display='none';
+
+      // Réinitialiser le texte et le bouton d'avis
+      reviewBtn.style.display  = 'none';
+      reviewText.style.display = 'none';
+
+      if (soundOn) {
+        bgMusic.currentTime = 0;
+      }
+      initRound();
+    }
+
+    // Premier clic / appui barre espace : démarre la partie ET fait sauter le hibou
+    function jump(){
+      if(!gameRunning) return;
+      playSound(jumpSound);
+      hibou.velocity = hibou.lift;
+      jumpPulse = 0.25;
+    }
+
+    function startFromTap(){
+      if (!gameRunning) return;
+      warmupSounds();
+      if (waitingForFirstTap) {
+        waitingForFirstTap = false;
+        tapToStartOverlay.style.display = 'none';
+      }
+      if (IS_PC) registerUserAction();
+      jump();
+    }
+
+    function inputIsOnUI(e){
+      return e.target.closest('.overlay, button') !== null;
+    }
+    function handlePointer(e){
+      if(inputIsOnUI(e)) return;
+      startFromTap();
+    }
+
+    // Boutons + son de clic
+    const playBtn = document.getElementById('playBtn');
+    const instructionsBtn = document.getElementById('instructionsBtn');
+    const useCodeBtn = document.getElementById('useCodeBtn');
+    const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+    const continueBtn = document.getElementById('continueBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const menuBtn = document.getElementById('menuBtn');
+
+    function clickAnd(fn){
+      return () => {
+        warmupSounds();        // pré-chauffe au premier clic
+        playSound(clickSound);
+        fn();
+      };
+    }
+
+    playBtn.onclick = clickAnd(startGame);
+    instructionsBtn.onclick = clickAnd(()=>{
+      document.getElementById('menu').style.display='none';
+      document.getElementById('instructionsOverlay').style.display='block';
+    });
+    closeInstructionsBtn.onclick = clickAnd(()=>{
+      document.getElementById('instructionsOverlay').style.display='none';
+      document.getElementById('menu').style.display='block';
+      displayHighScores();
+    });
+    continueBtn.onclick = clickAnd(initRound);
+    restartBtn.onclick = clickAnd(startGame);
+    menuBtn.onclick = clickAnd(()=>{
+      document.getElementById('gameOver').style.display='none';
+      document.getElementById('menu').style.display='block';
+      displayHighScores();
+      gameRunning = false;
+      bgMusic.pause();
+
+      // On masque aussi le popup de départ au cas où
+      waitingForFirstTap = false;
+      tapToStartOverlay.style.display = 'none';
+
+      // On masque au retour menu (sécurité)
+      reviewBtn.style.display  = 'none';
+      reviewText.style.display = 'none';
+    });
+    useCodeBtn.onclick = clickAnd(()=>{
+      window.open('https://www.aperodenuit.com/', '_blank');
+    });
+
+    // CLIC SUR LE BOUTON D'AVIS GOOGLE
+    reviewBtn.onclick = clickAnd(()=>{
+      window.open('https://g.page/r/CeR1XkHseNX9EBM/review', '_blank');
+    });
+
+    document.addEventListener('keydown',e=>{
+      if(e.code==='Space'){
+        e.preventDefault();
+        startFromTap();
+      }
+    });
+    window.addEventListener('mousedown', handlePointer);
+    window.addEventListener('touchstart', handlePointer);
+
+    // Au chargement
+    displayHighScores();
+    syncUseCodeButton(hasUnlockedCode25() ? 25 : 0);
+    syncInfoButton(0);
+    updateBackground();
+    updateCloud();
+  });
+  </script>
+
+
+  <!-- Bouton "Ajouter à l’écran d’accueil" (PWA) -->
+<script>
+(function () {
+  const installBtn = document.getElementById('installBtn');
+  if (!installBtn) return;
+
+  let deferredPrompt = null;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  // Affiche le bouton même sur iPhone (où il n’y a pas de popup d’installation automatique)
+  if (!isStandalone) {
+    installBtn.style.display = 'block';
+  } else {
+    installBtn.style.display = 'none';
+  }
+
+  // Android/Chrome: capture l’événement d’installation
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isStandalone) installBtn.style.display = 'block';
+  });
+
+  // Clic bouton: soit on lance le prompt (Android), soit on explique (iPhone / autres)
+  installBtn.addEventListener('click', async () => {
+    if (isStandalone) return;
+
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+      } catch (err) {}
+      deferredPrompt = null;
+      return;
+    }
+
+    if (isIOS) {
+      alert("Sur iPhone : appuie sur le bouton Partager (⬆️) puis 'Sur l’écran d’accueil'.");
+      return;
+    }
+
+    alert("Ouvre ce lien dans Chrome (Android) ou Safari (iPhone) pour l’ajouter à l’écran d’accueil.");
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+})();
+</script>
+
+
+  <!-- Enregistrement du service worker pour la PWA -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(err => {
+            console.log('Service worker registration failed:', err);
+          });
+      });
+    }
+  </script>
+<script>
+(function(){
+  function requestNotifOnce(){
+    try{
+      if (localStorage.getItem("notifAsked")) return;
+      localStorage.setItem("notifAsked","1");
+        try{
+          // Small delay helps on some Android devices right after first tap
+          await new Promise(r => setTimeout(r, 50));
+        }catch(e){}
+      });
+    }catch(e){}
+  }
+
+  function isJouerElement(el){
+    if(!el) return false;
+    // If element or one of its children contains exactly "Jouer"
+    const txt = (el.textContent || "").trim().toLowerCase();
+    return txt === "jouer";
+  }
+
+  // Delegation: catches dynamically created buttons too
+  document.addEventListener("click", function(ev){
+    let el = ev.target;
+    for(let i=0;i<6 && el; i++){
+      if(isJouerElement(el)){
+        requestNotifOnce();
+        break;
+      }
+      el = el.parentElement;
+    }
+  }, true);
+})();
+</script>
+
+/* === FIX AUDIO PWA (réactivation après installation) === */
+(function(){
+  let resumed = false;
+  function resumeAudio(){
+    if(resumed) return;
+    resumed = true;
+    try{
+      if(window.AudioContext || window.webkitAudioContext){
+        const ctx = window.__audioCtx;
+        if(ctx && ctx.state === 'suspended') ctx.resume();
+      }
+      // relance éventuelle des <audio>
+      document.querySelectorAll('audio').forEach(a=>{
+        try{ a.muted=false; a.play().then(()=>a.pause()).catch(()=>{}); }catch(e){}
+      });
+    }catch(e){}
+    document.removeEventListener('click', resumeAudio, true);
+    document.removeEventListener('touchstart', resumeAudio, true);
+  }
+  document.addEventListener('click', resumeAudio, true);
+  document.addEventListener('touchstart', resumeAudio, true);
+})();
+
+</body>
+</html>

@@ -1212,6 +1212,7 @@
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="adn-menu-item" id="adnMenuCall">📞 Appeler</div>
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">🚚 Suivi livreur <span class="adn-pill">PWA</span></div>
+    <div class="adn-menu-item" id="adnMenuGame" style="display:none">🎮 Hib’air Drink <span class="adn-pill">PWA</span></div>
     <div class="adn-menu-item" id="adnMenuInstall" style="display:none">⬇️ Installer l’app</div>
     <div class="adn-menu-item" id="adnMenuZone">📍 Zone de livraison</div>
     <div class="adn-menu-sep"></div>
@@ -1266,10 +1267,12 @@
 
       // Visibility rules
       const track = document.getElementById("adnMenuTrack");
+      const game = document.getElementById("adnMenuGame");
       const install = document.getElementById("adnMenuInstall");
       const standalone = isStandalone();
 
       if(track) track.style.display = standalone ? "flex" : "none";
+      if(game) game.style.display = standalone ? "flex" : "none";
       if(install) install.style.display = standalone ? "none" : "flex"; // site only
 
       // Actions
@@ -1279,6 +1282,14 @@
           closeMenu();
           // no age gate for calling
           window.location.href = "tel:0652336461";
+        });
+      }
+
+      if(game){
+        game.addEventListener("click", ()=>{
+          closeMenu();
+          // ✅ Onglet visible uniquement en PWA
+          window.location.href = "./game/";
         });
       }
 
