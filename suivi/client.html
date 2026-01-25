@@ -327,6 +327,15 @@
     /* L’ancien footer "legal" n’est plus utilisé (remplacé par bande noire) */
     .legal{ display:none !important; }
 
+
+    /* ===== FIX OVERFLOW INPUT ===== */
+    .clientPopupInput,
+    .clientPopup input,
+    .clientPopupCard input{
+      width:100% !important;
+      box-sizing:border-box !important;
+    }
+
 </style>
 </head>
 
@@ -354,8 +363,8 @@
 
 
   <!-- POPUP -->
-  <section class="clientPopup">
-    <div class="clientPopupCard">
+  <section class="clientPopup" id="clientPopup">
+    <div class="clientPopupCard" id="clientPopupCard">
       <h1 class="clientPopupTitle">Suivi en direct</h1>
       <p class="clientPopupSub">Indiquez votre nom pour activer le suivi.</p>
 
@@ -391,7 +400,116 @@
       if (history.length > 1) history.back();
       else location.href = "index.html";
     });
-  </script>
+  
+
+/* ===== ADN66 UI PATCH: popup état + chrono ===== */
+(() => {
+  const elPopup = document.getElementById('clientPopup');
+  const elStateText = document.getElementById('stateText');
+  const elStateDot = document.getElementById('stateDot');
+  const elCountdown = document.getElementById('countdown');
+
+  const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
+  const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
+
+  const setDot = (mode) => {
+    if (!elStateDot) return;
+    elStateDot.style.background = '#9aa8b6';
+    elStateDot.style.boxShadow = '0 0 0 4px rgba(154,168,182,.18)';
+    if (mode === 'ok') {
+      elStateDot.style.background = '#21d07a';
+      elStateDot.style.boxShadow = '0 0 0 4px rgba(33,208,122,.18)';
+    } else if (mode === 'warn') {
+      elStateDot.style.background = '#ffcc33';
+      elStateDot.style.boxShadow = '0 0 0 4px rgba(255,204,51,.18)';
+    } else if (mode === 'bad') {
+      elStateDot.style.background = '#ff4d4d';
+      elStateDot.style.boxShadow = '0 0 0 4px rgba(255,77,77,.18)';
+    }
+  };
+
+  const normalizeState = (raw) => {
+    const s = (raw ?? '').toString().toLowerCase().trim();
+    if (['accepted','accept','ok','active','granted','autorise','autorisé','allowed','running'].includes(s)) return 'accepted';
+    if (['refused','reject','rejected','denied','ko','blocked','refuse','refusé'].includes(s)) return 'refused';
+    if (['stopped','stop','ended','expired','timeout','finished','done','closed','revoked','revoke','revoké'].includes(s)) return 'ended';
+    if (['pending','wait','waiting','attente','request','requested'].includes(s)) return 'pending';
+    if (s.includes('refus')) return 'refused';
+    if (s.includes('accept') || s.includes('actif')) return 'accepted';
+    if (s.includes('stop') || s.includes('expir') || s.includes('termin')) return 'ended';
+    if (s) return s;
+    return 'pending';
+  };
+
+  const setUi = (stateRaw, remainingSec) => {
+    const state = normalizeState(stateRaw);
+
+    if (state === 'accepted') {
+      if (elStateText) elStateText.textContent = 'Suivi actif';
+      setDot('ok');
+      hidePopup();
+      return;
+    }
+
+    if (state === 'refused') {
+      if (elStateText) elStateText.textContent = 'Accès refusé';
+      setDot('bad');
+      showPopup();
+      if (elCountdown) elCountdown.textContent = '0:00';
+      return;
+    }
+
+    if (state === 'ended') {
+      if (elStateText) elStateText.textContent = 'Suivi terminé';
+      setDot('warn');
+      showPopup();
+      if (elCountdown) elCountdown.textContent = '0:00';
+      return;
+    }
+
+    if (elStateText) elStateText.textContent = 'En attente';
+    setDot('warn');
+    showPopup();
+    if (elCountdown) elCountdown.textContent = '0:00';
+  };
+
+  window.__ADN66_UI_SET = setUi;
+
+  // Observe changes pushed by existing code
+  if (elStateText) {
+    const obs = new MutationObserver(() => {
+      const t = (elStateText.textContent || '').toLowerCase();
+      if (t.includes('actif') || t.includes('accept')) hidePopup();
+      if (t.includes('attente') || t.includes('refus') || t.includes('termin') || t.includes('stop') || t.includes('expir')) showPopup();
+      if (t.includes('stop') || t.includes('termin') || t.includes('expir')) {
+        if (elCountdown) elCountdown.textContent = '0:00';
+      }
+    });
+    obs.observe(elStateText, { childList: true, subtree: true, characterData: true });
+  }
+
+  // Patch fetch: whenever /client/status returns, enforce UI coherence
+  const _fetch = window.fetch;
+  window.fetch = async (...args) => {
+    const res = await _fetch(...args);
+    try {
+      const url = (args[0] && args[0].toString) ? args[0].toString() : '';
+      if (url.includes('/client/status')) {
+        res.clone().json().then((data) => {
+          const state = data?.status ?? data?.state ?? data?.access ?? data?.result ?? data?.decision ?? data?.mode;
+          // remaining could be seconds; we don't rely on it, but if state ended/refused we reset
+          setUi(state, 0);
+        }).catch(()=>{});
+      }
+    } catch (e) {}
+    return res;
+  };
+
+  // Init default UI
+  setUi('pending', 0);
+})();
+
+</script>
 
 </body>
 </html>
