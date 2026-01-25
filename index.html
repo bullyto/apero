@@ -408,11 +408,15 @@
     }
 
     .adn-legal-footer{
-      margin-top:auto;
-      padding:10px 14px calc(12px + env(safe-area-inset-bottom));
+      position:fixed;
+      left:0; right:0;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      padding:6px 10px;
       text-align:center;
       font-size:12px;
       opacity:.55;
+      z-index:55;
+      pointer-events:auto;
     }
     .adn-legal-footer a{
       color:inherit;
@@ -1209,6 +1213,7 @@
     <div class="adn-menu-item" id="adnMenuCall">📞 Appeler</div>
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">🚚 Suivi livreur <span class="adn-pill">PWA</span></div>
     <div class="adn-menu-item" id="adnMenuInstall" style="display:none">⬇️ Installer l’app</div>
+    <div class="adn-menu-item" id="adnMenuZone">📍 Zone de livraison</div>
     <div class="adn-menu-sep"></div>
     <div class="adn-menu-item" id="adnMenuClose">✖️ Fermer</div>
   </div>
@@ -1248,6 +1253,14 @@
       }
 
       if(btn) btn.addEventListener("click", ()=>{ sheet && sheet.classList.contains("open") ? closeMenu() : openMenu(); });
+      const zoneEl = document.getElementById("adnMenuZone");
+      if(zoneEl){
+        zoneEl.addEventListener("click", () => {
+          closeMenu();
+          window.location.href = "./zone_livraison.html";
+        });
+      }
+
       if(closeBtn) closeBtn.addEventListener("click", closeMenu);
       if(back) back.addEventListener("click", closeMenu);
 
