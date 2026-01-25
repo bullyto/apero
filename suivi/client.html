@@ -406,13 +406,18 @@
 
 <script>
 
-/* ===== ADN66 UI PATCH: LIGHT (no fetch/setInterval override) ===== */
+/* ===== ADN66 UI PATCH: STATE MACHINE (no fetch/setInterval override) ===== */
 (() => {
   const elPopup = document.getElementById('clientPopup');
   const elStateText = document.getElementById('stateText');
   const elStateDot = document.getElementById('stateDot');
   const elCountdown = document.getElementById('countdown');
   const elGeoText = document.getElementById('geoText');
+  const btnStart = document.getElementById('btnStart');
+
+  const LS_KEY = 'adn_client_track_phase'; // idle|waiting|active
+  const getPhase = () => localStorage.getItem(LS_KEY) || 'idle';
+  const setPhase = (p) => localStorage.setItem(LS_KEY, p);
 
   const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
   const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
@@ -451,111 +456,121 @@
     return 0;
   };
 
-  let lastMode = 'pending'; // pending | waiting | active | refused | ended
-
-  const setMode = (mode) => {
-    if (!elStateText) return;
-
-    lastMode = mode;
-
-    if (mode === 'active') {
-      elStateText.textContent = 'Suivi actif';
-      setDot('ok');
-      hidePopup();
-      return;
-    }
-    if (mode === 'waiting') {
-      elStateText.textContent = 'En attente de décision';
-      setDot('warn');
-      showPopup();
-      return;
-    }
-    if (mode === 'refused') {
-      elStateText.textContent = 'Accès refusé';
-      setDot('bad');
-      showPopup();
-      if (elCountdown) elCountdown.textContent = '0:00';
-      return;
-    }
-    if (mode === 'ended') {
-      elStateText.textContent = 'Suivi terminé';
-      setDot('warn');
-      showPopup();
-      if (elCountdown) elCountdown.textContent = '0:00';
-      return;
-    }
-    // pending default
-    elStateText.textContent = 'En attente';
+  const uiPending = () => {
+    if (elStateText) elStateText.textContent = 'En attente';
     setDot('warn');
     showPopup();
     if (elCountdown) elCountdown.textContent = '0:00';
   };
 
-  // Hook for your existing JS (if present)
-  // You can call: window.ADN66_UI.set('waiting'|'active'|'refused'|'ended'|'pending')
-  window.ADN66_UI = { set: setMode };
+  const uiWaiting = () => {
+    if (elStateText) elStateText.textContent = 'En attente de décision';
+    setDot('warn');
+    showPopup();
+  };
 
-  // === Observers: we infer states from DOM changes made by the existing logic ===
+  const uiActive = () => {
+    if (elStateText) elStateText.textContent = 'Suivi actif';
+    setDot('ok');
+    hidePopup();
+  };
 
-  // 1) If countdown > 0 => ACTIVE (even if another script forgot to change the label)
+  const uiEnded = () => {
+    if (elStateText) elStateText.textContent = 'Suivi terminé';
+    setDot('warn');
+    showPopup();
+    if (elCountdown) elCountdown.textContent = '0:00';
+  };
+
+  const uiRefused = () => {
+    if (elStateText) elStateText.textContent = 'Accès refusé';
+    setDot('bad');
+    showPopup();
+    if (elCountdown) elCountdown.textContent = '0:00';
+  };
+
+  // On click: we assume a request is sent => keep "waiting" until accepted/refused/ended
+  if (btnStart) {
+    btnStart.addEventListener('click', () => {
+      setPhase('waiting');
+      uiWaiting();
+    }, true);
+  }
+
+  // Countdown drives ACTIVE, and STOP/timeout drives ENDED
   const applyFromCountdown = () => {
     if (!elCountdown) return;
     const sec = parseToSeconds(elCountdown.textContent);
+    const phase = getPhase();
+
     if (sec > 0) {
-      if (lastMode !== 'active') setMode('active');
+      if (phase !== 'active') setPhase('active');
+      uiActive();
       return;
     }
-    // countdown == 0
-    if (lastMode === 'active') {
-      // if we were active and now 0:00 => ended (STOP or TIMEOUT)
-      setMode('ended');
+
+    // sec == 0
+    if (phase === 'active') {
+      // We were active and now 0 => driver stopped or expired
+      setPhase('idle');
+      uiEnded();
       return;
     }
-    // if not active, keep current mode
+
+    // if waiting, keep waiting (prevents flicker back to "En attente")
+    if (phase === 'waiting') {
+      uiWaiting();
+      return;
+    }
   };
 
-  // 2) If geoText indicates "demande" => WAITING, if indicates "refus" => REFUSED
+  // GeoText can signal refused/ended in your existing flow
   const applyFromGeo = () => {
     if (!elGeoText) return;
     const t = (elGeoText.textContent || '').toLowerCase();
-    if (t.includes('décision') || t.includes('demande') || t.includes('envoi') || t.includes('envoy')) {
-      if (lastMode !== 'active') setMode('waiting');
-      return;
-    }
+    const phase = getPhase();
+
     if (t.includes('refus')) {
-      setMode('refused');
+      setPhase('idle');
+      uiRefused();
+      return;
+    }
+    if (t.includes('stop') || t.includes('termin') || t.includes('expir') || t.includes('fin')) {
+      setPhase('idle');
+      uiEnded();
+      return;
+    }
+    if (t.includes('décision') || t.includes('demande') || t.includes('envoy')) {
+      if (phase !== 'active') {
+        setPhase('waiting');
+        uiWaiting();
+      }
       return;
     }
   };
 
-  // 3) If another script writes in stateText, we respect strong signals but countdown still wins for ACTIVE
-  const applyFromStateText = () => {
-    if (!elStateText) return;
-    const t = (elStateText.textContent || '').toLowerCase();
-    if (t.includes('refus')) return setMode('refused');
-    if (t.includes('termin') || t.includes('stop') || t.includes('expir')) return setMode('ended');
-    if (t.includes('décision')) return setMode('waiting');
-    if (t.includes('actif') || t.includes('accept')) return setMode('active');
-    if (t.includes('attente')) return setMode('pending');
+  // If another script tries to revert to "En attente" while we're waiting, we force "En attente de décision"
+  const enforceWaitingText = () => {
+    const phase = getPhase();
+    if (phase !== 'waiting') return;
+    const t = (elStateText?.textContent || '').toLowerCase();
+    if (t.includes('en attente') && !t.includes('décision')) {
+      uiWaiting();
+    }
   };
 
-  if (elCountdown) {
-    new MutationObserver(() => applyFromCountdown()).observe(elCountdown, { childList:true, subtree:true, characterData:true });
-  }
-  if (elGeoText) {
-    new MutationObserver(() => { applyFromGeo(); applyFromCountdown(); }).observe(elGeoText, { childList:true, subtree:true, characterData:true });
-  }
-  if (elStateText) {
-    new MutationObserver(() => { applyFromStateText(); applyFromCountdown(); }).observe(elStateText, { childList:true, subtree:true, characterData:true });
-  }
+  if (elCountdown) new MutationObserver(() => applyFromCountdown()).observe(elCountdown, { childList:true, subtree:true, characterData:true });
+  if (elGeoText) new MutationObserver(() => { applyFromGeo(); applyFromCountdown(); }).observe(elGeoText, { childList:true, subtree:true, characterData:true });
+  if (elStateText) new MutationObserver(() => { enforceWaitingText(); applyFromCountdown(); }).observe(elStateText, { childList:true, subtree:true, characterData:true });
 
-  // Initial: only set if empty (do NOT fight the real logic)
-  if (elStateText && !elStateText.textContent.trim()) {
-    setMode('pending');
-  } else {
-    // still ensure countdown rule is applied
-    applyFromCountdown();
-  }
+  // Init on load
+  const phase = getPhase();
+  if (phase === 'waiting') uiWaiting();
+  else if (phase === 'active') uiActive();
+  else uiPending();
+
+  // One more pass
+  setTimeout(() => { applyFromGeo(); applyFromCountdown(); }, 50);
 })();
 
 </script>
