@@ -1,10 +1,5 @@
-/* service-worker.js — v3.5 (SAFE)
-   Fix:
-   - Precache robuste: n’échoue pas si un fichier manque (sinon SW ne s’update jamais)
-   - NE JAMAIS cacher status-popup.js / status.json / images status (toujours frais)
-   - HTML en network-first, reste en cache-first
-*/
-const CACHE_NAME = "aperodenuit-v3.9";
+
+const CACHE_NAME = "aperodenuit-v4.0";
 
 // ⚠️ Pré-cache minimal + tolérant aux fichiers absents
 const CORE_ASSETS = [
