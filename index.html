@@ -30,10 +30,63 @@
       margin:0; min-height:100dvh; display:flex; flex-direction:column;
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#fff; color:var(--text); overflow-x:hidden;
+      background:#fff; color:var(--text); overflow-x:hidden; overflow-y:hidden;
     }
 
-    
+    /* =========================
+       ⏳ SPLASH LOADER (2.5s)
+       (Ajouté, ne supprime rien)
+       ========================= */
+    #splashLoader{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:#0b1c2d;
+      z-index:900000; /* sous status overlay (999999), au-dessus du reste */
+      padding:24px;
+    }
+    #splashLoader.hide{
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .30s ease;
+    }
+    #splashBox{
+      width:min(520px, 92vw);
+      text-align:center;
+      color:#fff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    #splashTitle{
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:13px;
+      opacity:.80;
+      margin:0;
+    }
+    #splashBrand{
+      margin:10px 0 18px;
+      font-size:26px;
+      font-weight:950;
+    }
+    #splashBar{
+      height:14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    #splashFill{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:#5db7ee;
+    }
+    #splashHint{
+      margin:12px 0 0;
+      font-size:13px;
+      font-weight:800;
+      opacity:.70;
+    }
 
     /* HEADER */
     .top{background:var(--blue);padding-bottom:8px}
@@ -276,7 +329,306 @@
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
   <script>
-  // ✅ PATCH STATUS: force la PWA à lire /outil/apps/status/status.json (et plus l'ancien repo /status)// ✅ Service worker (cache-bust)
+  // ✅ PATCH STATUS: force la PWA à lire /outil/apps/status/status.json (et plus l'ancien repo /status)
+  (function(){
+    var NEW_STATUS_URL = "https://bullyto.github.io/outil/apps/status/status.json";
+    // Expose/compat
+    window.AD_STATUS_URL = NEW_STATUS_URL;
+    window.AD_STATUS_JSON_URL = NEW_STATUS_URL;
+    window.STATUS_URL = NEW_STATUS_URL;
+    window.STATUS_JSON_URL = NEW_STATUS_URL;
+    window.statusJsonUrl = NEW_STATUS_URL;
+    try { document.documentElement.setAttribute('data-status-url', NEW_STATUS_URL); } catch(e) {}
+
+    // Interception fetch() pour réécrire toute requête vers l'ancien status.json
+    var _fetch = window.fetch ? window.fetch.bind(window) : null;
+    if (_fetch) {
+      window.fetch = function(input, init){
+        try {
+          var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
+          if (url) {
+            var u = url;
+            // Remplace plusieurs variantes connues de l'ancien status
+            if (u.indexOf('bullyto.github.io/status/status.json') !== -1) u = NEW_STATUS_URL;
+            if (u.indexOf('raw.githubusercontent.com/bullyto/status') !== -1) u = NEW_STATUS_URL;
+            // Si quelqu’un appelle /status.json en relatif, on le force aussi
+            if (/\/status\.json(\?|$)/i.test(u) && u.indexOf('/outil/apps/status/status.json') === -1) u = NEW_STATUS_URL;
+            if (u !== url) {
+              if (typeof input === 'string') input = u;
+              else if (input && input.url) input = new Request(u, input);
+            }
+          }
+        } catch(e) {}
+        return _fetch(input, init);
+      };
+    }
+  })();
+</script>
+<script defer src="./status-popup.js?v=20260101a"></script>
+
+  <style id="adn66-bottom-menu-css">
+    .bottom-actions{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      display:flex;
+      gap:12px;
+      padding:14px 14px calc(14px + env(safe-area-inset-bottom));
+      border-top:1px solid rgba(255,255,255,.10);
+      background:rgba(8,12,20,.92);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      z-index:9998;
+    }
+    .bottom-btn{
+      flex:1;
+      padding:14px;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:700;
+      text-align:center;
+      user-select:none;
+      cursor:pointer;
+      box-shadow: 0 10px 28px rgba(0,0,0,.35);
+    }
+    .bottom-btn.call{ background:#2ecc71; color:#fff; }
+    .bottom-btn.track{ background:#7b4fe9; color:#fff; }
+    /* Avoid hiding content behind the bottom bar */
+    body{ padding-bottom: 90px; }
+    @media (min-width: 820px){
+      body{ padding-bottom: 84px; }
+    }
+
+    /* Floating menu button */
+    .fab-menu{
+      position:fixed;
+      right:16px;
+      bottom: calc(96px + env(safe-area-inset-bottom));
+      width:56px; height:56px;
+      border-radius:999px;
+      background:rgba(84,180,255,.18);
+      border:1px solid rgba(84,180,255,.45);
+      color:#e8f0ff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      box-shadow:0 14px 34px rgba(0,0,0,.45);
+      z-index:9999;
+      cursor:pointer;
+      user-select:none;
+    }
+    .fab-menu:active{ transform: translateY(1px); }
+
+    .menu-sheet{
+      position:fixed;
+      right:16px;
+      bottom: calc(160px + env(safe-area-inset-bottom));
+      width:min(340px, calc(100vw - 32px));
+      background: rgba(11,20,32,.98);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      z-index:10000;
+      display:none;
+    }
+    .menu-sheet.open{ display:block; }
+    .menu-item{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:14px 16px;
+      color:#e8f0ff;
+      text-decoration:none;
+      font-weight:700;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+    .menu-item:last-child{ border-bottom:none; }
+    .menu-item .hint{
+      margin-left:auto;
+      font-weight:700;
+      font-size:12px;
+      opacity:.75;
+    }
+    .menu-item .pwa-only{
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(123,79,233,.55);
+      background:rgba(123,79,233,.18);
+      color:#fff;
+      opacity:1;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- =========================
+       ⏳ SPLASH LOADER (AJOUT)
+       ========================= -->
+  <div id="splashLoader" aria-hidden="true">
+    <div id="splashBox">
+      <div id="splashTitle">Chargement</div>
+      <div id="splashBrand">APÉRO DE NUIT 66®</div>
+      <div id="splashBar"><div id="splashFill"></div></div>
+      <div id="splashHint">Préparation de l’expérience…</div>
+    </div>
+  </div>
+
+  <header class="top">
+    <img src="assets/logo-header.png" alt="">
+  </header>
+
+  <section class="mid">
+    <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
+  </section>
+
+  <main class="stage">
+    <div class="bottleWrap" id="bottles">
+      <img src="assets/bottle1.png" class="active" alt="">
+      <img src="assets/bottle2.png" alt="">
+      <img src="assets/bottle3.png" alt="">
+      <img src="assets/bottle4.png" alt="">
+      <img src="assets/bottle5.png" alt="">
+      <img src="assets/bottle6.png" alt="">
+      <img src="assets/bottle7.png" alt="">
+
+      <div class="btnStack">
+        <button class="btn primary" id="goBtn">Commander</button>
+
+        <button class="btn secondary pulse" id="installBtn" style="display:none">
+          Ajouter l’app
+          <span class="badge-new" id="newBadge">Nouveau</span>
+        </button>
+
+        <button class="btn secondary" id="promoBtn" style="display:none">
+          Code promo
+          <span class="badge-new" id="promoBadge">Nouveau</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✅ Apéro de Nuit 66® est ajouté à ton écran d’accueil !</div>
+
+  <!-- Modale help install -->
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="sheet">
+      <div class="sheetHead">
+        <div class="sheetIcon" id="helpIcon">📲</div>
+        <div>
+          <h3 id="helpTitle">Installer l’app</h3>
+          <p id="helpIntro"></p>
+        </div>
+      </div>
+
+      <div class="step" id="helpSteps"></div>
+      <div class="copied" id="copiedMsg">✅ Lien copié</div>
+
+      <div class="modalActions">
+        <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
+        <button class="okBtn" id="closeHelp">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔞 AGE GATE -->
+  <div class="ageOverlay" id="ageQuestion" role="dialog" aria-modal="true">
+    <div class="ageCard">
+      <div class="ageTop">
+        <div class="ageBrand">
+          <div class="ageBadge">AD</div>
+          <b>APÉRO DE NUIT®</b>
+        </div>
+      </div>
+      <div class="ageBody">
+        <div class="ageTitle">Bienvenue ✨</div>
+        <p class="ageLead">
+          Ce site présente des boissons alcoolisées. Pour continuer, confirme que tu as l’âge légal.
+        </p>
+        <div class="ageNotice">
+          <b>La vente d’alcool est interdite aux mineurs.</b><br>
+          L’abus d’alcool est dangereux pour la santé, à consommer avec modération.
+        </div>
+        <div class="ageBtns">
+          <button class="ageBtn ageBtnPrimary" id="ageYes">✅ Je suis majeur</button>
+          <button class="ageBtn ageBtnSecondary" id="ageNo">ℹ️ Je ne suis pas majeur</button>
+        </div>
+        <div class="ageFine">🔒 Choix mémorisé sur cet appareil.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ageOverlay" id="ageBlocked" role="dialog" aria-modal="true">
+    <div class="ageCard">
+      <div class="ageTop">
+        <div class="ageBrand">
+          <div class="ageBadge">18+</div>
+          <b>ACCÈS RÉSERVÉ</b>
+        </div>
+      </div>
+      <div class="ageBody">
+        <div class="ageTitle">Accès réservé 🔞</div>
+        <p class="ageLead">
+          Ce contenu est strictement réservé aux personnes majeures.<br>
+          La vente d’alcool est interdite aux mineurs.
+        </p>
+        <div class="ageNotice">
+          Pour accéder au contenu, une vérification d’âge est obligatoire.
+        </div>
+        <div class="ageFine">
+          Si tu penses être bloqué par erreur, contacte Apéro de Nuit® (06.52.33.64.61)
+          ou <a href="mailto:contact@aperos.net">contact@aperos.net</a>.
+        </div>
+        <div class="ageFine" style="margin-top:10px;">
+          L’abus d’alcool est dangereux pour la santé.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================
+       ⏳ SPLASH LOADER JS (AJOUT)
+       - 2.5s minimum
+       - ne supprime rien du reste
+       ========================= */
+    (function(){
+      const splash = document.getElementById("splashLoader");
+      const fill = document.getElementById("splashFill");
+      if(!splash || !fill) return;
+
+      const DURATION = 2500;
+      const start = performance.now();
+      let done = false;
+
+      function animate(){
+        const t = performance.now() - start;
+        const p = Math.min(1, t / DURATION);
+        const eased = 1 - Math.pow(1 - p, 2.2);
+        fill.style.width = Math.round(eased * 100) + "%";
+        if(p < 1) requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+
+      function hide(){
+        if(done) return;
+        done = true;
+        fill.style.width = "100%";
+        splash.classList.add("hide");
+        setTimeout(() => {
+          try { splash.remove(); } catch(e){ splash.style.display = "none"; }
+        }, 360);
+      }
+
+      setTimeout(hide, DURATION);
+    })();
+
+    // ✅ Service worker (cache-bust)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
         navigator.serviceWorker.register("./service-worker.js?v=20260101").catch(() => {});
@@ -747,42 +1099,7 @@
     const modal = document.getElementById("helpModal");
     const closeBtn = document.getElementById("closeHelp");
     const copyBtn = document.getElementById("copyLinkBtn");
-    const copiedMsg = document.getElementB
-  <!-- ✅ Bottom actions -->
-  <div class="bottom-actions" id="bottomActions" aria-label="Actions rapides">
-    <div class="bottom-btn call" id="bottomCall" role="button" tabindex="0">📞 Appeler</div>
-    <div class="bottom-btn track" id="bottomTrack" role="button" tabindex="0" style="display:none">🚚 Suivi livreur</div>
-  </div>
-
-  <!-- ✅ Menu flottant -->
-  <div class="fabMenu" id="fabMenu" role="button" tabindex="0" aria-label="Menu">
-    <span class="fabDot" aria-hidden="true"></span>
-    Menu
-  </div>
-
-  <div class="menuBackdrop" id="menuBackdrop" aria-hidden="true"></div>
-
-  <div class="menuSheet" id="menuSheet" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="menuHead">
-      <div>
-        <div class="menuTitle">Menu</div>
-        <div class="menuHint">Le bouton <b>Commander</b> reste sur la page. Ici : accès rapide & documents.</div>
-      </div>
-      <button class="menuClose" id="menuClose" type="button">Fermer</button>
-    </div>
-
-    <div class="menuGrid">
-      <div class="menuItem" id="menuCall">📞 Appeler<small>Ouvre le téléphone</small></div>
-      <div class="menuItem pwaOnly" id="menuTrack" style="display:none">🚚 Suivi livreur<small>Uniquement dans la PWA</small></div>
-
-      <div class="menuItem" id="menuPrivacy">🔒 Confidentialité<small>RGPD & traceurs</small></div>
-      <div class="menuItem" id="menuCgv">📄 CGV<small>Conditions de vente</small></div>
-
-      <div class="menuItem" id="menuLegal">🏛️ Mentions légales<small>Éditeur, hébergeur…</small></div>
-      <div class="menuItem" id="menuInstall">📲 Installer l’app<small>Guide d’installation</small></div>
-    </div>
-  </div>
-yId("copiedMsg");
+    const copiedMsg = document.getElementById("copiedMsg");
     const intro = document.getElementById("helpIntro");
     const steps = document.getElementById("helpSteps");
     const title = document.getElementById("helpTitle");
@@ -875,105 +1192,102 @@ yId("copiedMsg");
         window.location.href = AGE.commanderUrl;
       });
     });
-  
+  </script>
 
-    // =========================
-    // ✅ Bottom bar + Menu flottant (site vs PWA)
-    // - Ne casse pas l'age gate / status popup
-    // =========================
+  <!-- ADN66: bottom actions + floating menu -->
+  <div class="bottom-actions" id="bottomActions" aria-label="Actions rapides">
+    <div class="bottom-btn call" id="bottomCall">📞 Appeler</div>
+    <div class="bottom-btn track" id="bottomTrack" style="display:none">🚚 Suivi livreur</div>
+  </div>
+
+  <div class="fab-menu" id="fabMenu" aria-label="Ouvrir le menu">Menu</div>
+  <div class="menu-sheet" id="menuSheet" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="menu-item" id="menuCall">📞 Appeler</div>
+    <div class="menu-item" id="menuTrack" style="display:none">🚚 Suivi livreur <span class="hint pwa-only">PWA</span></div>
+    <a class="menu-item" href="./privacy.html">🔒 Confidentialité (RGPD)</a>
+    <a class="menu-item" href="./cgv.html">🧾 CGV</a>
+    <a class="menu-item" href="./mentions.html">⚖️ Mentions légales</a>
+    <div class="menu-item" id="menuInstall">⬇️ Installer l’app <span class="hint">PWA</span></div>
+    <div class="menu-item" id="menuClose">✖️ Fermer</div>
+  </div>
+
+  <script id="adn66-bottom-menu-js">
     (function(){
-      const TEL = "0652336461";
-      const trackUrl = (window.TRACK && window.TRACK.call) ? window.TRACK.call : null;
-
-      function clicky(el, fn){
-        if(!el) return;
-        el.addEventListener("click", fn);
-        el.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fn(); }});
-      }
-
-      // PWA detection (déjà défini plus haut mais on sécurise)
-      function isStandaloneSafe(){
+      function isStandalone(){
         try{
-          return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || (window.navigator && window.navigator.standalone===true);
+          return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
         }catch(e){ return false; }
       }
 
-      const inPwa = isStandaloneSafe();
+      // Toggle menu
+      const fab = document.getElementById("fabMenu");
+      const sheet = document.getElementById("menuSheet");
+      const closeBtn = document.getElementById("menuClose");
+      function openMenu(){ if(sheet) sheet.classList.add("open"); }
+      function closeMenu(){ if(sheet) sheet.classList.remove("open"); }
+      if(fab) fab.addEventListener("click", ()=>{ sheet && sheet.classList.contains("open") ? closeMenu() : openMenu(); });
+      if(closeBtn) closeBtn.addEventListener("click", closeMenu);
+      document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeMenu(); });
+      document.addEventListener("click", (e)=>{
+        if(!sheet || !fab) return;
+        const t = e.target;
+        if(sheet.classList.contains("open") && !sheet.contains(t) && !fab.contains(t)) closeMenu();
+      });
 
-      const bottomTrack = document.getElementById("bottomTrack");
-      const menuTrack = document.getElementById("menuTrack");
-      if(bottomTrack) bottomTrack.style.display = inPwa ? "block" : "none";
-      if(menuTrack) menuTrack.style.display = inPwa ? "flex" : "none";
-
-      function doCall(){
-        try{ if(typeof fireTrack==="function") fireTrack(trackUrl); }catch(e){}
-        window.location.href = "tel:"+TEL;
-      }
-
-      function doTrack(){
-        // Respecte l'age gate existant
+      // Call action uses existing call button if present
+      function triggerCall(){
         try{
-          if(typeof requireMajorThen==="function"){
+          const call = document.getElementById("callBtn");
+          if(call) call.click();
+          else window.location.href = "tel:0652336461";
+        }catch(e){}
+      }
+      const bottomCall = document.getElementById("bottomCall");
+      const menuCall = document.getElementById("menuCall");
+      if(bottomCall) bottomCall.addEventListener("click", triggerCall);
+      if(menuCall) menuCall.addEventListener("click", ()=>{ triggerCall(); closeMenu(); });
+
+      // Track (PWA only) => goes to suivi/client.html after age gate
+      function goTrack(){
+        try{
+          if(typeof requireMajorThen === "function"){
             requireMajorThen(()=>{ window.location.href = "./suivi/client.html"; });
           }else{
             window.location.href = "./suivi/client.html";
           }
-        }catch(e){
-          window.location.href = "./suivi/client.html";
-        }
+        }catch(e){ window.location.href = "./suivi/client.html"; }
       }
+      const bottomTrack = document.getElementById("bottomTrack");
+      const menuTrack = document.getElementById("menuTrack");
 
-      clicky(document.getElementById("bottomCall"), doCall);
-      clicky(document.getElementById("menuCall"), doCall);
-      clicky(document.getElementById("bottomTrack"), doTrack);
-      clicky(document.getElementById("menuTrack"), doTrack);
-
-      // Menu open/close
-      const fab = document.getElementById("fabMenu");
-      const sheet = document.getElementById("menuSheet");
-      const back = document.getElementById("menuBackdrop");
-      const closeBtn = document.getElementById("menuClose");
-
-      function openMenu(){
-        if(!sheet || !back) return;
-        back.style.display="block";
-        sheet.style.display="block";
-        // empêche le scroll derrière
-        document.documentElement.style.overflow="hidden";
-        document.body.style.overflow="hidden";
+      function updatePwaUi(){
+        const on = isStandalone();
+        if(bottomTrack) bottomTrack.style.display = on ? "block" : "none";
+        if(menuTrack) menuTrack.style.display = on ? "flex" : "none";
       }
-      function closeMenu(){
-        if(!sheet || !back) return;
-        back.style.display="none";
-        sheet.style.display="none";
-        document.documentElement.style.overflow="";
-        document.body.style.overflow="";
+      updatePwaUi();
+      window.addEventListener("resize", updatePwaUi);
+
+      if(bottomTrack) bottomTrack.addEventListener("click", goTrack);
+      if(menuTrack) menuTrack.addEventListener("click", ()=>{ goTrack(); closeMenu(); });
+
+      // Install: reuse existing install button / modal
+      const menuInstall = document.getElementById("menuInstall");
+      if(menuInstall){
+        menuInstall.addEventListener("click", ()=>{
+          try{
+            const btn = document.getElementById("installBtn");
+            if(btn) btn.click();
+            else{
+              const help = document.getElementById("helpModal");
+              if(help) help.classList.add("open");
+            }
+          }catch(e){}
+          closeMenu();
+        });
       }
-
-      clicky(fab, openMenu);
-      clicky(back, closeMenu);
-      clicky(closeBtn, closeMenu);
-
-      // Liens docs
-      clicky(document.getElementById("menuPrivacy"), ()=>{ window.location.href="./privacy.html"; });
-      clicky(document.getElementById("menuCgv"), ()=>{ window.location.href="./cgv.html"; });
-      clicky(document.getElementById("menuLegal"), ()=>{ window.location.href="./mentions.html"; });
-
-      // Installer (réutilise ta logique déjà présente : ouvre la modale / help)
-      clicky(document.getElementById("menuInstall"), ()=>{
-        try{
-          const btn = document.getElementById("installBtn");
-          if(btn){
-            btn.click();
-          }else{
-            // fallback
-            const help = document.getElementById("helpModal");
-            if(help) help.classList.add("open");
-          }
-        }catch(e){}
-        closeMenu();
-      });
     })();
-</script>
+  </script>
+
 </body>
 </html>
