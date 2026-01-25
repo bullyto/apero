@@ -13,7 +13,7 @@
   <style>
     :root{
       --blue:#0b1c2d;
-      --sky:#5db7ee;     /* ✅ COULEUR "Commander" */
+      --sky:#5db7ee;     /* ✅ BLEU "Commander" */
       --text:#0b1c2d;
       --muted:rgba(11,28,45,.65);
       --line:rgba(11,28,45,.15);
@@ -31,12 +31,46 @@
     header{
       background:var(--blue);
       color:#fff;
-      padding:14px 16px;
+      padding:12px 14px;
     }
-    header h1{
-      margin:0;
-      font-size:18px;
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      max-width:820px;
+      margin:0 auto;
+    }
+
+    .back-btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
       font-weight:900;
+      font-size:14px;
+      color:#fff;
+      background:var(--sky);
+      box-shadow:0 10px 18px rgba(93,183,238,.32);
+      text-decoration:none;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-btn:active{ transform: translateY(1px); }
+
+    .header-title{
+      font-size:16px;
+      font-weight:900;
+      opacity:.95;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     main{
@@ -80,7 +114,7 @@
       background:#fff;
     }
 
-    /* ✅ CHAMPS BLANCS + CONTOUR BLEU (comme ta capture) */
+    /* ✅ CHAMPS BLANCS + CONTOUR BLEU */
     .adn66Field{
       width:100%;
       border-radius:14px;
@@ -99,6 +133,12 @@
       box-shadow: 0 0 0 4px rgba(93,183,238,.22);
     }
 
+    /* ✅ SELECT : forcer rendu "2 lignes" quand supporté */
+    #adn66CommuneSelect{
+      white-space: pre-line;         /* supporte \n quand possible */
+      line-height: 1.15;
+    }
+
     #adn66CountInfo{
       margin-top:2px;
       font-size:11px;
@@ -106,7 +146,7 @@
       color:rgba(11,28,45,.70);
     }
 
-    /* ✅ MARKER = BLEU "Commander" */
+    /* ✅ MARKER BLEU */
     .adn66-num-marker{
       width:34px;height:34px;border-radius:999px;
       background:var(--sky);
@@ -116,7 +156,7 @@
       color:#fff;font-weight:900;font-size:14px;line-height:1;
     }
 
-    /* Nettoyage Leaflet */
+    /* Leaflet */
     #adn66Map .leaflet-control-attribution{ display:none !important; }
     #adn66Map .leaflet-popup-content{ margin:10px 12px; }
     #adn66Map .leaflet-popup-content-wrapper{ border-radius:14px; }
@@ -126,7 +166,11 @@
 <body>
 
 <header>
-  <h1>Zone de livraison</h1>
+  <div class="topbar">
+    <a class="back-btn" href="./index.html">← Retour</a>
+    <div class="header-title">Zone de livraison</div>
+    <div style="width:44px"></div>
+  </div>
 </header>
 
 <main>
@@ -230,7 +274,6 @@
   let geoQueueRunning = false;
   let inited = false;
 
-  // ✅ Attendre Leaflet + taille réelle (sinon carte blanche dans popup)
   function whenReady(cb){
     const t0 = Date.now();
     const tick = () => {
@@ -311,9 +354,15 @@
     list.forEach((c) => {
       const o = document.createElement("option");
       o.value = makeKey(c);
+
+      // ✅ 2 lignes : Ligne 1 = Ville (CP) / Ligne 2 = Tarif • Délai
+      // ⚠️ pas de 3e ligne : on garde un format court
+      const line1 = `${c.name} (${c.cp})`;
       const p = (c.price && c.price.trim()) ? c.price : "—";
       const d = (c.delay && c.delay.trim()) ? c.delay : "—";
-      o.textContent = `${c.name} (${c.cp}) — ${p} • ${d}`;
+      const line2 = `${p} • ${d}`;
+      o.textContent = `${line1}\n${line2}`;
+
       sel.appendChild(o);
     });
   }
@@ -446,15 +495,13 @@
   // ========= GEO =========
   function loadGeoCache(){
     try{
-      const raw = localStorage.getItem(GEO_CACHE_KEY);
+      const raw = localStorage.getItem("adn66_geo_cache_v1");
       const obj = raw ? JSON.parse(raw) : {};
       return (obj && typeof obj === "object") ? obj : {};
-    }catch(e){
-      return {};
-    }
+    }catch(e){ return {}; }
   }
   function saveGeoCache(){
-    try{ localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(geoCache || {})); }catch(e){}
+    try{ localStorage.setItem("adn66_geo_cache_v1", JSON.stringify(geoCache || {})); }catch(e){}
   }
 
   function applyCachedCoords(list){
@@ -477,7 +524,7 @@
         await geocodeOne(c);
         buildOrUpdateMarkers(list);
         saveGeoCache();
-        await sleep(GEO_RATE_MS);
+        await sleep(1100);
       }
     } finally {
       geoQueueRunning = false;
@@ -493,7 +540,7 @@
     }
 
     const q = `${c.name} ${c.cp} France`;
-    const url = new URL(NOMINATIM_URL);
+    const url = new URL("https://nominatim.openstreetmap.org/search");
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("limit", "1");
     url.searchParams.set("q", q);
