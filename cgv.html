@@ -4,82 +4,373 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
   <meta name="theme-color" content="#0a0f1a"/>
-  <title>Conditions générales de vente — Apéro de Nuit 66</title>
+  <meta name="description" content="Conditions générales de vente — Apéro de Nuit 66"/>
+  <title>CGV — Apéro de Nuit 66</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --bg:#070b12;
+      --bg2:#050812;
       --card:#0d1422;
+      --line:rgba(255,255,255,.10);
       --text:rgba(255,255,255,.92);
       --muted:rgba(255,255,255,.68);
-      --line:rgba(255,255,255,.10);
+      --muted2:rgba(255,255,255,.55);
       --accent:#5db7ee;
+      --ring: rgba(93,183,238,.22);
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+      --shadow2: 0 10px 25px rgba(0,0,0,.28);
     }
+
     *{box-sizing:border-box}
-    body{margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#070b12,#050812); color:var(--text);}
-    .wrap{max-width:900px; margin:0 auto; padding:18px 14px 40px;}
-    .top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
-    .back{display:inline-flex; align-items:center; gap:10px; padding:10px 12px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); text-decoration:none; font-weight:800;}
-    .title{font-weight:1000; font-size:18px; letter-spacing:.2px;}
-    .card{border:1px solid var(--line); background:rgba(13,20,34,.88); border-radius:18px; padding:16px; box-shadow: 0 18px 60px rgba(0,0,0,.35);}
-    h2{margin:18px 0 10px; font-size:16px;}
-    p,li{color:var(--muted); line-height:1.55}
-    ul{margin:8px 0 0 18px}
-    .hr{height:1px; background:var(--line); margin:14px 0}
-    .note{padding:12px; border-radius:14px; border:1px solid rgba(93,183,238,.25); background:rgba(93,183,238,.10); color:rgba(255,255,255,.86);}
-    .footer{margin-top:14px; color:rgba(255,255,255,.55); font-size:12px;}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(93,183,238,.20), transparent 55%),
+        radial-gradient(900px 650px at 110% 0%, rgba(93,183,238,.12), transparent 60%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+      color:var(--text);
+    }
+
+    /* Topbar */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background: rgba(13,20,34,.86);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .topbar-inner{
+      max-width:900px;
+      margin:0 auto;
+      padding:14px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .logo{
+      width:40px;height:40px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(93,183,238,.22);
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      overflow:hidden;
+    }
+    .logo span{
+      font-weight:1000;
+      color:var(--accent);
+      letter-spacing:.5px;
+    }
+    .brand-title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+    .brand-title strong{
+      font-size:16px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand-title span{
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      color:var(--text);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:none;
+      flex:0 0 auto;
+    }
+    .btn:hover{border-color: rgba(93,183,238,.30)}
+    .btn:active{transform:translateY(1px)}
+
+    /* Layout */
+    .wrap{
+      max-width:900px;
+      margin:0 auto;
+      padding:16px 14px 40px;
+    }
+
+    .hero{
+      margin-top:14px;
+      padding:16px 16px 14px;
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow2);
+    }
+    .hero h1{
+      margin:0 0 8px;
+      font-size:18px;
+      letter-spacing:.2px;
+      font-weight:1000;
+    }
+    .hero p{
+      margin:0;
+      color: var(--muted);
+      font-size:13.5px;
+      line-height:1.55;
+    }
+
+    .card{
+      margin-top:14px;
+      background: rgba(13,20,34,.88);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .pill{
+      width:34px;height:34px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background: rgba(93,183,238,.12);
+      border:1px solid rgba(93,183,238,.22);
+      color: rgba(255,255,255,.92);
+      font-weight:1000;
+      flex:0 0 auto;
+      box-shadow: 0 10px 18px rgba(0,0,0,.20);
+    }
+    .card-hd h2{
+      margin:0;
+      font-size:15px;
+      font-weight:1000;
+      letter-spacing:.2px;
+    }
+    .card-hd p{
+      margin:4px 0 0;
+      color: var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .card-bd{
+      padding:12px 14px 14px;
+      font-size:13.5px;
+      line-height:1.6;
+      color: var(--muted);
+    }
+    .card-bd b, .card-bd strong{color:var(--text)}
+    .card-bd ul{
+      margin:8px 0 0 18px;
+      padding:0;
+    }
+    .card-bd li{margin:6px 0}
+
+    .note{
+      margin-top:14px;
+      padding:12px 14px;
+      border-radius:16px;
+      background: rgba(93,183,238,.10);
+      border:1px solid rgba(93,183,238,.25);
+      color: rgba(255,255,255,.86);
+      font-size:12.8px;
+      line-height:1.5;
+    }
+
+    .hr{height:1px; background:rgba(255,255,255,.10); margin:14px 0}
+
+    .footer{
+      margin-top:18px;
+      color: var(--muted2);
+      font-size:12px;
+      text-align:center;
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="top">
-      <a class="back" href="./index.html">← Retour</a>
-      <div class="title">Conditions générales de vente</div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"><span>ADN</span></div>
+        <div class="brand-title">
+          <strong>Apéro de Nuit 66®</strong>
+          <span>Conditions générales de vente</span>
+        </div>
+      </div>
+
+      <a class="btn" href="./index.html">← Retour</a>
     </div>
+  </header>
 
-    <div class="card">
-      
-<p class="note"><b>Important :</b> les présentes CGV concernent la vente d’alcool à domicile. Les règles de livraison détaillées (tarifs / zones / communes) sont disponibles sur les pages informatives dédiées du site.</p>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Conditions générales de vente (CGV)</h1>
+      <p>
+        Les présentes CGV encadrent la vente d’alcool à domicile. Les règles de livraison détaillées (tarifs / zones / communes)
+        sont disponibles sur les pages informatives dédiées du site.
+      </p>
+    </section>
 
-<h2>1) Politique de livraison</h2>
-<ul>
-  <li>Un minimum de <b>25 €</b> d’achat est requis pour toute commande.</li>
-  <li>La livraison peut être offerte à partir de <b>75 €</b> d’achat (conditions précisées sur le site).</li>
-  <li>Après validation de commande, le client peut être contacté avant le départ en livraison.</li>
-  <li>Le client doit être joignable et fournir des informations exactes (adresse, digicode, téléphone).</li>
-</ul>
+    <section class="note">
+      <b>Important :</b> ces CGV concernent la vente d’alcool à domicile. Les détails tarifaires/communes sont consultables sur les pages dédiées.
+    </section>
 
-<h2>2) Politique de remboursement</h2>
-<p>Les remboursements concernent les paiements en ligne uniquement. Aucun remboursement ne peut avoir lieu après réception de commande, sauf exercice du droit de rétractation dans les conditions légales applicables. Les articles doivent être intacts et dans leur emballage d’origine.</p>
-<p>En cas de paiement en ligne sans livraison, adressez une réclamation via la rubrique de contact : nous nous engageons à traiter la demande.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">1</div>
+        <div>
+          <h2>Politique de livraison</h2>
+          <p>Règles générales sans détail des communes/zones.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <ul>
+          <li>Un minimum de <b>25 €</b> d’achat est requis pour toute commande.</li>
+          <li>La livraison peut être offerte à partir de <b>75 €</b> d’achat (conditions précisées sur le site).</li>
+          <li>Après validation de commande, le client peut être contacté avant le départ en livraison.</li>
+          <li>Le client doit être joignable et fournir des informations exactes (adresse, digicode, téléphone).</li>
+        </ul>
+      </div>
+    </section>
 
-<h2>3) Politique de paiement</h2>
-<h2>3.1 Paiement en espèces</h2>
-<p>Le paiement s’effectue à la livraison si la commande est acceptée par le client. Le paiement peut être refusé notamment si :</p>
-<ul>
-  <li>Le nombre de pièces dépasse 50</li>
-  <li>Le livreur n’a pas suffisamment de monnaie (prévoir l’appoint)</li>
-  <li>Les billets/pièces sont trop endommagés, suspects ou retirés de la circulation</li>
-  <li>Monnaie autre que l’euro</li>
-</ul>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">2</div>
+        <div>
+          <h2>Politique de remboursement</h2>
+          <p>Paiements en ligne et droit de rétractation.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Les remboursements concernent les paiements en ligne uniquement. Aucun remboursement ne peut avoir lieu après réception
+          de commande, sauf exercice du droit de rétractation dans les conditions légales applicables. Les articles doivent être
+          intacts et dans leur emballage d’origine.
+        </p>
+        <p>
+          En cas de paiement en ligne sans livraison, adressez une réclamation via la rubrique de contact : nous nous engageons à
+          traiter la demande.
+        </p>
+      </div>
+    </section>
 
-<h2>3.2 Paiement par carte bancaire</h2>
-<p>Les paiements par carte bancaire peuvent s’effectuer sur le site ou à la livraison via un terminal sécurisé. Les informations de paiement sont traitées conformément aux normes de sécurité en vigueur.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">3</div>
+        <div>
+          <h2>Politique de paiement</h2>
+          <p>Espèces ou carte bancaire.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <h2 style="margin:0 0 8px;font-size:14px;color:var(--text)">3.1 Paiement en espèces</h2>
+        <p>Le paiement s’effectue à la livraison si la commande est acceptée par le client. Le paiement peut être refusé notamment si :</p>
+        <ul>
+          <li>Le nombre de pièces dépasse 50</li>
+          <li>Le livreur n’a pas suffisamment de monnaie (prévoir l’appoint)</li>
+          <li>Les billets/pièces sont trop endommagés, suspects ou retirés de la circulation</li>
+          <li>Monnaie autre que l’euro</li>
+        </ul>
 
-<h2>4) Limitations de responsabilité</h2>
-<ul>
-  <li>Nous ne sommes pas responsables des retards dus à des informations incorrectes fournies par le client.</li>
-  <li>En cas de force majeure (intempéries, accidents, grèves…), nous pouvons retarder ou annuler une livraison.</li>
-  <li>Les produits livrés demeurent sous la responsabilité du client dès leur réception.</li>
-</ul>
+        <div class="hr"></div>
 
-<h2>5) Protection des mineurs</h2>
-<p>Conformément à la législation en vigueur, la vente d’alcool est interdite aux mineurs. En passant commande, vous confirmez avoir l’âge légal. Un contrôle d’identité peut être effectué à la livraison. En cas de doute ou de refus, la livraison est annulée sans remise de produits.</p>
+        <h2 style="margin:0 0 8px;font-size:14px;color:var(--text)">3.2 Paiement par carte bancaire</h2>
+        <p>
+          Les paiements par carte bancaire peuvent s’effectuer sur le site ou à la livraison via un terminal sécurisé.
+          Les informations de paiement sont traitées conformément aux normes de sécurité en vigueur.
+        </p>
+      </div>
+    </section>
 
-<h2>6) Modifications des CGV</h2>
-<p>Nous nous réservons le droit de modifier les présentes CGV à tout moment. Les conditions applicables sont celles en vigueur au moment de la commande.</p>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">4</div>
+        <div>
+          <h2>Limitations de responsabilité</h2>
+          <p>Informations client, force majeure, responsabilité après réception.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <ul>
+          <li>Nous ne sommes pas responsables des retards dus à des informations incorrectes fournies par le client.</li>
+          <li>En cas de force majeure (intempéries, accidents, grèves…), nous pouvons retarder ou annuler une livraison.</li>
+          <li>Les produits livrés demeurent sous la responsabilité du client dès leur réception.</li>
+        </ul>
+      </div>
+    </section>
 
-      <div class="footer">Apéro de Nuit 66® — Document d’information.</div>
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">5</div>
+        <div>
+          <h2>Protection des mineurs</h2>
+          <p>Vente d’alcool interdite aux mineurs.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Conformément à la législation en vigueur, la vente d’alcool est interdite aux mineurs.
+          En passant commande, vous confirmez avoir l’âge légal. Un contrôle d’identité peut être effectué à la livraison.
+          En cas de doute ou de refus, la livraison est annulée sans remise de produits.
+        </p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-hd">
+        <div class="pill">6</div>
+        <div>
+          <h2>Modifications des CGV</h2>
+          <p>Version applicable au moment de la commande.</p>
+        </div>
+      </div>
+      <div class="card-bd">
+        <p>
+          Nous nous réservons le droit de modifier les présentes CGV à tout moment.
+          Les conditions applicables sont celles en vigueur au moment de la commande.
+        </p>
+      </div>
+    </section>
+
+    <div class="footer">
+      Apéro de Nuit 66® — Document d’information.
     </div>
-  </div>
+  </main>
 </body>
 </html>
