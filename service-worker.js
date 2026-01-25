@@ -4,7 +4,7 @@
    - NE JAMAIS cacher status-popup.js / status.json / images status (toujours frais)
    - HTML en network-first, reste en cache-first
 */
-const CACHE_NAME = "aperodenuit-v3.8";
+const CACHE_NAME = "aperodenuit-v3.9";
 
 // ⚠️ Pré-cache minimal + tolérant aux fichiers absents
 const CORE_ASSETS = [
