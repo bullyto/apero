@@ -418,7 +418,7 @@
     /* ADN66 — Menu top-right + footer legal (discret) */
     .adn-menu-btn{
       position:fixed;
-      top: calc(18vh + 10px); /* ✅ sous le logo (max-height:26vh), n’empiète jamais */
+      top: calc(19vh + 10px); /* ✅ sous le logo (max-height:26vh), n’empiète jamais */
       right:14px;
       z-index:9999;
       padding:9px 12px;
@@ -1124,8 +1124,10 @@
 
     if(ageIsMinorBlocked()){
       ageShowBlocked();
+    } else if(!ageIsMajorValid()){
+      // ✅ Demande l'âge dès l'ouverture (site + PWA)
+      ageShowQuestion();
     }
-
     // =========================
     // 🎁 PROMO
     // =========================
@@ -1296,6 +1298,7 @@
 
     // Click "Ajouter l’app"
     document.getElementById("installBtn").addEventListener("click", async () => {
+      const run = async () => {
       // tracking "Ajouter l’app" (sans casser l’installation)
       fireTrack(TRACK.appClick);
 
@@ -1345,15 +1348,30 @@
           "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
         showCopy:true
       });
+      };
+
+      if (typeof requireMajorThen === "function"){
+        requireMajorThen(() => { run(); });
+      } else {
+        run();
+      }
     });
 
     // ✅ ACTION PRINCIPALE: APPELER (pas de commander)
     const callBtn = document.getElementById("callBtn");
     if (callBtn){
       callBtn.addEventListener("click", () => {
-        // tracking appel
-        fireTrack(TRACK.call);
-        window.location.href = "tel:0652336461";
+        if (typeof requireMajorThen === "function"){
+          requireMajorThen(() => {
+            // tracking appel
+            fireTrack(TRACK.call);
+            window.location.href = "tel:0652336461";
+          });
+        } else {
+          // fallback (au cas où)
+          fireTrack(TRACK.call);
+          window.location.href = "tel:0652336461";
+        }
       });
     }
   </script>
@@ -1443,7 +1461,11 @@
       if(zoneEl){
         zoneEl.addEventListener("click", () => {
           closeMenu();
-          window.location.href = "./zone_livraison.html";
+          if(typeof requireMajorThen === "function"){
+            requireMajorThen(()=>{ window.location.href = "./zone_livraison.html"; });
+          }else{
+            window.location.href = "./zone_livraison.html";
+          }
         });
       }
 
@@ -1465,8 +1487,11 @@
       if(call){
         call.addEventListener("click", ()=>{
           closeMenu();
-          // no age gate for calling
-          window.location.href = "tel:0652336461";
+          if(typeof requireMajorThen === "function"){
+            requireMajorThen(()=>{ window.location.href = "tel:0652336461"; });
+          }else{
+            window.location.href = "tel:0652336461";
+          }
         });
       }
 
@@ -1474,7 +1499,11 @@
         game.addEventListener("click", ()=>{
           closeMenu();
           // ✅ Onglet visible uniquement en PWA
-          window.location.href = "./game/";
+          if(typeof requireMajorThen === "function"){
+            requireMajorThen(()=>{ window.location.href = "./game/"; });
+          }else{
+            window.location.href = "./game/";
+          }
         });
       }
 
@@ -1492,13 +1521,20 @@
       if(install){
         install.addEventListener("click", ()=>{
           closeMenu();
-          const realInstallBtn = document.getElementById("installBtn");
-          if(realInstallBtn && realInstallBtn.style.display !== "none"){
-            realInstallBtn.click();
-            return;
-          }
-          if(typeof showToast === "function"){
-            showToast("Ajoute l’app via le menu du navigateur : “Ajouter à l’écran d’accueil”.");
+          const run = () => {
+            const realInstallBtn = document.getElementById("installBtn");
+            if(realInstallBtn && realInstallBtn.style.display !== "none"){
+              realInstallBtn.click();
+              return;
+            }
+            if(typeof showToast === "function"){
+              showToast("Ajoute l’app via le menu du navigateur : “Ajouter à l’écran d’accueil”.");
+            }
+          };
+          if(typeof requireMajorThen === "function"){
+            requireMajorThen(()=>{ run(); });
+          }else{
+            run();
           }
         });
       }
