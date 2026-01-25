@@ -318,7 +318,23 @@
       opacity:0 !important;
       visibility:hidden !important;
     }
-  </style>
+  
+    /* Discreet legal footer */
+    .legal-footer{
+      max-width: 980px;
+      margin: 18px auto 28px;
+      padding: 0 16px;
+      text-align:center;
+      font-size: 12px;
+      opacity: .65;
+    }
+    .legal-footer a{
+      color: rgba(232,240,255,.85);
+      text-decoration: none;
+    }
+    .legal-footer a:active{ opacity:.8; }
+    .legal-footer .sep{ margin: 0 8px; opacity:.6; }
+</style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
@@ -365,103 +381,6 @@
   })();
 </script>
 <script defer src="./status-popup.js?v=20260101a"></script>
-
-  <style id="adn66-bottom-menu-css">
-    .bottom-actions{
-      position:fixed;
-      left:0; right:0; bottom:0;
-      display:flex;
-      gap:12px;
-      padding:14px 14px calc(14px + env(safe-area-inset-bottom));
-      border-top:1px solid rgba(255,255,255,.10);
-      background:rgba(8,12,20,.92);
-      -webkit-backdrop-filter: blur(10px);
-      backdrop-filter: blur(10px);
-      z-index:9998;
-    }
-    .bottom-btn{
-      flex:1;
-      padding:14px;
-      border-radius:14px;
-      font-size:16px;
-      font-weight:700;
-      text-align:center;
-      user-select:none;
-      cursor:pointer;
-      box-shadow: 0 10px 28px rgba(0,0,0,.35);
-    }
-    .bottom-btn.call{ background:#2ecc71; color:#fff; }
-    .bottom-btn.track{ background:#7b4fe9; color:#fff; }
-    /* Avoid hiding content behind the bottom bar */
-    body{ padding-bottom: 90px; }
-    @media (min-width: 820px){
-      body{ padding-bottom: 84px; }
-    }
-
-    /* Floating menu button */
-    .fab-menu{
-      position:fixed;
-      right:16px;
-      bottom: calc(96px + env(safe-area-inset-bottom));
-      width:56px; height:56px;
-      border-radius:999px;
-      background:rgba(84,180,255,.18);
-      border:1px solid rgba(84,180,255,.45);
-      color:#e8f0ff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:800;
-      box-shadow:0 14px 34px rgba(0,0,0,.45);
-      z-index:9999;
-      cursor:pointer;
-      user-select:none;
-    }
-    .fab-menu:active{ transform: translateY(1px); }
-
-    .menu-sheet{
-      position:fixed;
-      right:16px;
-      bottom: calc(160px + env(safe-area-inset-bottom));
-      width:min(340px, calc(100vw - 32px));
-      background: rgba(11,20,32,.98);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 18px 60px rgba(0,0,0,.55);
-      z-index:10000;
-      display:none;
-    }
-    .menu-sheet.open{ display:block; }
-    .menu-item{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      padding:14px 16px;
-      color:#e8f0ff;
-      text-decoration:none;
-      font-weight:700;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      cursor:pointer;
-    }
-    .menu-item:last-child{ border-bottom:none; }
-    .menu-item .hint{
-      margin-left:auto;
-      font-weight:700;
-      font-size:12px;
-      opacity:.75;
-    }
-    .menu-item .pwa-only{
-      font-size:11px;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid rgba(123,79,233,.55);
-      background:rgba(123,79,233,.18);
-      color:#fff;
-      opacity:1;
-    }
-  </style>
-
 </head>
 
 <body>
@@ -1195,19 +1114,14 @@
   </script>
 
   <!-- ADN66: bottom actions + floating menu -->
-  <div class="bottom-actions" id="bottomActions" aria-label="Actions rapides">
-    <div class="bottom-btn call" id="bottomCall">📞 Appeler</div>
-    <div class="bottom-btn track" id="bottomTrack" style="display:none">🚚 Suivi livreur</div>
+<div class="bottom-btn track" id="bottomTrack" style="display:none">🚚 Suivi livreur</div>
   </div>
 
-  <div class="fab-menu" id="fabMenu" aria-label="Ouvrir le menu">Menu</div>
+  <div class="fab-menu" id="fabMenu" aria-label="Ouvrir le menu">Menus</div>
   <div class="menu-sheet" id="menuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="menu-item" id="menuCall">📞 Appeler</div>
     <div class="menu-item" id="menuTrack" style="display:none">🚚 Suivi livreur <span class="hint pwa-only">PWA</span></div>
-    <a class="menu-item" href="./privacy.html">🔒 Confidentialité (RGPD)</a>
-    <a class="menu-item" href="./cgv.html">🧾 CGV</a>
-    <a class="menu-item" href="./mentions.html">⚖️ Mentions légales</a>
-    <div class="menu-item" id="menuInstall">⬇️ Installer l’app <span class="hint">PWA</span></div>
+<div class="menu-item" id="menuInstall">⬇️ Installer l’app <span class="hint">PWA</span></div>
     <div class="menu-item" id="menuClose">✖️ Fermer</div>
   </div>
 
@@ -1227,27 +1141,20 @@
       function closeMenu(){ if(sheet) sheet.classList.remove("open"); }
       if(fab) fab.addEventListener("click", ()=>{ sheet && sheet.classList.contains("open") ? closeMenu() : openMenu(); });
       if(closeBtn) closeBtn.addEventListener("click", closeMenu);
-      document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeMenu(); });
-      document.addEventListener("click", (e)=>{
-        if(!sheet || !fab) return;
-        const t = e.target;
-        if(sheet.classList.contains("open") && !sheet.contains(t) && !fab.contains(t)) closeMenu();
-      });
+      if(sheet) sheet.addEventListener("click", (e)=>{ if(e.target === sheet) closeMenu(); });
 
-      // Call action uses existing call button if present
+      // Call
       function triggerCall(){
         try{
           const call = document.getElementById("callBtn");
           if(call) call.click();
           else window.location.href = "tel:0652336461";
-        }catch(e){}
+        }catch(e){ window.location.href = "tel:0652336461"; }
       }
-      const bottomCall = document.getElementById("bottomCall");
       const menuCall = document.getElementById("menuCall");
-      if(bottomCall) bottomCall.addEventListener("click", triggerCall);
       if(menuCall) menuCall.addEventListener("click", ()=>{ triggerCall(); closeMenu(); });
 
-      // Track (PWA only) => goes to suivi/client.html after age gate
+      // Track (PWA only) => ./suivi/client.html after age gate
       function goTrack(){
         try{
           if(typeof requireMajorThen === "function"){
@@ -1257,18 +1164,7 @@
           }
         }catch(e){ window.location.href = "./suivi/client.html"; }
       }
-      const bottomTrack = document.getElementById("bottomTrack");
       const menuTrack = document.getElementById("menuTrack");
-
-      function updatePwaUi(){
-        const on = isStandalone();
-        if(bottomTrack) bottomTrack.style.display = on ? "block" : "none";
-        if(menuTrack) menuTrack.style.display = on ? "flex" : "none";
-      }
-      updatePwaUi();
-      window.addEventListener("resize", updatePwaUi);
-
-      if(bottomTrack) bottomTrack.addEventListener("click", goTrack);
       if(menuTrack) menuTrack.addEventListener("click", ()=>{ goTrack(); closeMenu(); });
 
       // Install: reuse existing install button / modal
@@ -1278,16 +1174,30 @@
           try{
             const btn = document.getElementById("installBtn");
             if(btn) btn.click();
-            else{
-              const help = document.getElementById("helpModal");
-              if(help) help.classList.add("open");
-            }
           }catch(e){}
           closeMenu();
         });
       }
+
+      // UI rules:
+      // - Suivi livreur visible ONLY in PWA
+      // - Installer l'app visible ONLY on website (not PWA)
+      function updateUi(){
+        const on = isStandalone();
+        if(menuTrack) menuTrack.style.display = on ? "flex" : "none";
+        if(menuInstall) menuInstall.style.display = on ? "none" : "flex";
+      }
+      updateUi();
+      window.addEventListener("resize", updateUi);
     })();
-  </script>
+</script>
+  <footer class="legal-footer">
+    <a href="./mentions.html">Mentions légales</a>
+    <span class="sep">•</span>
+    <a href="./cgv.html">CGV</a>
+    <span class="sep">•</span>
+    <a href="./privacy.html">Confidentialité</a>
+  </footer>
 
 </body>
 </html>
