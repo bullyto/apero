@@ -1,30 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="https://www.sitemaps.org/schemas/sitemap/0.9">
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- Site principal : Apéro de Nuit 66 -->
   <sitemap>
-    <loc>https://aperos.net/sitemap-main.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <loc>https://www.aperos.net/sitemap-main.xml</loc>
+    <lastmod>2026-01-25</lastmod>
   </sitemap>
 
-  <!-- Apéro Catalan -->
   <sitemap>
     <loc>https://catalan.aperos.net/sitemap.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <lastmod>2026-01-25</lastmod>
   </sitemap>
 
-  <!-- Game / marketing (UNIQUEMENT si public) -->
   <sitemap>
     <loc>https://game.aperos.net/sitemap.xml</loc>
-    <lastmod>2026-01-21</lastmod>
+    <lastmod>2026-01-25</lastmod>
   </sitemap>
-
-  <!-- PWA TTC alcool (si publique) -->
-  <!--
-  <sitemap>
-    <loc>https://ttc-alcool.aperos.net/sitemap.xml</loc>
-    <lastmod>2026-01-21</lastmod>
-  </sitemap>
-  -->
 
 </sitemapindex>
