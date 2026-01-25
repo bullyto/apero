@@ -148,11 +148,492 @@
 
 <!-- ===== SCRIPT CARTE (IDENTIQUE AU TIEN, COULEURS ADAPTÉES) ===== -->
 <script>
-/* 🔴 TON SCRIPT COMPLET ICI
-   (strictement identique à celui que tu as fourni,
-    AUCUNE LOGIQUE MODIFIÉE,
-    seulement la classe .adn66-num-marker qui change de couleur)
-*/
+
+<div id="adn66MapEmbed" style="
+  width:330px; max-width:100%;
+  height:450px;
+  overflow:hidden;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,.10);
+">
+  <!-- CARTE -->
+  <div id="adn66Map" style="width:330px; max-width:100%; height:355px;"></div>
+
+  <!-- FILTRES SOUS LA CARTE -->
+  <div style="padding:6px 6px 8px 6px;">
+    <select id="adn66CommuneSelect" class="adn66Field"></select>
+    <input id="adn66SearchInput" class="adn66Field" type="text" placeholder="Rechercher une commune…" autocomplete="off" />
+    <div id="adn66CountInfo" style="margin-top:4px; font-size:11px; font-weight:800; color:#8a0b0b;"></div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  /* Attribution masquée dans la carte (tu affiches ton texte légal ailleurs si besoin) */
+  #adn66Map .leaflet-control-attribution{ display:none !important; }
+
+  /* Marker numéroté */
+  .adn66-num-marker{
+    width:34px;height:34px;border-radius:999px;
+    background:#8a0b0b;border:2px solid rgba(255,255,255,.95);
+    box-shadow:0 10px 18px rgba(0,0,0,.25);
+    display:grid;place-items:center;
+    color:#fff;font-weight:900;font-size:14px;line-height:1;
+  }
+
+  /* ✅ FILTRES JAUNE + ROUGE */
+  .adn66Field{
+    width:100%;
+    border-radius:12px;
+    border:2px solid #8a0b0b;
+    background: linear-gradient(180deg, #fff3a6, #ffe066);
+    padding:8px 10px;
+    font-size:13px;
+    outline:none;
+    box-shadow: 0 6px 12px rgba(138,11,11,.10);
+  }
+  #adn66CommuneSelect{ margin-bottom:6px; }
+  .adn66Field:focus{
+    border-color:#b10f0f;
+    box-shadow: 0 0 0 4px rgba(177,15,15,.18);
+  }
+
+  /* Popup plus compacte dans petit embed */
+  #adn66Map .leaflet-popup-content{ margin:10px 12px; }
+  #adn66Map .leaflet-popup-content-wrapper{ border-radius:14px; }
+</style>
+
+<script>
+(function(){
+  // ========= CONFIG =========
+  const CENTER = [42.6887, 2.8948];
+  const DEFAULT_ZOOM = 10;
+
+  const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+  const GEO_CACHE_KEY = "adn66_geo_cache_v1";
+  const GEO_RATE_MS = 1100;
+
+  // ========= DATA =========
+  const COMMUNES = [
+    { name: "Alénya", cp: "66200", price: "9 €",  delay: "20 à 25 min" },
+    { name: "Argelès-sur-Mer", cp: "66700", price: "16 €", delay: "30 à 35 min" },
+
+    { name: "Bages", cp: "66670", price: "8 €",  delay: "20 à 25 min" },
+    { name: "Baho", cp: "66540", price: "8 €",  delay: "20 à 25 min" },
+    { name: "Baixas", cp: "66390", price: "9 €", delay: "20 à 25 min" },
+    { name: "Le Barcarès", cp: "66420", price: "8 €", delay: "20 à 25 min" },
+    { name: "Bompas", cp: "66430", price: "7 €",  delay: "15 à 20 min" },
+
+    { name: "Cabestany", cp: "66330", price: "4 €", delay: "15 à 20 min" },
+    { name: "Canet-en-Roussillon", cp: "66140", price: "6 €", delay: "15 à 20 min" },
+    { name: "Canohès", cp: "66680", price: "8 €", delay: "20 à 25 min" },
+    { name: "Claira", cp: "66530", price: "8 €", delay: "20 à 25 min" },
+    { name: "Collioure", cp: "66190", price: "20 €", delay: "25 à 35 min" },
+    { name: "Corneilla-del-Vercol", cp: "66200", price: "11 €", delay: "25 à 30 min" },
+    { name: "Corneilla-la-Rivière", cp: "66550", price: "9 €", delay: "20 à 25 min" },
+
+    { name: "Elne", cp: "66200", price: "9 €", delay: "20 à 25 min" },
+    { name: "Espira-de-l’Agly", cp: "66600", price: "9 €", delay: "20 à 25 min" },
+
+    { name: "Fitou", cp: "11510", price: "11 €", delay: "25 à 30 min" },
+
+    { name: "Latour-Bas-Elne", cp: "66200", price: "9 €", delay: "25 à 35 min" },
+    { name: "Le Soler", cp: "66270", price: "8 €", delay: "20 à 25 min" },
+    { name: "Leucate", cp: "11370", price: "16 €", delay: "25 à 35 min" },
+
+    { name: "Millas", cp: "66170", price: "9 €", delay: "25 à 30 min" },
+    { name: "Montescot", cp: "66200", price: "9 €", delay: "20 à 30 min" },
+
+    { name: "Néfiach", cp: "66170", price: "9 €", delay: "25 à 30 min" },
+    { name: "Nyls", cp: "66300", price: "11 €", delay: "25 à 30 min" },
+
+    { name: "Perpignan", cp: "66000", price: "4 €", delay: "15 à 20 min" },
+    { name: "Peyrestortes", cp: "66600", price: "9 €", delay: "20 à 25 min" },
+    { name: "Pia", cp: "66380", price: "4 €", delay: "15 à 20 min" },
+    { name: "Pollestres", cp: "66450", price: "8 €", delay: "20 à 25 min" },
+    { name: "Ponteilla", cp: "66300", price: "9 €", delay: "20 à 30 min" },
+    { name: "Pézilla-la-Rivière", cp: "66370", price: "9 €", delay: "20 à 25 min" },
+
+    { name: "Rivesaltes", cp: "66600", price: "9 €", delay: "20 à 25 min" },
+
+    { name: "Saleilles", cp: "66280", price: "7 €", delay: "15 à 25 min" },
+    { name: "Salses-le-Château", cp: "66600", price: "11 €", delay: "25 à 35 min" },
+    { name: "Saint-Cyprien", cp: "66750", price: "8 €", delay: "20 à 25 min" },
+    { name: "Saint-Cyprien Plage", cp: "66750", price: "8 €", delay: "20 à 25 min" },
+    { name: "Saint-Estève", cp: "66240", price: "8 €", delay: "20 à 25 min" },
+    { name: "Saint-Féliu-d’Amont", cp: "66170", price: "9 €", delay: "20 à 25 min" },
+    { name: "Saint-Féliu-d’Avall", cp: "66170", price: "9 €", delay: "20 à 25 min" },
+    { name: "Saint-Hippolyte", cp: "66510", price: "6 €", delay: "15 à 25 min" },
+    { name: "Saint-Laurent-de-la-Salanque", cp: "66250", price: "7 €", delay: "15 à 20 min" },
+    { name: "Saint-Nazaire", cp: "66570", price: "6 €", delay: "15 à 20 min" },
+    { name: "Sainte-Marie-la-Mer", cp: "66470", price: "6 €", delay: "15 à 20 min" },
+
+    { name: "Théza", cp: "66200", price: "9 €", delay: "20 à 25 min" },
+    { name: "Thuir", cp: "66300", price: "9 €", delay: "20 à 30 min" },
+    { name: "Torreilles", cp: "66440", price: "6 €", delay: "15 à 20 min" },
+    { name: "Toulouges", cp: "66350", price: "8 €", delay: "15 à 20 min" },
+    { name: "Trouillas", cp: "66300", price: "9 €", delay: "20 à 30 min" },
+
+    { name: "Villelongue-de-la-Salanque", cp: "66410", price: "4 €", delay: "15 à 20 min" },
+    { name: "Villeneuve-de-la-Raho", cp: "66180", price: "9 €", delay: "20 à 25 min" },
+    { name: "Villemolaque", cp: "66300", price: "9 €", delay: "20 à 30 min" }
+  ];
+
+  // ========= STATE =========
+  let map = null;
+  let sorted = [];
+  let markersByKey = new Map();
+  let geoCache = loadGeoCache();
+  let geoQueueRunning = false;
+  let inited = false;
+
+  // ✅ Attendre Leaflet + taille réelle (sinon carte blanche dans popup)
+  function whenReady(cb){
+    const t0 = Date.now();
+    const tick = () => {
+      const okLeaflet = (window.L && typeof window.L.map === "function");
+      const el = document.getElementById("adn66Map");
+      const okDom = !!el;
+      const okSize = okDom && el.offsetWidth > 0 && el.offsetHeight > 0;
+      if (okLeaflet && okSize) return cb();
+      if (Date.now() - t0 > 12000) return; // stop
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  // ⚠️ IMPORTANT: si la popup s’ouvre après (display none -> block), on force refresh
+  function refreshMapSize(){
+    if (!map) return;
+    try{
+      map.invalidateSize(true);
+    }catch(e){}
+  }
+
+  // Observer quand l’embed change de taille/visibilité
+  function installAutoRefresh(){
+    const wrap = document.getElementById("adn66MapEmbed");
+    if (!wrap) return;
+
+    // ResizeObserver (quand popup change / viewport)
+    if ("ResizeObserver" in window) {
+      const ro = new ResizeObserver(() => refreshMapSize());
+      ro.observe(wrap);
+    }
+
+    // fallback : resize
+    window.addEventListener("resize", () => refreshMapSize(), { passive:true });
+
+    // si animations / transitions à l’ouverture
+    wrap.addEventListener("transitionend", refreshMapSize);
+    wrap.addEventListener("animationend", refreshMapSize);
+
+    // petit ping au démarrage
+    setTimeout(refreshMapSize, 120);
+    setTimeout(refreshMapSize, 450);
+    setTimeout(refreshMapSize, 900);
+  }
+
+  // ========= INIT =========
+  whenReady(() => {
+    if (inited) return;
+    inited = true;
+
+    sorted = normalizeAndSort(COMMUNES);
+
+    map = L.map("adn66Map", { scrollWheelZoom:true, attributionControl:false })
+      .setView(CENTER, DEFAULT_ZOOM);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: ""
+    }).addTo(map);
+
+    buildSelect(sorted);
+    bindUI();
+
+    applyCachedCoords(sorted);
+    buildOrUpdateMarkers(sorted);
+    fitToAll();
+
+    installAutoRefresh();
+    refreshMapSize();
+
+    geocodeMissingSequential(sorted);
+    updateCountInfo();
+  });
+
+  // ========= UI (RECHERCHE) =========
+  function buildSelect(list){
+    const sel = document.getElementById("adn66CommuneSelect");
+    if (!sel) return;
+    sel.innerHTML = "";
+
+    const opt0 = document.createElement("option");
+    opt0.value = "";
+    opt0.textContent = "— Choisir une commune —";
+    sel.appendChild(opt0);
+
+    list.forEach((c) => {
+      const o = document.createElement("option");
+      o.value = makeKey(c);
+      const p = (c.price && c.price.trim()) ? c.price : "—";
+      const d = (c.delay && c.delay.trim()) ? c.delay : "—";
+      o.textContent = `${c.name} (${c.cp}) — ${p} • ${d}`;
+      sel.appendChild(o);
+    });
+  }
+
+  function bindUI(){
+    const sel = document.getElementById("adn66CommuneSelect");
+    const input = document.getElementById("adn66SearchInput");
+    if (!sel || !input) return;
+
+    sel.addEventListener("change", () => {
+      const key = sel.value;
+      if (!key) return;
+      focusCommuneByKey(key, true);
+    });
+
+    input.addEventListener("input", () => {
+      applySearchFilter();
+    });
+  }
+
+  function applySearchFilter(){
+    const input = document.getElementById("adn66SearchInput");
+    if (!input) return;
+    const q = input.value.trim().toLowerCase();
+    let filtered = sorted;
+
+    if (q) {
+      filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || String(c.cp).includes(q));
+    }
+
+    buildSelect(filtered);
+    updateCountInfo(filtered.length);
+
+    if (filtered.length === 1) {
+      const key = makeKey(filtered[0]);
+      const sel = document.getElementById("adn66CommuneSelect");
+      if (sel) sel.value = key;
+      focusCommuneByKey(key, true);
+    }
+  }
+
+  function updateCountInfo(shown){
+    const el = document.getElementById("adn66CountInfo");
+    if (!el) return;
+    const total = sorted.length;
+    const n = (typeof shown === "number") ? shown : total;
+    el.textContent = `${n} commune(s) • Total: ${total}`;
+  }
+
+  function focusCommuneByKey(key, openPopup){
+    const item = sorted.find(c => makeKey(c) === key);
+    if (!item || !map) return;
+
+    if (!isValidLatLng(item.lat, item.lng)) {
+      geocodeOne(item).then(ok => {
+        if (!ok) return;
+        buildOrUpdateMarkers(sorted);
+        refreshMapSize();
+        map.setView([item.lat, item.lng], Math.max(map.getZoom(), 12), { animate:true });
+        const marker = markersByKey.get(key);
+        if (marker && openPopup) marker.openPopup();
+      });
+      return;
+    }
+
+    refreshMapSize();
+    map.setView([item.lat, item.lng], Math.max(map.getZoom(), 12), { animate:true });
+    const marker = markersByKey.get(key);
+    if (marker && openPopup) marker.openPopup();
+  }
+
+  // ========= MARKERS =========
+  function buildOrUpdateMarkers(list){
+    if (!map) return;
+    list.forEach((c, idx) => {
+      const key = makeKey(c);
+      const n = idx + 1;
+      if (!isValidLatLng(c.lat, c.lng)) return;
+
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="adn66-num-marker">${n}</div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+        popupAnchor: [0, -14]
+      });
+
+      const popupHtml = popupFor(c);
+      const existing = markersByKey.get(key);
+
+      if (existing) {
+        existing.setLatLng([c.lat, c.lng]);
+        existing.setIcon(icon);
+        existing.setPopupContent(popupHtml);
+      } else {
+        const marker = L.marker([c.lat, c.lng], { icon })
+          .addTo(map)
+          .bindPopup(popupHtml, { maxWidth: 260 });
+        markersByKey.set(key, marker);
+      }
+    });
+  }
+
+  function popupFor(c){
+    const name = escapeHtml(c.name);
+    const cp = escapeHtml(c.cp);
+    const delay = escapeHtml((c.delay && c.delay.trim()) ? c.delay : "—");
+    const price = escapeHtml((c.price && c.price.trim()) ? c.price : "—");
+    return `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; line-height:1.25;">
+        <div style="font-weight:900; font-size:14px; margin-bottom:6px;">${name} (${cp})</div>
+        <div style="margin-bottom:4px;">⏱️ <strong>Délai :</strong> ${delay}</div>
+        <div style="margin-bottom:4px;">🚚 <strong>Tarif :</strong> ${price}</div>
+        <div style="color:#6b7280; font-size:12px; margin-top:6px;">Indicatif selon trafic/charge.</div>
+      </div>
+    `;
+  }
+
+  function fitToAll(){
+    if (!map) return;
+    const latlngs = [];
+    for (const c of sorted) {
+      if (isValidLatLng(c.lat, c.lng)) latlngs.push([c.lat, c.lng]);
+    }
+    if (!latlngs.length) return;
+    const bounds = L.latLngBounds(latlngs);
+    map.fitBounds(bounds.pad(0.12));
+  }
+
+  // ========= GEO (Nominatim + Cache) =========
+  function loadGeoCache(){
+    try{
+      const raw = localStorage.getItem(GEO_CACHE_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === "object") ? obj : {};
+    }catch(e){
+      return {};
+    }
+  }
+  function saveGeoCache(){
+    try{ localStorage.setItem(GEO_CACHE_KEY, JSON.stringify(geoCache || {})); }catch(e){}
+  }
+
+  function applyCachedCoords(list){
+    list.forEach(c => {
+      const key = makeKey(c);
+      const cached = geoCache[key];
+      if (cached && isValidLatLng(cached.lat, cached.lng)) {
+        c.lat = cached.lat;
+        c.lng = cached.lng;
+      }
+    });
+  }
+
+  async function geocodeMissingSequential(list){
+    if (geoQueueRunning) return;
+    geoQueueRunning = true;
+    try{
+      for (const c of list) {
+        if (isValidLatLng(c.lat, c.lng)) continue;
+        await geocodeOne(c);
+        buildOrUpdateMarkers(list);
+        saveGeoCache();
+        await sleep(GEO_RATE_MS);
+      }
+    } finally {
+      geoQueueRunning = false;
+    }
+  }
+
+  async function geocodeOne(c){
+    const key = makeKey(c);
+    if (geoCache[key] && isValidLatLng(geoCache[key].lat, geoCache[key].lng)) {
+      c.lat = geoCache[key].lat;
+      c.lng = geoCache[key].lng;
+      return true;
+    }
+
+    const q = `${c.name} ${c.cp} France`;
+    const url = new URL(NOMINATIM_URL);
+    url.searchParams.set("format", "jsonv2");
+    url.searchParams.set("limit", "1");
+    url.searchParams.set("q", q);
+    url.searchParams.set("countrycodes", "fr");
+
+    try{
+      const res = await fetch(url.toString(), { method:"GET", headers:{ "Accept":"application/json" }});
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!Array.isArray(data) || !data.length) return false;
+
+      const lat = Number(data[0].lat);
+      const lng = Number(data[0].lon);
+      if (!isValidLatLng(lat, lng)) return false;
+
+      c.lat = lat;
+      c.lng = lng;
+      geoCache[key] = { lat, lng, ts: Date.now() };
+      saveGeoCache();
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // ========= HELPERS =========
+  function normalizeAndSort(list){
+    const cleaned = (Array.isArray(list) ? list : [])
+      .map(x => ({
+        name: String(x.name || "").trim(),
+        cp: String(x.cp || "").trim(),
+        lat: (x.lat === undefined || x.lat === null || x.lat === "") ? undefined : (typeof x.lat === "number" ? x.lat : Number(x.lat)),
+        lng: (x.lng === undefined || x.lng === null || x.lng === "") ? undefined : (typeof x.lng === "number" ? x.lng : Number(x.lng)),
+        delay: String(x.delay || "—").trim(),
+        price: String(x.price || "—").trim()
+      }))
+      .filter(x => x.name && x.cp);
+
+    cleaned.sort((a,b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
+    return cleaned;
+  }
+
+  function makeKey(c){ return `${slug(c.name)}|${String(c.cp).trim()}`; }
+
+  function slug(s){
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  function isValidLatLng(lat, lng){
+    return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[s]));
+  }
+})();
+</script>
+
+
+
+
+  
 </script>
 
 </body>
