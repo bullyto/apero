@@ -1,32 +1,38 @@
 {
   "name": "Apéro de Nuit 66®",
-  "short_name": "Apéro de nuit 66®",
-  "id": "./?src=pwa",
+  "short_name": "Apéro Nuit 66",
+  "description": "Livraison de boissons la nuit à Perpignan et Pyrénées-Orientales (66). Service 7j/7 de 19h à 6h. Accès rapide, suivi de demande et informations du service. Réservé aux personnes majeures.",
+  "id": "/?src=pwa",
   "start_url": "./?src=pwa",
   "scope": "./",
   "display": "standalone",
   "display_override": [
-    "window-controls-overlay",
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#0b1c2d",
-  "theme_color": "#0b1c2d",
-  "lang": "fr",
+  "orientation": "portrait",
+  "lang": "fr-FR",
   "dir": "ltr",
+  "theme_color": "#0b4bff",
+  "background_color": "#ffffff",
   "categories": [
     "food",
-    "shopping"
+    "shopping",
+    "business"
   ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "assets/icon-192.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "assets/icon-512.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -34,16 +40,63 @@
   ],
   "screenshots": [
     {
-      "src": "screenshots/narrow-1080x1920.png",
+      "src": "/screenshots/screen1.png",
       "sizes": "1080x1920",
       "type": "image/png",
       "form_factor": "narrow"
     },
     {
-      "src": "screenshots/wide-1920x1080.png",
-      "sizes": "1920x1080",
+      "src": "/screenshots/screen2.png",
+      "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screen3.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Appeler",
+      "short_name": "Appel",
+      "description": "Appeler Apéro de Nuit 66",
+      "url": "./?src=pwa#call",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Horaires & zone",
+      "short_name": "Infos",
+      "description": "Voir horaires (19h-6h) et infos du service",
+      "url": "./?src=pwa#infos",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Confidentialité",
+      "short_name": "Privacy",
+      "description": "Lire la politique de confidentialité",
+      "url": "./privacy.html",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }
