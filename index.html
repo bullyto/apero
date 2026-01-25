@@ -365,6 +365,139 @@
   })();
 </script>
 <script defer src="./status-popup.js?v=20260101a"></script>
+
+  <!-- ✅ Bottom actions + menu (PWA/site) -->
+  <style>
+    .bottom-actions{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      display:flex;
+      gap:12px;
+      padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+      border-top:1px solid rgba(255,255,255,.10);
+      background:rgba(8,12,20,.92);
+      backdrop-filter: blur(10px);
+      z-index: 999;
+    }
+    .bottom-btn{
+      flex:1;
+      padding:14px;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:700;
+      text-align:center;
+      user-select:none;
+      cursor:pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25);
+    }
+    .bottom-btn:active{ transform: translateY(1px); }
+
+    .bottom-btn.call{ background:#2ecc71; color:#fff; }
+    .bottom-btn.track{ background:#7b4fe9; color:#fff; }
+
+    /* avoid overlap with bottom bar */
+    body{ padding-bottom: 90px; }
+
+    /* Floating menu */
+    .fabMenu{
+      position:fixed;
+      right:16px;
+      bottom: calc(96px + env(safe-area-inset-bottom));
+      z-index: 1000;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 14px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(14,20,32,.92);
+      color:rgba(255,255,255,.92);
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      cursor:pointer;
+      user-select:none;
+      backdrop-filter: blur(10px);
+      font-weight:800;
+    }
+    .fabDot{
+      width:10px; height:10px; border-radius:999px;
+      background:#5db7ee;
+      box-shadow: 0 0 0 6px rgba(93,183,238,.12);
+    }
+
+    .menuBackdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      z-index: 1001;
+      display:none;
+    }
+    .menuSheet{
+      position:fixed;
+      left:12px; right:12px;
+      bottom: calc(96px + env(safe-area-inset-bottom));
+      z-index: 1002;
+      display:none;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(10,14,24,.96);
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .menuHead{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    .menuTitle{
+      font-weight:900;
+      color:rgba(255,255,255,.95);
+      font-size:14px;
+      letter-spacing:.2px;
+    }
+    .menuHint{
+      color:rgba(255,255,255,.60);
+      font-size:12px;
+      margin-top:2px;
+    }
+    .menuClose{
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.92);
+      font-weight:900;
+      cursor:pointer;
+    }
+    .menuGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      padding:12px 14px 14px;
+    }
+    .menuItem{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      color:rgba(255,255,255,.92);
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+    }
+    .menuItem small{
+      display:block;
+      font-weight:700;
+      color:rgba(255,255,255,.60);
+      margin-top:2px;
+    }
+    .menuItem:active{ transform: translateY(1px); }
+    .menuItem.pwaOnly{ opacity:.85; }
+  </style>
 </head>
 
 <body>
@@ -410,11 +543,6 @@
         <button class="btn secondary" id="promoBtn" style="display:none">
           Code promo
           <span class="badge-new" id="promoBadge">Nouveau</span>
-        </button>
-
-        <button class="btn primary" id="trackBtn" style="display:none">
-          Suivi livreur
-          <span class="badge-new" id="trackBadge">Nouveau</span>
         </button>
       </div>
     </div>
@@ -937,23 +1065,11 @@
       }
     }
 
-    function suiviUpdateUI(){
-      const btn = document.getElementById("trackBtn");
-      const badge = document.getElementById("trackBadge");
-      if (!btn) return;
-
-      const shouldShow = isStandalone();
-      btn.style.display = shouldShow ? "block" : "none";
-      if (badge) badge.style.display = shouldShow ? "inline-block" : "none";
-    }
-
-
     function promoUnlockNow(){
       const now = Date.now();
       localStorage.setItem(PROMO_KEYS.unlockedTs, String(now));
       localStorage.setItem(PROMO_KEYS.expiryTs, String(addMonths(now, 4)));
       promoUpdateUI();
-      suiviUpdateUI();
     }
 
     function promoStopSession(){
@@ -1007,31 +1123,54 @@
     if (promoBtnEl){
       promoBtnEl.addEventListener("click", () => {
         lsSetBool(PROMO_KEYS.clicked, true);
-    
-
-    const trackBtnEl = document.getElementById("trackBtn");
-    if (trackBtnEl){
-      trackBtnEl.addEventListener("click", () => {
-        requireMajorThen(() => {
-          window.location.href = "./suivi/client.html";
-        });
-      });
-    }
-
-    promoUpdateUI();
+        promoUpdateUI();
         window.location.href = PROMO_URL;
       });
     }
 
     promoUpdateUI();
-    suiviUpdateUI();
     promoStartSession();
 
     // Modale helpers
     const modal = document.getElementById("helpModal");
     const closeBtn = document.getElementById("closeHelp");
     const copyBtn = document.getElementById("copyLinkBtn");
-    const copiedMsg = document.getElementById("copiedMsg");
+    const copiedMsg = document.getElementB
+  <!-- ✅ Bottom actions -->
+  <div class="bottom-actions" id="bottomActions" aria-label="Actions rapides">
+    <div class="bottom-btn call" id="bottomCall" role="button" tabindex="0">📞 Appeler</div>
+    <div class="bottom-btn track" id="bottomTrack" role="button" tabindex="0" style="display:none">🚚 Suivi livreur</div>
+  </div>
+
+  <!-- ✅ Menu flottant -->
+  <div class="fabMenu" id="fabMenu" role="button" tabindex="0" aria-label="Menu">
+    <span class="fabDot" aria-hidden="true"></span>
+    Menu
+  </div>
+
+  <div class="menuBackdrop" id="menuBackdrop" aria-hidden="true"></div>
+
+  <div class="menuSheet" id="menuSheet" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="menuHead">
+      <div>
+        <div class="menuTitle">Menu</div>
+        <div class="menuHint">Le bouton <b>Commander</b> reste sur la page. Ici : accès rapide & documents.</div>
+      </div>
+      <button class="menuClose" id="menuClose" type="button">Fermer</button>
+    </div>
+
+    <div class="menuGrid">
+      <div class="menuItem" id="menuCall">📞 Appeler<small>Ouvre le téléphone</small></div>
+      <div class="menuItem pwaOnly" id="menuTrack" style="display:none">🚚 Suivi livreur<small>Uniquement dans la PWA</small></div>
+
+      <div class="menuItem" id="menuPrivacy">🔒 Confidentialité<small>RGPD & traceurs</small></div>
+      <div class="menuItem" id="menuCgv">📄 CGV<small>Conditions de vente</small></div>
+
+      <div class="menuItem" id="menuLegal">🏛️ Mentions légales<small>Éditeur, hébergeur…</small></div>
+      <div class="menuItem" id="menuInstall">📲 Installer l’app<small>Guide d’installation</small></div>
+    </div>
+  </div>
+yId("copiedMsg");
     const intro = document.getElementById("helpIntro");
     const steps = document.getElementById("helpSteps");
     const title = document.getElementById("helpTitle");
@@ -1124,6 +1263,105 @@
         window.location.href = AGE.commanderUrl;
       });
     });
-  </script>
+  
+
+    // =========================
+    // ✅ Bottom bar + Menu flottant (site vs PWA)
+    // - Ne casse pas l'age gate / status popup
+    // =========================
+    (function(){
+      const TEL = "0652336461";
+      const trackUrl = (window.TRACK && window.TRACK.call) ? window.TRACK.call : null;
+
+      function clicky(el, fn){
+        if(!el) return;
+        el.addEventListener("click", fn);
+        el.addEventListener("keydown", (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); fn(); }});
+      }
+
+      // PWA detection (déjà défini plus haut mais on sécurise)
+      function isStandaloneSafe(){
+        try{
+          return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || (window.navigator && window.navigator.standalone===true);
+        }catch(e){ return false; }
+      }
+
+      const inPwa = isStandaloneSafe();
+
+      const bottomTrack = document.getElementById("bottomTrack");
+      const menuTrack = document.getElementById("menuTrack");
+      if(bottomTrack) bottomTrack.style.display = inPwa ? "block" : "none";
+      if(menuTrack) menuTrack.style.display = inPwa ? "flex" : "none";
+
+      function doCall(){
+        try{ if(typeof fireTrack==="function") fireTrack(trackUrl); }catch(e){}
+        window.location.href = "tel:"+TEL;
+      }
+
+      function doTrack(){
+        // Respecte l'age gate existant
+        try{
+          if(typeof requireMajorThen==="function"){
+            requireMajorThen(()=>{ window.location.href = "./suivi/client.html"; });
+          }else{
+            window.location.href = "./suivi/client.html";
+          }
+        }catch(e){
+          window.location.href = "./suivi/client.html";
+        }
+      }
+
+      clicky(document.getElementById("bottomCall"), doCall);
+      clicky(document.getElementById("menuCall"), doCall);
+      clicky(document.getElementById("bottomTrack"), doTrack);
+      clicky(document.getElementById("menuTrack"), doTrack);
+
+      // Menu open/close
+      const fab = document.getElementById("fabMenu");
+      const sheet = document.getElementById("menuSheet");
+      const back = document.getElementById("menuBackdrop");
+      const closeBtn = document.getElementById("menuClose");
+
+      function openMenu(){
+        if(!sheet || !back) return;
+        back.style.display="block";
+        sheet.style.display="block";
+        // empêche le scroll derrière
+        document.documentElement.style.overflow="hidden";
+        document.body.style.overflow="hidden";
+      }
+      function closeMenu(){
+        if(!sheet || !back) return;
+        back.style.display="none";
+        sheet.style.display="none";
+        document.documentElement.style.overflow="";
+        document.body.style.overflow="";
+      }
+
+      clicky(fab, openMenu);
+      clicky(back, closeMenu);
+      clicky(closeBtn, closeMenu);
+
+      // Liens docs
+      clicky(document.getElementById("menuPrivacy"), ()=>{ window.location.href="./privacy.html"; });
+      clicky(document.getElementById("menuCgv"), ()=>{ window.location.href="./cgv.html"; });
+      clicky(document.getElementById("menuLegal"), ()=>{ window.location.href="./mentions.html"; });
+
+      // Installer (réutilise ta logique déjà présente : ouvre la modale / help)
+      clicky(document.getElementById("menuInstall"), ()=>{
+        try{
+          const btn = document.getElementById("installBtn");
+          if(btn){
+            btn.click();
+          }else{
+            // fallback
+            const help = document.getElementById("helpModal");
+            if(help) help.classList.add("open");
+          }
+        }catch(e){}
+        closeMenu();
+      });
+    })();
+</script>
 </body>
 </html>
