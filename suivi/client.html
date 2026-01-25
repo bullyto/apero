@@ -404,18 +404,23 @@
 
 </script>
 
-<script>
 
-/* ===== ADN66 UI PATCH: STATE MACHINE (no fetch/setInterval override) ===== */
+<script>
+/* ===== ADN66 UI SYNC (SAFE, NO OBSERVER, NO FETCH OVERRIDE) =====
+   - Empêche le clignotement "en attente de décision" -> "en attente"
+   - Ferme la popup quand le suivi devient actif (chrono > 0)
+   - Ré-ouvre la popup quand le suivi se termine/refusé
+   - Ne gèle pas la page (aucun MutationObserver / aucun override global)
+*/
 (() => {
   const elPopup = document.getElementById('clientPopup');
   const elStateText = document.getElementById('stateText');
   const elStateDot = document.getElementById('stateDot');
   const elCountdown = document.getElementById('countdown');
   const elGeoText = document.getElementById('geoText');
-  const btnStart = document.getElementById('btnStart');
+  const btnRequest = document.getElementById('btnRequest');
 
-  const LS_KEY = 'adn_client_track_phase'; // idle|waiting|active
+  const LS_KEY = 'adn_client_track_phase_v1'; // idle|waiting|active|ended|refused
   const getPhase = () => localStorage.getItem(LS_KEY) || 'idle';
   const setPhase = (p) => localStorage.setItem(LS_KEY, p);
 
@@ -438,9 +443,13 @@
     }
   };
 
+  const setTopState = (label, mode) => {
+    if (elStateText && elStateText.textContent !== label) elStateText.textContent = label;
+    setDot(mode);
+  };
+
   const parseToSeconds = (txt) => {
     const t = (txt || '').trim();
-    if (!t) return 0;
     const parts = t.split(':').map(p => p.trim());
     if (parts.length === 2) {
       const m = parseInt(parts[0], 10);
@@ -456,123 +465,74 @@
     return 0;
   };
 
-  const uiPending = () => {
-    if (elStateText) elStateText.textContent = 'En attente';
-    setDot('warn');
-    showPopup();
-    if (elCountdown) elCountdown.textContent = '0:00';
-  };
-
-  const uiWaiting = () => {
-    if (elStateText) elStateText.textContent = 'En attente de décision';
-    setDot('warn');
-    showPopup();
-  };
-
-  const uiActive = () => {
-    if (elStateText) elStateText.textContent = 'Suivi actif';
-    setDot('ok');
-    hidePopup();
-  };
-
-  const uiEnded = () => {
-    if (elStateText) elStateText.textContent = 'Suivi terminé';
-    setDot('warn');
-    showPopup();
-    if (elCountdown) elCountdown.textContent = '0:00';
-  };
-
-  const uiRefused = () => {
-    if (elStateText) elStateText.textContent = 'Accès refusé';
-    setDot('bad');
-    showPopup();
-    if (elCountdown) elCountdown.textContent = '0:00';
-  };
-
-  // On click: we assume a request is sent => keep "waiting" until accepted/refused/ended
-  if (btnStart) {
-    btnStart.addEventListener('click', () => {
+  // Clic: on fixe l'état "waiting" immédiatement (anti-flicker)
+  if (btnRequest) {
+    btnRequest.addEventListener('click', () => {
       setPhase('waiting');
-      uiWaiting();
+      setTopState('En attente de décision', 'warn');
+      showPopup();
     }, true);
   }
 
-  // Countdown drives ACTIVE, and STOP/timeout drives ENDED
-  const applyFromCountdown = () => {
-    if (!elCountdown) return;
-    const sec = parseToSeconds(elCountdown.textContent);
-    const phase = getPhase();
+  // Boucle légère (lecture -> décision -> écriture minimale)
+  let last = { phase: null, sec: null, geo: null };
 
+  const tick = () => {
+    const phase = getPhase();
+    const geo = (elGeoText ? (elGeoText.textContent || '') : '');
+    const geoL = geo.toLowerCase();
+    const sec = elCountdown ? parseToSeconds(elCountdown.textContent) : 0;
+
+    // 1) Signaux forts depuis geoText (si ton client.js les affiche)
+    if (geoL.includes('refus')) {
+      if (phase !== 'refused') setPhase('refused');
+    } else if (geoL.includes('stop') || geoL.includes('termin') || geoL.includes('expir') || geoL.includes('fin')) {
+      if (phase !== 'ended') setPhase('ended');
+    } else if (geoL.includes('décision') || geoL.includes('demande') || geoL.includes('envoy')) {
+      if (phase !== 'active') setPhase('waiting');
+    }
+
+    // 2) Chrono = actif si >0 (et l'accès se coupe quand il retombe à 0)
+    const phase2 = getPhase();
     if (sec > 0) {
-      if (phase !== 'active') setPhase('active');
-      uiActive();
-      return;
+      if (phase2 !== 'active') setPhase('active');
+    } else {
+      // si on était actif et qu'on tombe à 0 => fin
+      if (phase2 === 'active') setPhase('ended');
     }
 
-    // sec == 0
-    if (phase === 'active') {
-      // We were active and now 0 => driver stopped or expired
-      setPhase('idle');
-      uiEnded();
-      return;
-    }
-
-    // if waiting, keep waiting (prevents flicker back to "En attente")
-    if (phase === 'waiting') {
-      uiWaiting();
-      return;
-    }
-  };
-
-  // GeoText can signal refused/ended in your existing flow
-  const applyFromGeo = () => {
-    if (!elGeoText) return;
-    const t = (elGeoText.textContent || '').toLowerCase();
-    const phase = getPhase();
-
-    if (t.includes('refus')) {
-      setPhase('idle');
-      uiRefused();
-      return;
-    }
-    if (t.includes('stop') || t.includes('termin') || t.includes('expir') || t.includes('fin')) {
-      setPhase('idle');
-      uiEnded();
-      return;
-    }
-    if (t.includes('décision') || t.includes('demande') || t.includes('envoy')) {
-      if (phase !== 'active') {
-        setPhase('waiting');
-        uiWaiting();
+    // 3) Appliquer UI selon phase (écriture minimale)
+    const p = getPhase();
+    if (p !== last.phase || sec !== last.sec || geo !== last.geo) {
+      if (p === 'active') {
+        setTopState('Suivi actif', 'ok');
+        hidePopup();
+      } else if (p === 'waiting') {
+        setTopState('En attente de décision', 'warn');
+        showPopup();
+      } else if (p === 'refused') {
+        setTopState('Accès refusé', 'bad');
+        showPopup();
+        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
+      } else if (p === 'ended') {
+        setTopState('Suivi terminé', 'warn');
+        showPopup();
+        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
+      } else {
+        // idle
+        setTopState('En attente', 'warn');
+        showPopup();
+        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       }
-      return;
+      last = { phase: p, sec, geo };
     }
   };
 
-  // If another script tries to revert to "En attente" while we're waiting, we force "En attente de décision"
-  const enforceWaitingText = () => {
-    const phase = getPhase();
-    if (phase !== 'waiting') return;
-    const t = (elStateText?.textContent || '').toLowerCase();
-    if (t.includes('en attente') && !t.includes('décision')) {
-      uiWaiting();
-    }
-  };
-
-  if (elCountdown) new MutationObserver(() => applyFromCountdown()).observe(elCountdown, { childList:true, subtree:true, characterData:true });
-  if (elGeoText) new MutationObserver(() => { applyFromGeo(); applyFromCountdown(); }).observe(elGeoText, { childList:true, subtree:true, characterData:true });
-  if (elStateText) new MutationObserver(() => { enforceWaitingText(); applyFromCountdown(); }).observe(elStateText, { childList:true, subtree:true, characterData:true });
-
-  // Init on load
-  const phase = getPhase();
-  if (phase === 'waiting') uiWaiting();
-  else if (phase === 'active') uiActive();
-  else uiPending();
-
-  // One more pass
-  setTimeout(() => { applyFromGeo(); applyFromCountdown(); }, 50);
+  // Init: on n'écrase pas un suivi actif déjà en cours
+  tick();
+  setInterval(tick, 350);
 })();
-
 </script>
+
 </body>
 </html>
