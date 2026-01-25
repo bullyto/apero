@@ -402,7 +402,7 @@
     });
   
 
-/* ===== ADN66 UI PATCH: popup état + chrono (v2) ===== */
+/* ===== ADN66 UI PATCH: popup état + chrono (v4 STOP SAFE) ===== */
 (() => {
   const elPopup = document.getElementById('clientPopup');
   const elStateText = document.getElementById('stateText');
@@ -411,6 +411,29 @@
 
   const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
   const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
+
+  let lockMode = null; // null | 'accepted' | 'ended' | 'refused' | 'pending'
+  const intervalIds = new Set();
+
+  // Capture all intervals created by the page (to stop countdown when needed)
+  const _setInterval = window.setInterval.bind(window);
+  const _clearInterval = window.clearInterval.bind(window);
+  window.setInterval = (fn, ms, ...rest) => {
+    const id = _setInterval(fn, ms, ...rest);
+    intervalIds.add(id);
+    return id;
+  };
+  window.clearInterval = (id) => {
+    intervalIds.delete(id);
+    return _clearInterval(id);
+  };
+
+  const killAllIntervals = () => {
+    intervalIds.forEach((id) => {
+      try { _clearInterval(id); } catch (e) {}
+    });
+    intervalIds.clear();
+  };
 
   const setDot = (mode) => {
     if (!elStateDot) return;
@@ -436,112 +459,86 @@
     if (['pending','wait','waiting','attente','request','requested'].includes(s)) return 'pending';
     if (s.includes('refus')) return 'refused';
     if (s.includes('accept') || s.includes('actif')) return 'accepted';
-    if (s.includes('stop') || s.includes('expir') || s.includes('termin')) return 'ended';
+    if (s.includes('stop') || s.includes('expir') || s.includes('termin') || s.includes('revok')) return 'ended';
     if (s) return s;
     return 'pending';
   };
 
-  const setUi = (stateRaw) => {
-    const state = normalizeState(stateRaw);
+  const forceCountdownZero = () => {
+    if (elCountdown) elCountdown.textContent = '0:00';
+  };
 
-    if (state === 'accepted') {
+  const lockTo = (mode) => {
+    lockMode = mode;
+    if (mode === 'accepted') {
       if (elStateText) elStateText.textContent = 'Suivi actif';
       setDot('ok');
       hidePopup();
       return;
     }
-
-    if (state === 'refused') {
+    if (mode === 'refused') {
       if (elStateText) elStateText.textContent = 'Accès refusé';
       setDot('bad');
       showPopup();
-      if (elCountdown) elCountdown.textContent = '0:00';
+      forceCountdownZero();
+      killAllIntervals();
       return;
     }
-
-    if (state === 'ended') {
+    if (mode === 'ended') {
       if (elStateText) elStateText.textContent = 'Suivi terminé';
       setDot('warn');
       showPopup();
-      if (elCountdown) elCountdown.textContent = '0:00';
+      forceCountdownZero();
+      killAllIntervals(); // IMPORTANT: stop any running countdown interval
       return;
     }
-
+    // pending
     if (elStateText) elStateText.textContent = 'En attente';
     setDot('warn');
     showPopup();
-    if (elCountdown) elCountdown.textContent = '0:00';
+    forceCountdownZero();
   };
 
-  // Expose for main code if needed
-  window.__ADN66_UI_SET = setUi;
+  const applyState = (stateRaw) => {
+    const st = normalizeState(stateRaw);
 
-  // === Heuristique robuste: si le chrono affiche un temps > 0, alors suivi actif ===
-  const parseCountdownToSeconds = (txt) => {
-    const t = (txt || '').trim();
-    if (!t) return 0;
-    // formats possibles: "MM:SS", "H:MM:SS", "0:00"
-    const parts = t.split(':').map(p => p.trim()).filter(Boolean);
-    if (parts.length === 2) {
-      const m = parseInt(parts[0], 10);
-      const s = parseInt(parts[1], 10);
-      if (Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, m * 60 + s);
-    }
-    if (parts.length === 3) {
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      const s = parseInt(parts[2], 10);
-      if (Number.isFinite(h) && Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, h * 3600 + m * 60 + s);
-    }
-    return 0;
+    // If we are already ended/refused, never allow to go back to active unless backend truly says accepted
+    if (lockMode === 'ended' && st !== 'accepted') return;
+    if (lockMode === 'refused' && st !== 'accepted') return;
+
+    if (st === 'accepted') return lockTo('accepted');
+    if (st === 'refused') return lockTo('refused');
+    if (st === 'ended') return lockTo('ended');
+    return lockTo('pending');
   };
 
-  const applyFromCountdown = () => {
-    if (!elCountdown) return;
-    const sec = parseCountdownToSeconds(elCountdown.textContent);
-    if (sec > 0) {
-      // suivi actif => on force la cohérence UI
-      if (elStateText && !elStateText.textContent.toLowerCase().includes('actif')) {
-        elStateText.textContent = 'Suivi actif';
-      }
-      setDot('ok');
-      hidePopup();
-    } else {
-      // si 0 => on revient à l’état par défaut (attente) sauf si déjà refusé
-      const st = (elStateText?.textContent || '').toLowerCase();
-      if (st.includes('refus')) {
-        // ne rien faire
-        return;
-      }
-      if (st.includes('actif') || st.includes('termin')) {
-        elStateText.textContent = 'Suivi terminé';
-        setDot('warn');
-      } else {
-        elStateText.textContent = 'En attente';
-        setDot('warn');
-      }
-      showPopup();
-    }
-  };
+  window.__ADN66_UI_SET = applyState;
 
+  // STOP-SAFE: if countdown changes while ended/refused -> reset to 0:00
   if (elCountdown) {
-    const obsC = new MutationObserver(() => applyFromCountdown());
+    const obsC = new MutationObserver(() => {
+      const mode = lockMode;
+      if (mode === 'ended' || mode === 'refused') {
+        const t = (elCountdown.textContent || '').trim();
+        if (t !== '0:00') forceCountdownZero();
+      }
+    });
     obsC.observe(elCountdown, { childList: true, subtree: true, characterData: true });
   }
 
-  // Observe stateText changes pushed by existing code
+  // STOP-SAFE: if state text is modified by other code, re-assert lock
   if (elStateText) {
     const obsS = new MutationObserver(() => {
-      const t = (elStateText.textContent || '').toLowerCase();
-      if (t.includes('actif') || t.includes('accept')) { setDot('ok'); hidePopup(); }
-      if (t.includes('attente')) { setDot('warn'); showPopup(); }
-      if (t.includes('refus')) { setDot('bad'); showPopup(); if (elCountdown) elCountdown.textContent = '0:00'; }
-      if (t.includes('stop') || t.includes('termin') || t.includes('expir')) { setDot('warn'); showPopup(); if (elCountdown) elCountdown.textContent = '0:00'; }
+      const mode = lockMode;
+      if (mode === 'ended') lockTo('ended');
+      if (mode === 'refused') lockTo('refused');
+      if (mode === 'accepted') lockTo('accepted');
+      if (mode === 'pending') lockTo('pending');
     });
     obsS.observe(elStateText, { childList: true, subtree: true, characterData: true });
   }
 
-  // Patch fetch: whenever /client/status returns, try to read the state
+  // Patch fetch on /client/status to enforce end/stop immediately
   const _fetch = window.fetch;
   window.fetch = async (...args) => {
     const res = await _fetch(...args);
@@ -549,21 +546,24 @@
       const url = (args[0] && args[0].toString) ? args[0].toString() : '';
       if (url.includes('/client/status')) {
         res.clone().json().then((data) => {
-          const state = data?.status ?? data?.state ?? data?.access ?? data?.result ?? data?.decision ?? data?.mode ?? data?.allowed;
-          if (state !== undefined) setUi(state);
-          // quoiqu’il arrive, le chrono prime (si le backend fournit un temps, ton code le mettra à jour)
-          setTimeout(applyFromCountdown, 0);
+          const state =
+            data?.status ?? data?.state ?? data?.access ?? data?.result ?? data?.decision ??
+            data?.mode ?? data?.allowed ?? data?.tracking ?? data?.driverStatus ?? data?.clientStatus;
+          if (state !== undefined) applyState(state);
+
+          // Heuristique: si le backend renvoie explicitement un "stop" (flag), on termine
+          const stopped = data?.stopped ?? data?.stop ?? data?.ended ?? data?.expired ?? data?.revoked;
+          if (stopped === true) applyState('ended');
         }).catch(()=>{});
       }
     } catch (e) {}
     return res;
   };
 
-  // Init default UI
-  setUi('pending');
-  // If countdown already set by earlier code, apply
-  setTimeout(applyFromCountdown, 0);
+  // init pending
+  lockTo('pending');
 })();
+
 
 
 </script>
