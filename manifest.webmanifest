@@ -4,93 +4,104 @@
   "description": "Livraison de boissons la nuit à Perpignan et dans les Pyrénées-Orientales (66). Service 7j/7 de 19h à 6h. Accès rapide aux informations, suivi du service et expérience mobile optimisée. Réservé aux personnes majeures.",
   "lang": "fr-FR",
   "dir": "ltr",
-
   "start_url": "/?src=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
-  "orientation": "portrait",
-
   "background_color": "#ffffff",
-  "theme_color": "#0b2a5a",
-
-  "categories": ["food", "shopping", "business"],
-
+  "theme_color": "#0a4cff",
+  "orientation": "portrait",
+  "id": "/",
+  "display_override": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "categories": [
+    "food",
+    "shopping",
+    "business"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-
   "screenshots": [
     {
-      "src": "/screenshots/narrow-1080x1920.png",
+      "src": "screenshots/narrow-1080x1920.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Apéro de Nuit – interface mobile"
+      "label": "Accueil (mobile)"
     },
     {
-      "src": "/screenshots/wide-1920x1080.png",
+      "src": "screenshots/wide-1920x1080.png",
       "sizes": "1920x1080",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Apéro de Nuit – vue paysage"
+      "label": "Accueil (paysage)"
     }
   ],
-
   "shortcuts": [
     {
-      "name": "Appeler",
-      "short_name": "Appeler",
-      "description": "Appeler le service Apéro de Nuit",
-      "url": "#call",
+      "name": "Commander",
+      "short_name": "Commander",
+      "description": "Accéder rapidement à l’application.",
+      "url": "/?src=shortcut",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ]
+    },
+    {
+      "name": "Suivi commande",
+      "short_name": "Suivi",
+      "description": "Suivre l’état de la demande et le livreur (si disponible).",
+      "url": "suivi/",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
       ]
     },
     {
-      "name": "Horaires & zone",
-      "short_name": "Infos",
-      "description": "Horaires et zone de livraison",
-      "url": "#infos",
+      "name": "Jeu promo",
+      "short_name": "Jeu",
+      "description": "Accéder au mini-jeu promotionnel (réservé aux majeurs).",
+      "url": "game/",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Confidentialité",
-      "short_name": "Privacy",
-      "description": "Politique de confidentialité",
-      "url": "/privacy.html",
-      "icons": [
-        {
-          "src": "/icons/icon-192.png",
+          "src": "icons/icon-192.png",
           "sizes": "192x192",
           "type": "image/png"
         }
       ]
     }
-  ],
-
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  }
+  ]
 }
