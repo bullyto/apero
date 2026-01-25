@@ -411,6 +411,11 @@
           Code promo
           <span class="badge-new" id="promoBadge">Nouveau</span>
         </button>
+
+        <button class="btn primary" id="trackBtn" style="display:none">
+          Suivi livreur
+          <span class="badge-new" id="trackBadge">Nouveau</span>
+        </button>
       </div>
     </div>
   </main>
@@ -932,11 +937,23 @@
       }
     }
 
+    function suiviUpdateUI(){
+      const btn = document.getElementById("trackBtn");
+      const badge = document.getElementById("trackBadge");
+      if (!btn) return;
+
+      const shouldShow = isStandalone();
+      btn.style.display = shouldShow ? "block" : "none";
+      if (badge) badge.style.display = shouldShow ? "inline-block" : "none";
+    }
+
+
     function promoUnlockNow(){
       const now = Date.now();
       localStorage.setItem(PROMO_KEYS.unlockedTs, String(now));
       localStorage.setItem(PROMO_KEYS.expiryTs, String(addMonths(now, 4)));
       promoUpdateUI();
+      suiviUpdateUI();
     }
 
     function promoStopSession(){
@@ -990,12 +1007,24 @@
     if (promoBtnEl){
       promoBtnEl.addEventListener("click", () => {
         lsSetBool(PROMO_KEYS.clicked, true);
-        promoUpdateUI();
+    
+
+    const trackBtnEl = document.getElementById("trackBtn");
+    if (trackBtnEl){
+      trackBtnEl.addEventListener("click", () => {
+        requireMajorThen(() => {
+          window.location.href = "./suivi/client.html";
+        });
+      });
+    }
+
+    promoUpdateUI();
         window.location.href = PROMO_URL;
       });
     }
 
     promoUpdateUI();
+    suiviUpdateUI();
     promoStartSession();
 
     // Modale helpers
