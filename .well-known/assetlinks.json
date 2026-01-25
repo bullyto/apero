@@ -1,12 +1,8 @@
-[
-  {
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "net.aperos",
-      "sha256_cert_fingerprints": [
-        "METTRE MON AUTORISATION  sha256 ICI"
-      ]
-    }
-  }
-]
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "fr.aperos.nuit66",
+        "sha256_cert_fingerprints": ["4F:4F:CD:5E:67:FF:05:D5:70:19:CC:DA:15:D5:FA:28:13:31:1C:DF:4C:59:B0:97:34:A3:8E:C4:1B:67:CB:FA"]
+      }
+    }]
