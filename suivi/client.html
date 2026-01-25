@@ -13,19 +13,49 @@
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-  <!-- ✅ Style + couleurs alignés sur "Zone de livraison" (Commander) -->
+  <!-- ✅ Style & couleurs identiques (bleu nuit + bleu "Commander") + corrections demandées -->
   <style>
     :root{
       --adn-blue:#0b1c2d;
-      --adn-sky:#5db7ee; /* bleu bouton "Commander" */
+      --adn-sky:#5db7ee; /* ✅ BLEU "Commander" */
+      --adn-line:rgba(93,183,238,.95);
+      --adn-shadow:rgba(93,183,238,.22);
+      --adn-text:#0b1c2d;
     }
 
-    /* Bandeau haut : couleur cohérente */
+    /* Bandeau haut cohérent */
     header.clientTopbar{
       background: var(--adn-blue) !important;
     }
 
-    /* Bouton retour */
+    /* Layout topbar */
+    .clientTopbar{
+      display:flex !important;
+      align-items:center !important;
+      justify-content:space-between !important;
+      gap:10px !important;
+      padding-left:12px !important;
+      padding-right:12px !important;
+    }
+
+    .topBrand{
+      flex:1 1 auto;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-width:0;
+    }
+    .topTimer, .topState{
+      flex:0 0 auto;
+    }
+    .topBrandLogo{
+      max-height:34px;
+      height:auto;
+      width:auto;
+      display:block;
+    }
+
+    /* ✅ Bouton Retour: plus de 404 -> history.back() + fallback */
     .clientBackBtn{
       appearance:none;
       border:none;
@@ -49,39 +79,52 @@
     }
     .clientBackBtn:active{ transform: translateY(1px); }
 
-    /* Ajustement layout topbar (sans casser les styles existants) */
-    .clientTopbar{
-      display:flex !important;
-      align-items:center !important;
-      justify-content:space-between !important;
-      gap:10px !important;
-      padding-left:12px !important;
-      padding-right:12px !important;
+    /* ✅ POPUP: blanche + contour bleu comme "Commander" */
+    .clientPopupCard{
+      background:#fff !important;
+      border:2px solid var(--adn-line) !important;
+      box-shadow:0 16px 38px rgba(0,0,0,.12), 0 0 0 4px var(--adn-shadow) !important;
+      color:var(--adn-text) !important;
+    }
+    .clientPopupTitle{
+      color:var(--adn-text) !important;
+    }
+    .clientPopupSub{
+      color:rgba(11,28,45,.70) !important;
+    }
+    .clientInput{
+      border:2px solid rgba(93,183,238,.55) !important;
+      background:#fff !important;
+      color:var(--adn-text) !important;
+      border-radius:14px !important;
+      box-shadow: 0 8px 18px rgba(93,183,238,.10) !important;
+    }
+    .clientInput:focus{
+      outline:none !important;
+      border-color: rgba(93,183,238,1) !important;
+      box-shadow: 0 0 0 4px rgba(93,183,238,.18) !important;
     }
 
-    /* Bloc marque au centre : on conserve ton logo */
-    .topBrand{
-      flex:1 1 auto;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      min-width:0;
+    /* ✅ Bouton "Suivi" (Activer le suivi) = même couleur que "Commander" */
+    .clientBtn{
+      background:var(--adn-sky) !important;
+      color:#fff !important;
+      border:2px solid rgba(255,255,255,.0) !important;
+      box-shadow:0 10px 18px rgba(93,183,238,.28) !important;
+      border-radius:14px !important;
+      font-weight:900 !important;
+    }
+    .clientBtn:active{ transform: translateY(1px); }
+
+    /* Bouton secondaire reste discret */
+    .clientBtn.secondary{
+      background:#fff !important;
+      color:var(--adn-text) !important;
+      border:2px solid rgba(11,28,45,.18) !important;
+      box-shadow:none !important;
+      font-weight:800 !important;
     }
 
-    /* Les infos à droite restent compactes */
-    .topTimer, .topState{
-      flex:0 0 auto;
-    }
-
-    /* Petites sécurités visuelles */
-    .topBrandLogo{
-      max-height:34px;
-      height:auto;
-      width:auto;
-      display:block;
-    }
-
-    /* Mobile très étroit : on garde lisible */
     @media (max-width: 360px){
       .clientBackBtn{ padding:9px 10px; font-size:13px; }
       .topBrandLogo{ max-height:30px; }
@@ -96,11 +139,14 @@
       <div id="map" class="clientMap"></div>
 
       <header class="clientTopbar" aria-label="Bandeau suivi">
-        <!-- ✅ Retour (même bleu que "Commander") -->
-        <a class="clientBackBtn" href="./index.html" aria-label="Retour">← Retour</a>
+        <!-- ✅ Retour robuste (pas de 404) -->
+        <button class="clientBackBtn" type="button" id="btnBack" aria-label="Retour">← Retour</button>
 
         <div class="topBrand" aria-label="Marque">
-          <img class="topBrandLogo" alt="Apéro de Nuit 66" src="../assets/logo-header.png">
+          <!-- ✅ Logo: essaie ./assets puis fallback ../assets -->
+          <img class="topBrandLogo" alt="Apéro de Nuit 66"
+               src="./assets/logo-header.png"
+               onerror="this.onerror=null; this.src='../assets/logo-header.png';">
         </div>
 
         <div class="topTimer" aria-label="Temps restant">
@@ -126,7 +172,7 @@
           </div>
 
           <div class="clientForm">
-            <label class="clientLabel" for="name"> </label>
+            <label class="clientLabel" for="name"></label>
             <input id="name" class="clientInput" maxlength="24" autocomplete="given-name" placeholder="Ex: Lucas">
           </div>
 
@@ -135,7 +181,7 @@
             <button id="btnReset" class="clientBtn secondary" type="button" style="display:none">Relancer</button>
           </div>
 
-          <div class="clientHint">  </div>
+          <div class="clientHint"></div>
         </div>
       </section>
 
@@ -145,5 +191,26 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="./client.js"></script>
+
+  <!-- ✅ Back: history + fallback index -->
+  <script>
+    (function(){
+      const btn = document.getElementById("btnBack");
+      if(!btn) return;
+      btn.addEventListener("click", () => {
+        try{
+          if (window.history && history.length > 1) {
+            history.back();
+          } else {
+            // fallback robuste
+            const base = location.pathname.replace(/[^\/]+$/, "");
+            location.href = base + "index.html";
+          }
+        }catch(e){
+          location.href = "index.html";
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
