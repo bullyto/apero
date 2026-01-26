@@ -655,8 +655,8 @@
       <img src="assets/bottle7.png" alt="">
 
       <div class="btnStack">
-        <!-- ✅ PLAY STORE SAFE: pas de bouton commander -->
-        <button class="btn primary" id="callBtn" data-call>📞 Appeler</button>
+        <!-- ✅ ACTION PRINCIPALE: commande en ligne (Play Store OK) -->
+        <button class="btn primary" id="orderBtn" data-order>🛒 Commandez en ligne</button>
 
         <button class="btn secondary pulse" id="installBtn" style="display:none">
           Télécharger l’app
@@ -834,6 +834,30 @@
     // 📈 TRACKING (stats.aperos.net) — discret, sans redirection
     // =========================
     const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=fr.aperos.nuit66";
+    const ORDER_URL = "https://www.aperodenuit.com/commander";
+
+    function openOrder(){
+      const run = () => {
+        try{
+          if (typeof isStandalone === "function" && isStandalone()){
+            // ✅ PWA / App: ouverture directe (sans onglet)
+            window.location.replace(ORDER_URL);
+          } else {
+            // ✅ Site: onglet séparé
+            window.open(ORDER_URL, "_blank", "noopener");
+          }
+        } catch(e){
+          try{ window.location.href = ORDER_URL; } catch(_e){}
+        }
+      };
+
+      if (typeof requireMajorThen === "function"){
+        requireMajorThen(() => { run(); });
+      } else {
+        run();
+      }
+    }
+
 
     const TRACK = {
       call: "https://stats.aperos.net/e/apero_nuit.call?to=tel%3A0652336461&src=app",
@@ -1318,21 +1342,11 @@
         run();
       }
     });
-// ✅ ACTION PRINCIPALE: APPELER (pas de commander)
-    const callBtn = document.getElementById("callBtn");
-    if (callBtn){
-      callBtn.addEventListener("click", () => {
-        if (typeof requireMajorThen === "function"){
-          requireMajorThen(() => {
-            // tracking appel
-            fireTrack(TRACK.call);
-            window.location.href = "tel:0652336461";
-          });
-        } else {
-          // fallback (au cas où)
-          fireTrack(TRACK.call);
-          window.location.href = "tel:0652336461";
-        }
+// ✅ ACTION PRINCIPALE: COMMANDE EN LIGNE
+    const orderBtn = document.getElementById("orderBtn");
+    if (orderBtn){
+      orderBtn.addEventListener("click", () => {
+        openOrder();
       });
     }
   </script>
@@ -1343,11 +1357,19 @@
   <div class="adn-menu-backdrop" id="adnMenuBackdrop" aria-hidden="true"></div>
 
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="adn-menu-item" id="adnMenuCall">
+    <div class="adn-menu-item" id="adnMenuCall" data-call>
       <div class="adn-menu-left">
         <div class="adn-menu-title">📞 Appeler</div>
       </div>
     </div>
+
+    <div class="adn-menu-item" id="adnMenuOrder">
+      <div class="adn-menu-left">
+        <div class="adn-menu-title">🛒 Commandez en ligne</div>
+        <div class="adn-menu-sub">Paiement en ligne</div>
+      </div>
+    </div>
+
 
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
       <div class="adn-menu-left">
@@ -1455,6 +1477,25 @@
           }
         });
       }
+
+      const order = document.getElementById("adnMenuOrder");
+      if(order){
+        order.addEventListener("click", ()=>{
+          closeMenu();
+          // ✅ Commander en ligne
+          if (typeof openOrder === "function") {
+            openOrder();
+          } else {
+            const url = "https://www.aperodenuit.com/commander";
+            if(typeof requireMajorThen === "function"){
+              requireMajorThen(()=>{ window.location.replace(url); });
+            }else{
+              window.location.replace(url);
+            }
+          }
+        });
+      }
+
 
       if(game){
         game.addEventListener("click", ()=>{
