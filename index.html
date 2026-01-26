@@ -490,17 +490,17 @@
 
     .adn-menu-sheet{
       position:fixed;
-      top:56px; right:14px;
-      width:min(290px, calc(100vw - 28px));
+      top:58px; right:14px;
+      width:min(320px, calc(100vw - 28px)); /* ✅ compact (pas XXL) */
       z-index:9999;
-      background:rgba(9,14,22,.94);
+      background:linear-gradient(180deg, rgba(12,20,32,.96), rgba(8,14,22,.96));
       color:#fff;
       border:1px solid rgba(255,255,255,.12);
-      border-radius:18px;
-      box-shadow:0 18px 55px rgba(0,0,0,.45);
+      border-radius:20px;
+      box-shadow:0 18px 55px rgba(0,0,0,.48), 0 0 0 1px rgba(93,183,238,.07) inset;
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      padding:6px;
+      padding:8px;
       transform:translateY(-8px);
       opacity:0;
       pointer-events:none;
@@ -514,83 +514,76 @@
 
     /* Item layout */
     .adn-menu-item{
-      display:flex;
+      --adn-icon:44px;
+      --adn-gap:12px;
+
+      display:grid;
+      grid-template-columns: var(--adn-icon) 1fr auto;
       align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      padding:11px 12px;
-      border-radius:14px;
-      font-weight:800;
+      gap:var(--adn-gap);
+      padding:12px 12px;
+      border-radius:16px;
+      font-weight:850;
       user-select:none;
+      background:rgba(0,0,0,.14);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow:0 10px 26px rgba(0,0,0,.25);
     }
-    /* ✅ delimitation between each button */
+    /* ✅ delimitation between each button (fin) */
     .adn-menu-item + .adn-menu-item{
-      border-top:1px solid rgba(255,255,255,.10);
-      margin-top:2px;
-      padding-top:13px;
+      margin-top:10px;
     }
     .adn-menu-item:hover{ background:rgba(255,255,255,.06); }
     .adn-menu-item:active{ background:rgba(255,255,255,.10); }
 
-    .adn-menu-left{ min-width:0; display:flex; flex-direction:column; gap:2px; }
-    .adn-menu-title{ font-size:15px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .adn-menu-sub{
-      font-size:12px;
-      font-weight:750;
-      color:rgba(255,255,255,.72);
-      line-height:1.1;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-
-
-    /* ADN66 — Icônes image menu (remplace les emojis) */
-    .adn-menu-item{
-      --adn-icon:48px;
-      --adn-gap:14px;
+    .adn-menu-left{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
     }
     .adn-menu-title{
       display:flex;
       align-items:center;
-      gap:var(--adn-gap);
-      line-height:1.15;
+      gap:12px;
+      font-size:15px;
+      line-height:1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
+    .adn-menu-sub{
+      font-size:12px;
+      font-weight:750;
+      color:rgba(255,255,255,.70);
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+
+    /* ADN66 — Icônes image menu (remplace les emojis) */
     .adn-menu-icon{
-      width:var(--adn-icon);
-      height:var(--adn-icon);
+      width:44px;
+      height:44px;
       object-fit:contain;
       flex:0 0 auto;
       background:transparent;
       box-shadow:none;
       filter:none;
     }
-    /* Sous-texte aligné sous le libellé (pas sous l’icône) */
-    .adn-menu-sub{
-      margin-left: calc(var(--adn-icon) + var(--adn-gap));
-    }
     /* Icônes spécifiques */
-    .adn-menu-icon.cadeaux{ width:calc(var(--adn-icon) + 6px); height:calc(var(--adn-icon) + 6px); }
-    .adn-menu-icon.caddie{ width:calc(var(--adn-icon) + 2px); height:calc(var(--adn-icon) + 2px); }
-
-    /* icône cadeaux un peu plus grande */
-    .adn-menu-icon.cadeaux{
-      width:54px;
-      height:54px;
-    }
-
-    /* icône caddie légèrement plus grande */
-    .adn-menu-icon.caddie{
-      width:50px;
-      height:50px;
-    }
-
-    .adn-tag{
+    .adn-menu-icon.cadeaux{ width:50px; height:50px; }
+    .adn-menu-icon.caddie{ width:46px; height:46px; }
+.adn-tag{
       font-size:11px;
       font-weight:950;
-      padding:4px 9px;
+      padding:6px 10px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.20);
-      color:rgba(255,255,255,.95);
-      background:rgba(93,183,238,.22);
+      border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.92);
+      background:rgba(93,183,238,.18);
       flex:0 0 auto;
       letter-spacing:.2px;
     }
@@ -1585,13 +1578,5 @@
       }
 })();
   </script>
-<footer class="legal-footer">
-    <a href="./mentions.html">Mentions légales</a>
-    <span class="sep">•</span>
-    <a href="./cgv.html">CGV</a>
-    <span class="sep">•</span>
-    <a href="./privacy.html">Confidentialité</a>
-  </footer>
-
 </body>
 </html>
