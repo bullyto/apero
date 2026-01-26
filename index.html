@@ -531,10 +531,6 @@
     }
     .adn-menu-item:hover{ background:rgba(255,255,255,.06); }
     .adn-menu-item:active{ background:rgba(255,255,255,.10); }
-    .adn-menu-item > .adn-menu-icon,
-    .adn-menu-item > .adn-menu-svg{
-      justify-self:center;
-    }
 
     .adn-menu-left{ min-width:0; display:flex; flex-direction:column; gap:2px; }
     .adn-menu-title{ font-size:15px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -548,19 +544,43 @@
 
 
     /* ADN66 — Icônes image menu (remplace les emojis) */
+    .adn-menu-item{
+      --adn-icon:48px;
+      --adn-gap:14px;
+    }
     .adn-menu-title{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:var(--adn-gap);
+      line-height:1.15;
     }
     .adn-menu-icon{
-      width:42px;
-      height:42px;
+      width:var(--adn-icon);
+      height:var(--adn-icon);
       object-fit:contain;
       flex:0 0 auto;
       background:transparent;
       box-shadow:none;
       filter:none;
+    }
+    /* Sous-texte aligné sous le libellé (pas sous l’icône) */
+    .adn-menu-sub{
+      margin-left: calc(var(--adn-icon) + var(--adn-gap));
+    }
+    /* Icônes spécifiques */
+    .adn-menu-icon.cadeaux{ width:calc(var(--adn-icon) + 6px); height:calc(var(--adn-icon) + 6px); }
+    .adn-menu-icon.caddie{ width:calc(var(--adn-icon) + 2px); height:calc(var(--adn-icon) + 2px); }
+
+    /* icône cadeaux un peu plus grande */
+    .adn-menu-icon.cadeaux{
+      width:54px;
+      height:54px;
+    }
+
+    /* icône caddie légèrement plus grande */
+    .adn-menu-icon.caddie{
+      width:50px;
+      height:50px;
     }
 
     .adn-tag{
@@ -1379,40 +1399,30 @@
 
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="adn-menu-item" id="adnMenuCall" data-call>
-      <img src="assets/appel.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Commandez par téléphone</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez par téléphone</div>
       </div>
-    </div>      </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuOrder">
-      <svg class="adn-menu-svg caddie" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h-2l-1 2v2h2l3.6 7.2c.2.5.7.8 1.2.8h8.7c.5 0 1-.3 1.2-.8l2.1-6.2c.2-.6-.2-1.2-.8-1.2H8.3L7.6 4.9A1 1 0 0 0 7 4Zm3.3 6h10.2l-1.5 4.5H12l-1.7-3.4ZM10 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
+    <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:50px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Commandez en ligne</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon caddie" alt="">Commandez en ligne</div>
         <div class="adn-menu-sub">Paiement en ligne</div>
-      </div>
-    </div>        <div class="adn-menu-sub">Paiement en ligne</div>
       </div>
     </div>
 
 
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
-      <img src="assets/suivi.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Suivi livreur</div>
+        <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
       </div>
-    </div>      </div>
       <span class="adn-tag">Nouveau</span>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuGame" style="display:none">
-      <img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">
+    <div class="adn-menu-item" id="adnMenuGame" style="display:none; --adn-icon:52px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Cadeaux</div>
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Cadeaux</div>
         <div class="adn-menu-sub">Gagne ta livraison</div>
-      </div>
-    </div>        <div class="adn-menu-sub">Gagne ta livraison</div>
       </div>
       <span class="adn-tag">Nouveau</span>
     </div>
@@ -1424,19 +1434,15 @@
     </div>
 
     <div class="adn-menu-item" id="adnMenuZone">
-      <img src="assets/zone.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Zone de livraison</div>
+        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
       </div>
-    </div>      </div>
     </div>
 
     <div class="adn-menu-item" id="adnMenuClose">
-      <svg class="adn-menu-svg close" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7A1 1 0 0 0 5.7 7.1l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4l-4.9-4.9 4.9-4.9a1 1 0 0 0 0-1.4Z"/></svg>
       <div class="adn-menu-left">
-        <div class="adn-menu-title">Fermer</div>
+        <div class="adn-menu-title">✖️ Fermer</div>
       </div>
-    </div>      </div>
     </div>
   </div>
 
