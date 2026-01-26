@@ -521,17 +521,30 @@
       grid-template-columns: var(--adn-icon) 1fr auto;
       align-items:center;
       gap:var(--adn-gap);
-      padding:12px 12px;
-      border-radius:16px;
+      padding:14px 14px;
+      border-radius:18px;
       font-weight:850;
       user-select:none;
       background:rgba(0,0,0,.14);
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow:0 10px 26px rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 12px 28px rgba(0,0,0,.30);
     }
     /* ✅ delimitation between each button (fin) */
     .adn-menu-item + .adn-menu-item{
-      margin-top:10px;
+      --adn-icon:44px;
+      --adn-gap:12px;
+
+      display:grid;
+      grid-template-columns: var(--adn-icon) 1fr auto;
+      align-items:center;
+      gap:var(--adn-gap);
+      padding:14px 14px;
+      border-radius:18px;
+      font-weight:850;
+      user-select:none;
+      background:rgba(0,0,0,.14);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 12px 28px rgba(0,0,0,.30);
     }
     .adn-menu-item:hover{ background:rgba(255,255,255,.06); }
     .adn-menu-item:active{ background:rgba(255,255,255,.10); }
@@ -540,21 +553,21 @@
       min-width:0;
       display:flex;
       flex-direction:column;
-      gap:4px;
+      justify-content:center;
+      gap:5px;
     }
     .adn-menu-title{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-size:15px;
-      line-height:1.1;
+      display:block;
+      font-size:16px;
+      font-weight:900;
+      line-height:1.15;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
     .adn-menu-sub{
-      font-size:12px;
-      font-weight:750;
+      font-size:12.5px;
+      font-weight:700;
       color:rgba(255,255,255,.70);
       line-height:1.15;
       white-space:nowrap;
@@ -565,8 +578,8 @@
 
     /* ADN66 — Icônes image menu (remplace les emojis) */
     .adn-menu-icon{
-      width:44px;
-      height:44px;
+      width:46px;
+      height:46px;
       object-fit:contain;
       flex:0 0 auto;
       background:transparent;
@@ -574,17 +587,20 @@
       filter:none;
     }
     /* Icônes spécifiques */
-    .adn-menu-icon.cadeaux{ width:50px; height:50px; }
+    .adn-menu-icon.cadeaux{
+      width:54px;
+      height:54px;
+    }
     .adn-menu-icon.caddie{ width:46px; height:46px; }
 .adn-tag{
-      font-size:11px;
-      font-weight:950;
-      padding:6px 10px;
+      justify-self:end;
+      font-size:12px;
+      font-weight:900;
+      padding:7px 12px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      color:rgba(255,255,255,.92);
-      background:rgba(93,183,238,.18);
-      flex:0 0 auto;
+      border:1px solid rgba(255,255,255,.20);
+      background:rgba(93,183,238,.22);
+      color:rgba(255,255,255,.95);
       letter-spacing:.2px;
     }
 
