@@ -10,6 +10,8 @@ import { CONFIG } from "./config.js";
 //  - Le client ne voit jamais les autres clients.
 //  - Pendant l'attente de décision, le bouton est bloqué.
 //  - Si accepté: accès temporaire (défaut 30 minutes) + révocable.
+//  - ✅ IMPORTANT: sur certains Android/Chrome/WebView, la demande GPS ne s'affiche
+//    PAS au chargement. Il faut un "user gesture" (clic). On gère ça.
 
 const els = {
   name: document.getElementById("name"),
@@ -95,6 +97,10 @@ const STATE = {
     glideMarginMs: 80, // petite marge de sécurité
     lastPollApplyMs: 0,
   },
+
+  // ✅ anti double-prompt / anti double watch
+  geoRequestedOnce: false,
+  geoInFlight: false,
 };
 
 // ----------------------------
@@ -525,11 +531,7 @@ function driverStartLoop() {
     const dtMs = d.lastDispMs ? now - d.lastDispMs : 16;
     d.lastDispMs = now;
 
-    // ✅ NEW: follow factor tuned to "glideTargetMs" (2.9s)
-    // Goal: take ~2.9s to converge to a new target (instead of 0.5s then pause).
-    // We model it as a first-order low-pass:
-    //   alpha = dt / tau ; where tau ~= glideTargetMs/3 (gives ~95% in ~3*tau)
-    // So if glideTargetMs=2900ms => tau ~ 966ms => smooth, continuous movement.
+    // ✅ follow factor tuned to "glideTargetMs" (2.9s)
     const tau = Math.max(180, d.glideTargetMs / 3);
     const alphaRaw = dtMs / tau;
     const follow = clamp(alphaRaw, 0.03, 0.18); // clamp for stability
@@ -558,8 +560,6 @@ function driverStopLoop() {
   d.hasFirstFix = false;
   d.vel = null;
   d.lastVelFrom = null;
-
-  // keep glide settings
 }
 
 // ----------------------------
@@ -569,50 +569,144 @@ function ensureGeolocationAvailable() {
   return !!(navigator && navigator.geolocation);
 }
 
-function startGeolocation() {
-  if (!ensureGeolocationAvailable()) {
-    setGeo("⛔ Géolocalisation indisponible sur ce navigateur");
-    disableRequest(true);
-    return;
-  }
+function isSecureOk() {
+  // geolocation requires https (or localhost)
+  return !!(window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1");
+}
 
-  setGeo("📍 Demande d'accès à votre position…");
-
-  const onOk = (pos) => {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const acc = pos.coords.accuracy;
-    const ts = pos.timestamp || Date.now();
-
-    STATE.clientPos = { lat, lng, acc, ts };
-    updateClientMarker(lat, lng);
-
-    setGeo(`✅ Position partagée (±${Math.round(acc)}m)`);
-
-    if (STATE.status === "idle" || STATE.status === "refused" || STATE.status === "expired" || STATE.status === "error") {
-      disableRequest(false);
+function stopGeolocationWatch() {
+  try {
+    if (STATE.watchId != null && navigator?.geolocation?.clearWatch) {
+      navigator.geolocation.clearWatch(STATE.watchId);
     }
-  };
+  } catch {}
+  STATE.watchId = null;
+}
 
-  const onErr = (err) => {
-    console.log("[geo] error", err);
-    setGeo("⛔ Position refusée : impossible d'afficher le livreur");
-    disableRequest(true);
-  };
-
-  navigator.geolocation.getCurrentPosition(onOk, onErr, {
-    enableHighAccuracy: true,
-    timeout: 15000,
-    maximumAge: 0,
-  });
+function ensureGeolocationWatch() {
+  if (!ensureGeolocationAvailable()) return;
+  if (STATE.watchId != null) return;
 
   try {
-    STATE.watchId = navigator.geolocation.watchPosition(onOk, onErr, {
+    STATE.watchId = navigator.geolocation.watchPosition(onGeoOk, onGeoErr, {
       enableHighAccuracy: true,
       maximumAge: 0,
       timeout: 20000,
     });
   } catch {}
+}
+
+function onGeoOk(pos) {
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+  const acc = pos.coords.accuracy;
+  const ts = pos.timestamp || Date.now();
+
+  STATE.clientPos = { lat, lng, acc, ts };
+  updateClientMarker(lat, lng);
+
+  setGeo(`✅ Position partagée (±${Math.round(acc)}m)`);
+
+  if (STATE.status === "idle" || STATE.status === "refused" || STATE.status === "expired" || STATE.status === "error") {
+    disableRequest(false);
+  }
+}
+
+function onGeoErr(err) {
+  console.log("[geo] error", err);
+  const code = err?.code;
+
+  if (!isSecureOk()) {
+    setGeo("⛔ HTTPS requis pour la géolocalisation");
+    disableRequest(true);
+    return;
+  }
+
+  // 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+  if (code === 1) {
+    setGeo("⛔ Autorisation GPS refusée (active-la puis réessaie)");
+  } else if (code === 2) {
+    setGeo("⛔ GPS indisponible (réessaie)");
+  } else if (code === 3) {
+    setGeo("⛔ Timeout GPS (réessaie)");
+  } else {
+    setGeo("⛔ Position refusée : impossible d'afficher le livreur");
+  }
+
+  // On ne bloque pas à vie : le clic sur "Activer le suivi" relancera la demande GPS.
+  disableRequest(false);
+}
+
+async function requestGeolocationOnceInteractive() {
+  if (!ensureGeolocationAvailable()) {
+    setGeo("⛔ Géolocalisation indisponible sur ce navigateur");
+    return false;
+  }
+  if (!isSecureOk()) {
+    setGeo("⛔ HTTPS requis pour la géolocalisation");
+    return false;
+  }
+  if (STATE.geoInFlight) return !!STATE.clientPos;
+
+  STATE.geoInFlight = true;
+  setGeo("📍 Demande d'accès à votre position…");
+
+  const ok = await new Promise((resolve) => {
+    try {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          onGeoOk(pos);
+          resolve(true);
+        },
+        (err) => {
+          onGeoErr(err);
+          resolve(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0,
+        }
+      );
+    } catch (e) {
+      console.log("[geo] getCurrentPosition exception", e);
+      setGeo("⛔ Impossible d'accéder au GPS");
+      resolve(false);
+    }
+  });
+
+  STATE.geoInFlight = false;
+
+  if (ok) {
+    ensureGeolocationWatch();
+  } else {
+    stopGeolocationWatch();
+  }
+
+  return ok;
+}
+
+function startGeolocationPassiveBoot() {
+  // Boot "soft": on tente une fois (sans bloquer),
+  // mais le vrai prompt est garanti via clic (handleRequestClick).
+  if (!ensureGeolocationAvailable()) {
+    setGeo("⛔ Géolocalisation indisponible sur ce navigateur");
+    disableRequest(true);
+    return;
+  }
+  if (!isSecureOk()) {
+    setGeo("⛔ HTTPS requis pour la géolocalisation");
+    disableRequest(true);
+    return;
+  }
+
+  // tentative unique "silencieuse"
+  if (STATE.geoRequestedOnce) return;
+  STATE.geoRequestedOnce = true;
+
+  // on ne bloque pas le bouton ici : si le prompt est bloqué par le navigateur,
+  // l'utilisateur cliquera sur "Activer le suivi" => prompt.
+  requestGeolocationOnceInteractive().catch(() => {});
 }
 
 // ----------------------------
@@ -622,7 +716,7 @@ function loadSession() {
   const requestId = lsGet(LS.requestId, "");
   const clientId = lsGet(LS.clientId, "");
   const name = lsGet(LS.name, "");
-  const phone = lsGet(LS.phone, \"\");
+  const phone = lsGet(LS.phone, "");
 
   if (els.name && name) els.name.value = name;
   if (els.phone && phone) els.phone.value = phone;
@@ -731,8 +825,7 @@ async function pollDriverPosition() {
       const lng = Number(data.driver.lng);
 
       // Use server timestamp if present, else now
-      const tsServerMs =
-        (data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now());
+      const tsServerMs = data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now();
 
       driverAddPoint(lat, lng, tsServerMs);
       driverStartLoop();
@@ -880,9 +973,13 @@ async function handleRequestClick() {
 
   lsSet(LS.name, name);
 
+  // ✅ IMPORTANT: assure la demande GPS AU CLIC (user-gesture)
   if (!STATE.clientPos) {
-    toast("Tu dois accepter de partager ta position pour voir le livreur.");
-    return;
+    const ok = await requestGeolocationOnceInteractive();
+    if (!ok || !STATE.clientPos) {
+      toast("Tu dois accepter de partager ta position pour voir le livreur.");
+      return;
+    }
   }
 
   if (!canRequestNow()) {
@@ -963,7 +1060,8 @@ function boot() {
   // ✅ apply cadence/glide at boot too (safe)
   driverApplyPollGlideDefaults();
 
-  startGeolocation();
+  // ✅ tentative passive au boot (sans bloquer)
+  startGeolocationPassiveBoot();
 
   const hasSession = loadSession();
   if (hasSession) {
