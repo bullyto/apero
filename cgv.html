@@ -1,236 +1,297 @@
-<!-- ===================== -->
-<!-- CONDITIONS GÉNÉRALES DE VENTE -->
-<!-- APÉRO DE NUIT 66 -->
-<!-- ===================== -->
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0f1a"/>
+  <meta name="description" content="Conditions générales de vente — Apéro de Nuit 66"/>
+  <title>CGV — Apéro de Nuit 66</title>
 
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">1</div>
-    <div>
-      <h2>Objet</h2>
-      <p>Champ d’application des présentes CGV.</p>
+  <link rel="canonical" href="https://www.aperos.net/cgv.html">
+  <meta name="robots" content="index,follow">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#070b12;
+      --bg2:#050812;
+      --card:#0d1422;
+      --line:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.55);
+      --accent:#5db7ee;
+      --shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--bg),var(--bg2));
+      color:var(--text);
+    }
+    .topbar{
+      position:sticky;top:0;z-index:10;
+      background:rgba(13,20,34,.9);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      max-width:900px;margin:auto;
+      padding:14px;
+      display:flex;justify-content:space-between;align-items:center;
+    }
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{
+      width:40px;height:40px;border-radius:999px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(93,183,238,.22);
+      display:grid;place-items:center;
+      font-weight:900;color:var(--accent)
+    }
+    .wrap{max-width:900px;margin:auto;padding:16px 14px 40px}
+    .hero{
+      margin-top:14px;
+      padding:16px;
+      border-radius:18px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .hero h1{margin:0 0 8px;font-size:18px;font-weight:900}
+    .hero p{margin:0;color:var(--muted);font-size:13.5px}
+    .note{
+      margin-top:14px;padding:12px 14px;
+      border-radius:16px;
+      background:rgba(93,183,238,.10);
+      border:1px solid rgba(93,183,238,.25);
+      font-size:13px;
+    }
+    .card{
+      margin-top:14px;
+      background:var(--card);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:14px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;gap:10px;align-items:flex-start;
+    }
+    .pill{
+      width:34px;height:34px;border-radius:12px;
+      background:rgba(93,183,238,.15);
+      display:grid;place-items:center;
+      font-weight:900;
+    }
+    .card-hd h2{margin:0;font-size:15px;font-weight:900}
+    .card-hd p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .card-bd{
+      padding:14px;
+      color:var(--muted);
+      font-size:13.5px;
+      line-height:1.6;
+    }
+    .card-bd ul{margin:8px 0 0 18px;padding:0}
+    .card-bd li{margin:6px 0}
+    .hr{height:1px;background:rgba(255,255,255,.10);margin:14px 0}
+    .footer{
+      margin-top:20px;
+      text-align:center;
+      color:var(--muted2);
+      font-size:12px;
+    }
+    a.btn{
+      color:var(--text);text-decoration:none;
+      padding:8px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.15)
+    }
+  </style>
+</head>
+
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">ADN</div>
+      <strong>Apéro de Nuit 66®</strong>
     </div>
+    <a class="btn" href="./index.html">← Retour</a>
   </div>
-  <div class="card-bd">
-    <p>
-      Les présentes Conditions Générales de Vente (CGV) ont pour objet de définir les modalités et conditions
-      dans lesquelles Apéro de Nuit 66 propose la vente et la livraison de boissons alcoolisées à domicile,
-      via commande téléphonique, site internet ou application web (PWA).
-    </p>
-    <p>
-      Toute commande implique l’acceptation pleine, entière et sans réserve des présentes CGV.
-    </p>
-  </div>
-</section>
+</header>
 
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">2</div>
-    <div>
-      <h2>Conditions d’accès au service</h2>
-      <p>Service réservé aux personnes majeures.</p>
-    </div>
-  </div>
-  <div class="card-bd">
-    <p>
-      Le service de livraison d’alcool est strictement réservé aux personnes majeures (18 ans révolus).
-      Toute commande effectuée par un mineur est interdite et entraîne l’annulation immédiate de la commande.
-    </p>
-    <p>
-      Une vérification de l’âge pourra être effectuée à la livraison. En cas de refus de présentation
-      d’un justificatif d’identité ou de doute sur la majorité, la livraison sera refusée sans remise de produits.
-    </p>
-  </div>
-</section>
+<main class="wrap">
 
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">3</div>
-    <div>
-      <h2>Commande</h2>
-      <p>Processus et obligations du client.</p>
-    </div>
-  </div>
-  <div class="card-bd">
-    <ul>
-      <li>Un minimum de <b>25 € d’achat</b> est requis pour toute commande.</li>
-      <li>
-        La livraison est offerte à partir de <b>75 € d’achat</b>,
-        <b>uniquement pour les commandes passées et payées en ligne</b>.
-      </li>
-      <li>Une fois la commande validée, le client peut être contacté avant le départ en livraison.</li>
-      <li>
-        En l’absence d’appel dans un délai de <b>5 minutes</b> après la commande,
-        le client est invité à contacter immédiatement Apéro de Nuit 66.
-      </li>
-    </ul>
-  </div>
-</section>
+  <section class="hero">
+    <h1>Conditions générales de vente (CGV)</h1>
+    <p>Vente et livraison de boissons alcoolisées à domicile.</p>
+  </section>
 
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">4</div>
-    <div>
-      <h2>Présence du client et conditions de livraison</h2>
-      <p>Règles impératives de remise de commande.</p>
-    </div>
-  </div>
-  <div class="card-bd">
-    <p><b>La présence du client est obligatoire</b> à l’adresse indiquée lors de la commande.</p>
+  <section class="note">
+    <b>Important :</b> service strictement réservé aux personnes majeures (+18).
+    Un contrôle d’identité peut être effectué à la livraison.
+  </section>
 
-    <p>Il appartient au client de :</p>
-    <ul>
-      <li>s’assurer de sa présence à l’heure de la livraison ;</li>
-      <li>fournir une adresse exacte et accessible ;</li>
-      <li>s’assurer du bon fonctionnement des accès (digicode, portail, interphone) ;</li>
-      <li>être joignable par téléphone.</li>
-    </ul>
-
-    <p>
-      Pour des raisons de sécurité des personnes et de la marchandise :
-    </p>
-    <ul>
-      <li>le livreur ne sort jamais de son véhicule ;</li>
-      <li>la remise de la commande s’effectue au véhicule, à proximité immédiate du domicile.</li>
-    </ul>
-
-    <p>
-      Le livreur peut patienter quelques minutes. Passé un délai raisonnable sans réponse,
-      la livraison pourra être annulée et le livreur poursuivra sa tournée.
-    </p>
-
-    <p>
-      En cas d’absence du client :
-    </p>
-    <ul>
-      <li>la livraison pourra être annulée ;</li>
-      <li>si la commande a été payée en ligne, elle sera remboursée ;</li>
-      <li>aucun dédommagement supplémentaire ne pourra être exigé.</li>
-    </ul>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">5</div>
-    <div>
-      <h2>Zones de livraison</h2>
-      <p>Livraison d’alcool de nuit dans le département 66.</p>
-    </div>
-  </div>
+  <!-- 1 -->
   <section class="card">
-  <div class="card-hd">
-    <div class="pill">5</div>
-    <div>
-      <h2>Zones de livraison</h2>
-      <p>Livraison d’alcool de nuit dans le département 66.</p>
+    <div class="card-hd"><div class="pill">1</div><div><h2>Objet</h2><p>Champ d’application des CGV.</p></div></div>
+    <div class="card-bd">
+      Les présentes Conditions Générales de Vente ont pour objet de définir
+      les modalités selon lesquelles Apéro de Nuit 66 propose la vente et la livraison
+      de boissons alcoolisées à domicile via téléphone, site internet ou application web (PWA).
+      <br><br>
+      Toute commande implique l’acceptation pleine et entière des présentes CGV.
     </div>
-  </div>
-  <div class="card-bd">
-    <p>
-      Apéro de Nuit 66 assure la livraison d’alcool de nuit dans le département
-      des Pyrénées-Orientales (66), dans environ cinquante communes, notamment :
-    </p>
+  </section>
 
-    <p>
-      Perpignan, Canet-en-Roussillon, Elne, Alénya, Théza, Latour-Bas-Elne,
-      Saint-Estève, Saint-Laurent-de-la-Salanque, Le Soler, Saleilles, Thuir,
-      Llupia, Villemolaque, Trouillas, Cabestany, Toulouges, Pézilla-la-Rivière,
-      Pia, Villelongue-de-la-Salanque, Le Barcarès, Bompas, Torreilles,
-      Pollestres, Sainte-Marie-la-Mer, Saint-Hippolyte, Claira, Baho,
-      Corneilla-la-Rivière, Saint-Nazaire, Peyrestortes, Rivesaltes,
-      Salses-le-Château, Collioure, Bages, Canohès, Argelès-sur-Mer,
-      Saint-Cyprien, Leucate, Fitou, et bien d’autres.
-    </p>
-
-    <p>
-      Toutefois, la disponibilité du service de livraison dépend notamment :
-    </p>
-    <ul>
-      <li>des horaires d’affluence ;</li>
-      <li>du volume de commandes en cours ;</li>
-      <li>de la disponibilité des livreurs ;</li>
-      <li>des conditions de circulation ;</li>
-      <li>des conditions de sécurité des personnes et des biens.</li>
-    </ul>
-
-    <p>
-      Apéro de Nuit 66 se réserve le droit de refuser, différer ou annuler
-      une livraison, y compris dans une commune habituellement desservie,
-      sans que cela ne puisse engager sa responsabilité ni ouvrir droit
-      à une quelconque indemnisation.
-    </p>
-
-    <p>
-      Les informations relatives aux communes desservies sont communiquées
-      à titre indicatif et peuvent évoluer sans préavis.
-    </p>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">6</div>
-    <div>
-      <h2>Politique de paiement</h2>
-      <p>Espèces et carte bancaire.</p>
+  <!-- 2 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">2</div><div><h2>Conditions d’accès</h2><p>Service réservé aux majeurs.</p></div></div>
+    <div class="card-bd">
+      Le service est strictement réservé aux personnes âgées de 18 ans révolus.
+      Toute commande passée par un mineur est interdite et annulée.
+      <br><br>
+      En cas de refus ou d’impossibilité de vérifier l’âge à la livraison,
+      la commande sera refusée sans remise de produits.
     </div>
-  </div>
-  <div class="card-bd">
-    <h3>Paiement en espèces</h3>
-    <ul>
-      <li>plus de 50 pièces ;</li>
-      <li>absence de monnaie suffisante (appoint exigé) ;</li>
-      <li>billets ou pièces endommagés, suspects ou retirés de la circulation ;</li>
-      <li>monnaie autre que l’euro.</li>
-    </ul>
+  </section>
 
-    <div class="hr"></div>
-
-    <h3>Paiement par carte bancaire</h3>
-    <p>
-      Les paiements par carte bancaire s’effectuent sur le site ou à la livraison
-      via un terminal de paiement électronique sécurisé.
-    </p>
-  </div>
-</section>
-
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">7</div>
-    <div>
-      <h2>Droit de rétractation</h2>
-      <p>Exclusion légale.</p>
+  <!-- 3 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">3</div><div><h2>Commande</h2><p>Processus et obligations.</p></div></div>
+    <div class="card-bd">
+      <ul>
+        <li>Minimum de commande : <b>25 €</b></li>
+        <li>Livraison offerte dès <b>75 €</b> uniquement pour les commandes payées en ligne</li>
+        <li>Contact possible avant départ en livraison</li>
+        <li>Sans réponse sous <b>5 minutes</b>, le client doit contacter Apéro de Nuit 66</li>
+      </ul>
     </div>
-  </div>
-  <div class="card-bd">
-    <p>
-      Conformément à l’article <b>L221-28 du Code de la consommation</b>,
-      le droit de rétractation ne s’applique pas aux boissons alcoolisées
-      livrées à domicile et aux produits préparés immédiatement.
-    </p>
-    <p>
-      En conséquence, <b>aucune annulation, retour ou remboursement n’est possible
-      après la livraison</b>, sauf en cas de non-livraison d’une commande payée en ligne.
-    </p>
-  </div>
-</section>
+  </section>
 
-<section class="card">
-  <div class="card-hd">
-    <div class="pill">8</div>
-    <div>
-      <h2>Responsabilité</h2>
-      <p>Limitations et force majeure.</p>
+  <!-- 4 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">4</div><div><h2>Présence et livraison</h2><p>Règles impératives.</p></div></div>
+    <div class="card-bd">
+      La présence du client est obligatoire à l’adresse indiquée.
+      <br><br>
+      Le client doit garantir l’accessibilité du lieu et sa joignabilité.
+      <br><br>
+      Pour des raisons de sécurité :
+      <ul>
+        <li>le livreur ne sort jamais de son véhicule ;</li>
+        <li>la remise s’effectue au véhicule.</li>
+      </ul>
+      <br>
+      En cas d’absence : livraison annulée, remboursement possible si paiement en ligne,
+      sans indemnité supplémentaire.
     </div>
-  </div>
-  <div class="card-bd">
-    <p>
-      Aucun retard ou annulation lié à une adresse incorrecte, un accès impossible
-      ou l’absence du client ne saurait engager la responsabilité d’Apéro de Nuit 66.
-    </p>
-    <p>
+  </section>
+
+  <!-- 5 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">5</div><div><h2>Zones de livraison</h2><p>Département 66.</p></div></div>
+    <div class="card-bd">
+      Livraison assurée dans environ cinquante communes des Pyrénées-Orientales
+      (Perpignan, Canet, Elne, Argelès, Saint-Cyprien, Leucate, Fitou…).
+      <br><br>
+      La disponibilité dépend des horaires d’affluence, du volume de commandes,
+      de la disponibilité des livreurs et des conditions de sécurité.
+      Apéro de Nuit 66 peut refuser ou annuler une livraison sans indemnisation.
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">6</div><div><h2>Paiement</h2><p>Espèces et carte bancaire.</p></div></div>
+    <div class="card-bd">
+      Paiement en espèces possible, sous réserve d’appoint et de billets conformes.
+      <br><br>
+      Paiement par carte bancaire sur le site ou à la livraison via terminal sécurisé.
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">7</div><div><h2>Droit de rétractation</h2><p>Exclusion légale.</p></div></div>
+    <div class="card-bd">
+      Conformément à l’article L221-28 du Code de la consommation,
+      aucun droit de rétractation ne s’applique aux boissons alcoolisées livrées à domicile.
+      <br><br>
+      Aucun retour ou remboursement après livraison,
+      sauf non-livraison d’une commande payée en ligne.
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">8</div><div><h2>Responsabilité</h2><p>Limitations.</p></div></div>
+    <div class="card-bd">
+      Apéro de Nuit 66 ne saurait être tenue responsable d’un retard ou d’une annulation
+      liés à une adresse incorrecte, un accès impossible ou l’absence du client.
+      <br><br>
       Les produits deviennent sous la responsabilité du client dès leur remise.
-    </p>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">9</div><div><h2>Force majeure</h2><p>Événements exceptionnels.</p></div></div>
+    <div class="card-bd">
+      Apéro de Nuit 66 ne pourra être tenue responsable en cas de force majeure,
+      telle que définie par la jurisprudence française
+      (intempéries, accidents, grèves, restrictions, incidents techniques, etc.).
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">10</div><div><h2>Suivi de livraison</h2><p>Droits du livreur.</p></div></div>
+    <div class="card-bd">
+      Un service de suivi peut être proposé.
+      Le livreur a accès au prénom, au téléphone et à la position GPS du client,
+      uniquement pour des raisons de sécurité et de gestion.
+      <br><br>
+      Le livreur peut refuser, interrompre ou modifier la durée du suivi à tout moment.
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">11</div><div><h2>Données personnelles</h2><p>RGPD.</p></div></div>
+    <div class="card-bd">
+      Les données collectées sont nécessaires à la commande et à la livraison,
+      ne sont jamais revendues et peuvent être modifiées ou supprimées sur demande,
+      conformément au RGPD.
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">12</div><div><h2>Réclamations</h2><p>Service client.</p></div></div>
+    <div class="card-bd">
+      Toute réclamation doit être formulée par téléphone ou email
+      dans un délai raisonnable après livraison.
+      Aucune réclamation après consommation.
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="card">
+    <div class="card-hd"><div class="pill">13</div><div><h2>Acceptation des CGV</h2><p>Engagement contractuel.</p></div></div>
+    <div class="card-bd">
+      Le fait de passer commande implique l’acceptation pleine et entière
+      des présentes Conditions Générales de Vente.
+    </div>
+  </section>
+
+  <div class="footer">
+    Apéro de Nuit 66® — CGV
   </div>
-</section>
+
+</main>
+</body>
+</html>
