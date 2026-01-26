@@ -659,7 +659,7 @@
         <button class="btn primary" id="callBtn" data-call>📞 Appeler</button>
 
         <button class="btn secondary pulse" id="installBtn" style="display:none">
-          Ajouter l’app
+          Télécharger l’app
           <span class="badge-new" id="newBadge">Nouveau</span>
         </button>
 
@@ -833,6 +833,8 @@
     // =========================
     // 📈 TRACKING (stats.aperos.net) — discret, sans redirection
     // =========================
+    const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=fr.aperos.nuit66";
+
     const TRACK = {
       call: "https://stats.aperos.net/e/apero_nuit.call?to=tel%3A0652336461&src=app",
       appClick: "https://stats.aperos.net/e/apero_nuit.app.click?to=https%3A%2F%2Faperos.net&src=app"
@@ -1296,58 +1298,18 @@
       }
     });
 
-    // Click "Ajouter l’app"
+    // Click "Télécharger l’app" (Play Store)
     document.getElementById("installBtn").addEventListener("click", async () => {
-      const run = async () => {
-      // tracking "Ajouter l’app" (sans casser l’installation)
-      fireTrack(TRACK.appClick);
+      const run = () => {
+        // tracking "Télécharger l’app"
+        fireTrack(TRACK.appClick);
 
-      if (isFBInApp) {
-        openModal({
-          ic:"📣",
-          t:"Ouvrir dans un navigateur",
-          i:"Facebook / Instagram bloque l’installation de l’app.",
-          s:
-            "<strong>Solution :</strong><br><br>" +
-            "1) Clique sur <strong>Copier le lien</strong><br>" +
-            "2) Ouvre <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone)<br>" +
-            "3) Colle le lien dans la barre d’adresse, puis re-clique sur <strong>Ajouter l’app</strong>",
-          showCopy:true
-        });
-        return;
-      }
-
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        try { await deferredPrompt.userChoice; } catch(e) {}
-        deferredPrompt = null;
-        setTimeout(updateInstallUI, 600);
-        return;
-      }
-
-      if (isIOS && isSafari) {
-        openModal({
-          ic:"🍏",
-          t:"Ajouter à l’écran d’accueil",
-          i:"Sur iPhone, l’installation se fait via le bouton Partager.",
-          s:
-            "<strong>Étapes :</strong><br><br>" +
-            "1) Appuie sur <strong>Partager</strong> (carré + flèche)<br>" +
-            "2) Choisis <strong>Sur l’écran d’accueil</strong><br>" +
-            "3) Valide <strong>Ajouter</strong>"
-        });
-        return;
-      }
-
-      openModal({
-        ic:"⚠️",
-        t:"Installation indisponible",
-        i:"Ton navigateur ne propose pas l’installation automatique.",
-        s:
-          "Essaie avec <strong>Chrome</strong> (Android) ou <strong>Safari</strong> (iPhone).<br>" +
-          "Si tu es sur une appli (Facebook, etc.), ouvre le lien dans un navigateur.",
-        showCopy:true
-      });
+        // ✅ Désormais: redirection Play Store (sans casser le reste)
+        try {
+          window.location.href = PLAY_STORE_URL;
+        } catch(e) {
+          window.open(PLAY_STORE_URL, "_blank", "noopener");
+        }
       };
 
       if (typeof requireMajorThen === "function"){
@@ -1356,8 +1318,7 @@
         run();
       }
     });
-
-    // ✅ ACTION PRINCIPALE: APPELER (pas de commander)
+// ✅ ACTION PRINCIPALE: APPELER (pas de commander)
     const callBtn = document.getElementById("callBtn");
     if (callBtn){
       callBtn.addEventListener("click", () => {
@@ -1405,7 +1366,7 @@
 
     <div class="adn-menu-item" id="adnMenuInstall" style="display:none">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">⬇️ Installer l’app</div>
+        <div class="adn-menu-title">⬇️ Télécharger l’app</div>
       </div>
     </div>
 
@@ -1522,13 +1483,15 @@
         install.addEventListener("click", ()=>{
           closeMenu();
           const run = () => {
-            const realInstallBtn = document.getElementById("installBtn");
-            if(realInstallBtn && realInstallBtn.style.display !== "none"){
-              realInstallBtn.click();
-              return;
-            }
-            if(typeof showToast === "function"){
-              showToast("Ajoute l’app via le menu du navigateur : “Ajouter à l’écran d’accueil”.");
+            // tracking "Télécharger l’app"
+            try{
+              if (typeof fireTrack === "function" && typeof TRACK !== "undefined") fireTrack(TRACK.appClick);
+            }catch(e){}
+            // ✅ Désormais: redirection Play Store
+            try{
+              window.location.href = PLAY_STORE_URL;
+            }catch(e){
+              window.open(PLAY_STORE_URL, "_blank", "noopener");
             }
           };
           if(typeof requireMajorThen === "function"){
@@ -1538,7 +1501,7 @@
           }
         });
       }
-    })();
+})();
   </script>
 <footer class="legal-footer">
     <a href="./mentions.html">Mentions légales</a>
