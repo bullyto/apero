@@ -490,17 +490,17 @@
 
     .adn-menu-sheet{
       position:fixed;
-      top:58px; right:14px;
-      width:min(320px, calc(100vw - 28px)); /* ✅ compact (pas XXL) */
+      top:56px; right:14px;
+      width:min(290px, calc(100vw - 28px));
       z-index:9999;
-      background:linear-gradient(180deg, rgba(12,20,32,.96), rgba(8,14,22,.96));
+      background:rgba(9,14,22,.94);
       color:#fff;
       border:1px solid rgba(255,255,255,.12);
-      border-radius:20px;
-      box-shadow:0 18px 55px rgba(0,0,0,.48), 0 0 0 1px rgba(93,183,238,.07) inset;
+      border-radius:18px;
+      box-shadow:0 18px 55px rgba(0,0,0,.45);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      padding:8px;
+      padding:6px;
       transform:translateY(-8px);
       opacity:0;
       pointer-events:none;
@@ -514,93 +514,64 @@
 
     /* Item layout */
     .adn-menu-item{
-      --adn-icon:44px;
-      --adn-gap:12px;
-
-      display:grid;
-      grid-template-columns: var(--adn-icon) 1fr auto;
+      display:flex;
       align-items:center;
-      gap:var(--adn-gap);
-      padding:14px 14px;
-      border-radius:18px;
-      font-weight:850;
+      justify-content:space-between;
+      gap:14px;
+      padding:11px 12px;
+      border-radius:14px;
+      font-weight:800;
       user-select:none;
-      background:rgba(0,0,0,.14);
-      border:1px solid rgba(255,255,255,.10);
-      box-shadow:0 12px 28px rgba(0,0,0,.30);
     }
-    /* ✅ delimitation between each button (fin) */
+    /* ✅ delimitation between each button */
     .adn-menu-item + .adn-menu-item{
-      --adn-icon:44px;
-      --adn-gap:12px;
-
-      display:grid;
-      grid-template-columns: var(--adn-icon) 1fr auto;
-      align-items:center;
-      gap:var(--adn-gap);
-      padding:14px 14px;
-      border-radius:18px;
-      font-weight:850;
-      user-select:none;
-      background:rgba(0,0,0,.14);
-      border:1px solid rgba(255,255,255,.10);
-      box-shadow:0 12px 28px rgba(0,0,0,.30);
+      border-top:1px solid rgba(255,255,255,.10);
+      margin-top:2px;
+      padding-top:13px;
     }
     .adn-menu-item:hover{ background:rgba(255,255,255,.06); }
     .adn-menu-item:active{ background:rgba(255,255,255,.10); }
+    .adn-menu-item > .adn-menu-icon,
+    .adn-menu-item > .adn-menu-svg{
+      justify-self:center;
+    }
 
-    .adn-menu-left{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      gap:5px;
-    }
-    .adn-menu-title{
-      display:block;
-      font-size:16px;
-      font-weight:900;
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
+    .adn-menu-left{ min-width:0; display:flex; flex-direction:column; gap:2px; }
+    .adn-menu-title{ font-size:15px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .adn-menu-sub{
-      font-size:12.5px;
-      font-weight:700;
-      color:rgba(255,255,255,.70);
-      line-height:1.15;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      font-size:12px;
+      font-weight:750;
+      color:rgba(255,255,255,.72);
+      line-height:1.1;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
 
 
     /* ADN66 — Icônes image menu (remplace les emojis) */
+    .adn-menu-title{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
     .adn-menu-icon{
-      width:46px;
-      height:46px;
+      width:42px;
+      height:42px;
       object-fit:contain;
       flex:0 0 auto;
       background:transparent;
       box-shadow:none;
       filter:none;
     }
-    /* Icônes spécifiques */
-    .adn-menu-icon.cadeaux{
-      width:54px;
-      height:54px;
-    }
-    .adn-menu-icon.caddie{ width:46px; height:46px; }
-.adn-tag{
-      justify-self:end;
-      font-size:12px;
-      font-weight:900;
-      padding:7px 12px;
+
+    .adn-tag{
+      font-size:11px;
+      font-weight:950;
+      padding:4px 9px;
       border-radius:999px;
       border:1px solid rgba(255,255,255,.20);
-      background:rgba(93,183,238,.22);
       color:rgba(255,255,255,.95);
+      background:rgba(93,183,238,.22);
+      flex:0 0 auto;
       letter-spacing:.2px;
     }
 
@@ -1408,30 +1379,40 @@
 
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="adn-menu-item" id="adnMenuCall" data-call>
+      <img src="assets/appel.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez par téléphone</div>
+        <div class="adn-menu-title">Commandez par téléphone</div>
       </div>
+    </div>      </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:50px">
+    <div class="adn-menu-item" id="adnMenuOrder">
+      <svg class="adn-menu-svg caddie" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h-2l-1 2v2h2l3.6 7.2c.2.5.7.8 1.2.8h8.7c.5 0 1-.3 1.2-.8l2.1-6.2c.2-.6-.2-1.2-.8-1.2H8.3L7.6 4.9A1 1 0 0 0 7 4Zm3.3 6h10.2l-1.5 4.5H12l-1.7-3.4ZM10 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Zm8 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon caddie" alt="">Commandez en ligne</div>
+        <div class="adn-menu-title">Commandez en ligne</div>
         <div class="adn-menu-sub">Paiement en ligne</div>
+      </div>
+    </div>        <div class="adn-menu-sub">Paiement en ligne</div>
       </div>
     </div>
 
 
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
+      <img src="assets/suivi.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
+        <div class="adn-menu-title">Suivi livreur</div>
       </div>
+    </div>      </div>
       <span class="adn-tag">Nouveau</span>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuGame" style="display:none; --adn-icon:52px">
+    <div class="adn-menu-item" id="adnMenuGame" style="display:none">
+      <img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Cadeaux</div>
+        <div class="adn-menu-title">Cadeaux</div>
         <div class="adn-menu-sub">Gagne ta livraison</div>
+      </div>
+    </div>        <div class="adn-menu-sub">Gagne ta livraison</div>
       </div>
       <span class="adn-tag">Nouveau</span>
     </div>
@@ -1443,15 +1424,19 @@
     </div>
 
     <div class="adn-menu-item" id="adnMenuZone">
+      <img src="assets/zone.png" class="adn-menu-icon" alt="">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
+        <div class="adn-menu-title">Zone de livraison</div>
       </div>
+    </div>      </div>
     </div>
 
     <div class="adn-menu-item" id="adnMenuClose">
+      <svg class="adn-menu-svg close" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.3 5.7a1 1 0 0 0-1.4 0L12 10.6 7.1 5.7A1 1 0 0 0 5.7 7.1l4.9 4.9-4.9 4.9a1 1 0 1 0 1.4 1.4l4.9-4.9 4.9 4.9a1 1 0 0 0 1.4-1.4l-4.9-4.9 4.9-4.9a1 1 0 0 0 0-1.4Z"/></svg>
       <div class="adn-menu-left">
-        <div class="adn-menu-title">✖️ Fermer</div>
+        <div class="adn-menu-title">Fermer</div>
       </div>
+    </div>      </div>
     </div>
   </div>
 
@@ -1594,5 +1579,13 @@
       }
 })();
   </script>
+<footer class="legal-footer">
+    <a href="./mentions.html">Mentions légales</a>
+    <span class="sep">•</span>
+    <a href="./cgv.html">CGV</a>
+    <span class="sep">•</span>
+    <a href="./privacy.html">Confidentialité</a>
+  </footer>
+
 </body>
 </html>
