@@ -544,19 +544,43 @@
 
 
     /* ADN66 — Icônes image menu (remplace les emojis) */
+    .adn-menu-item{
+      --adn-icon:48px;
+      --adn-gap:14px;
+    }
     .adn-menu-title{
       display:flex;
       align-items:center;
-      gap:14px;
+      gap:var(--adn-gap);
+      line-height:1.15;
     }
     .adn-menu-icon{
-      width:42px;
-      height:42px;
+      width:var(--adn-icon);
+      height:var(--adn-icon);
       object-fit:contain;
       flex:0 0 auto;
       background:transparent;
       box-shadow:none;
       filter:none;
+    }
+    /* Sous-texte aligné sous le libellé (pas sous l’icône) */
+    .adn-menu-sub{
+      margin-left: calc(var(--adn-icon) + var(--adn-gap));
+    }
+    /* Icônes spécifiques */
+    .adn-menu-icon.cadeaux{ width:calc(var(--adn-icon) + 6px); height:calc(var(--adn-icon) + 6px); }
+    .adn-menu-icon.caddie{ width:calc(var(--adn-icon) + 2px); height:calc(var(--adn-icon) + 2px); }
+
+    /* icône cadeaux un peu plus grande */
+    .adn-menu-icon.cadeaux{
+      width:54px;
+      height:54px;
+    }
+
+    /* icône caddie légèrement plus grande */
+    .adn-menu-icon.caddie{
+      width:50px;
+      height:50px;
     }
 
     .adn-tag{
@@ -1380,9 +1404,9 @@
       </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuOrder">
+    <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:50px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">🛒 Commandez en ligne</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon caddie" alt="">Commandez en ligne</div>
         <div class="adn-menu-sub">Paiement en ligne</div>
       </div>
     </div>
@@ -1395,9 +1419,9 @@
       <span class="adn-tag">Nouveau</span>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuGame" style="display:none">
+    <div class="adn-menu-item" id="adnMenuGame" style="display:none; --adn-icon:52px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon" alt="">Cadeaux</div>
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Cadeaux</div>
         <div class="adn-menu-sub">Gagne ta livraison</div>
       </div>
       <span class="adn-tag">Nouveau</span>
