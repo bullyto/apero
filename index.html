@@ -542,6 +542,21 @@
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
 
+
+    /* ADN66 — Icônes image menu (remplace les emojis) */
+    .adn-menu-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .adn-menu-icon{
+      width:22px;
+      height:22px;
+      object-fit:contain;
+      flex:0 0 auto;
+      filter: drop-shadow(0 0 6px rgba(93,183,238,.35));
+    }
+
     .adn-tag{
       font-size:11px;
       font-weight:950;
@@ -1359,7 +1374,7 @@
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="adn-menu-item" id="adnMenuCall" data-call>
       <div class="adn-menu-left">
-        <div class="adn-menu-title">📞 Commandez par téléphone</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez par téléphone</div>
       </div>
     </div>
 
@@ -1373,14 +1388,14 @@
 
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">🚚 Suivi livreur</div>
+        <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
       </div>
       <span class="adn-tag">Nouveau</span>
     </div>
 
     <div class="adn-menu-item" id="adnMenuGame" style="display:none">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">🎁 Cadeaux</div>
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon" alt="">Cadeaux</div>
         <div class="adn-menu-sub">Gagne ta livraison</div>
       </div>
       <span class="adn-tag">Nouveau</span>
@@ -1394,7 +1409,7 @@
 
     <div class="adn-menu-item" id="adnMenuZone">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">📍 Zone de livraison</div>
+        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
       </div>
     </div>
 
