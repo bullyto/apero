@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "aperodenuit-v4.0";
+const CACHE_NAME = "aperodenuit-v4.1";
 
 // ⚠️ Pré-cache minimal + tolérant aux fichiers absents
 const CORE_ASSETS = [
