@@ -366,7 +366,7 @@
   <section class="clientPopup" id="clientPopup">
     <div class="clientPopupCard" id="clientPopupCard">
       <h1 class="clientPopupTitle">Suivi en direct</h1>
-      <p class="clientPopupSub">Indiquez votre nom pour activer le suivi.</p>
+      <p class="clientPopupSub">Indiquez votre nom et votre numéro pour activer le suivi.</p>
 
       <div class="clientPopupRow" aria-label="Statut géolocalisation">
         <span class="clientPopupRowI" aria-hidden="true">📍</span>
@@ -382,6 +382,16 @@
         placeholder="Entrer votre nom"
       >
 
+
+
+<input
+  id="phone"
+  class="clientInput"
+  maxlength="20"
+  autocomplete="tel"
+  inputmode="tel"
+  placeholder="Votre téléphone (ex: 06 12 34 56 78)"
+>
       <div class="clientBtnRow">
         <button id="btnRequest" class="clientBtn">Activer le suivi</button>
         <button id="btnReset" class="clientBtn secondary" style="display:none">Relancer</button>

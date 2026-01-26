@@ -13,6 +13,7 @@ import { CONFIG } from "./config.js";
 
 const els = {
   name: document.getElementById("name"),
+  phone: document.getElementById("phone"),
   btnRequest: document.getElementById("btnRequest"),
   btnReset: document.getElementById("btnReset"),
   badge: document.getElementById("statusBadge"),
@@ -26,6 +27,7 @@ const els = {
 const LS = {
   prefix: CONFIG.LS_PREFIX || "adn66_track_",
   name: (CONFIG.LS_PREFIX || "adn66_track_") + "name",
+  phone: (CONFIG.LS_PREFIX || "adn66_track_") + "phone",
   requestId: (CONFIG.LS_PREFIX || "adn66_track_") + "requestId",
   clientId: (CONFIG.LS_PREFIX || "adn66_track_") + "clientId",
   lastRequestMs: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRequestMs",
@@ -181,6 +183,39 @@ function lsDel(k) {
   try {
     localStorage.removeItem(k);
   } catch {}
+}
+
+// ----------------------------
+// PHONE helpers (FR)
+// ----------------------------
+function normalizePhoneFR(raw) {
+  if (!raw) return "";
+  let s = String(raw).trim();
+  // keep digits and leading +
+  s = s.replace(/[^\d+]/g, "");
+  if (s.startsWith("00")) s = "+" + s.slice(2);
+  if (s.startsWith("+")) {
+    if (!s.startsWith("+33")) return "";
+    let rest = s.slice(3).replace(/\D/g, "");
+    if (rest.startsWith("0")) rest = rest.slice(1);
+    if (rest.length !== 9) return "";
+    return "+33" + rest;
+  }
+  const digits = s.replace(/\D/g, "");
+  if (digits.length !== 10) return "";
+  // Convert to E.164 (+33) by removing leading 0
+  return "+33" + digits.slice(1);
+}
+
+function getPhoneE164() {
+  const raw = (els.phone?.value || lsGet(LS.phone, "") || "").trim();
+  return normalizePhoneFR(raw);
+}
+
+function persistPhoneIfValid() {
+  const p = getPhoneE164();
+  if (p) lsSet(LS.phone, p);
+  return p;
 }
 
 // ----------------------------
@@ -587,8 +622,10 @@ function loadSession() {
   const requestId = lsGet(LS.requestId, "");
   const clientId = lsGet(LS.clientId, "");
   const name = lsGet(LS.name, "");
+  const phone = lsGet(LS.phone, \"\");
 
   if (els.name && name) els.name.value = name;
+  if (els.phone && phone) els.phone.value = phone;
 
   if (requestId && clientId) {
     STATE.requestId = requestId;
@@ -661,6 +698,7 @@ async function sendClientPositionUpdate() {
   if (!STATE.clientId || !STATE.clientPos) return;
 
   const name = (els.name?.value || lsGet(LS.name, "") || "").trim().slice(0, 40);
+  const phone = persistPhoneIfValid();
 
   try {
     await apiFetchJson("/client/position/update", {
@@ -668,6 +706,7 @@ async function sendClientPositionUpdate() {
       body: {
         clientId: STATE.clientId,
         name,
+        phone,
         lat: STATE.clientPos.lat,
         lng: STATE.clientPos.lng,
         ts: STATE.clientPos.ts || Date.now(),
@@ -833,6 +872,12 @@ async function handleRequestClick() {
     return;
   }
 
+  const phone = persistPhoneIfValid();
+  if (!phone) {
+    toast("Entre ton numéro de téléphone (ex: 06 12 34 56 78).");
+    return;
+  }
+
   lsSet(LS.name, name);
 
   if (!STATE.clientPos) {
@@ -859,6 +904,7 @@ async function handleRequestClick() {
       method: "POST",
       body: {
         clientName: name,
+        phone,
         lat: STATE.clientPos.lat,
         lng: STATE.clientPos.lng,
         ts: STATE.clientPos.ts || Date.now(),
