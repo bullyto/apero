@@ -1,6 +1,37 @@
 // PATH: /fidel/admin.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
+
+function makeQrSvg(text, cellSize = 4, margin = 2) {
+  if (!window.qrcode) throw new Error("qrcode lib missing");
+  const qr = window.qrcode(0, "M");
+  qr.addData(String(text));
+  qr.make();
+  return qr.createSvgTag(cellSize, margin);
+}
+
+function isValidClientId(id) {
+  if (!id) return false;
+  const s = String(id).trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  if (/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
+  return s.length >= 8;
+}
+
+function extractClientIdFromAny(text) {
+  if (!text) return "";
+  const t = String(text).trim();
+  if (isValidClientId(t)) return t;
+  const m = t.match(/(?:adn66:loyalty:|cid:)([0-9a-zA-Z-]{8,})/i);
+  if (m) return m[1];
+  try {
+    const u = new URL(t);
+    const id = u.searchParams.get("id") || u.searchParams.get("client_id");
+    if (id && isValidClientId(id)) return id;
+  } catch {}
+  return "";
+}
+
 const ADMIN_LS = "adn66_loyalty_admin_key";
 
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
