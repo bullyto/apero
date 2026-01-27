@@ -33,24 +33,12 @@ function setCardVisible(v){
   if(card) card.style.display = v ? "block" : "none";
 }
 
-/* --------- QR: wait loader (FIX) --------- */
-function waitForQR(cb, retries = 25){
-  if (typeof window.QRCodeGenerator === "function") {
-    cb();
-  } else if (retries > 0) {
-    setTimeout(() => waitForQR(cb, retries - 1), 120);
-  } else {
-    const box = document.getElementById("qrSvg");
-    if (box) box.innerHTML = "QR indisponible";
-  }
-}
-
 function setMeta(cid){
   const meta = document.getElementById("meta");
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) waitForQR(() => qrRender(cid));
+  if(cid) qrRender(cid);
 }
 
 function setApiState(ok, msg){
@@ -91,18 +79,54 @@ function renderVisualStamps(points){
 }
 
 /* ---------- QR (FIX) ---------- */
-function qrRender(text){
+function ensureQrLibLoaded(){
+  return new Promise((resolve)=>{
+    if(typeof window !== "undefined" && typeof window.QRCodeGenerator === "function"){
+      return resolve(true);
+    }
+    // Try to (re)load the library with cache-busting (handles SW/old cache issues)
+    const existing = document.querySelector('script[data-adn66-qr="1"]');
+    if(existing){
+      existing.addEventListener("load", ()=>resolve(typeof window.QRCodeGenerator === "function"), {once:true});
+      existing.addEventListener("error", ()=>resolve(false), {once:true});
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "/fidel/qr.min.js?v=" + Date.now();
+    s.async = true;
+    s.setAttribute("data-adn66-qr","1");
+    s.onload = ()=>resolve(typeof window.QRCodeGenerator === "function");
+    s.onerror = ()=>resolve(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
+
   try{
-    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
-    const q = new QRCodeGenerator(0);
+    const ok = await ensureQrLibLoaded();
+    if(!ok) throw new Error("qr.min.js non chargé");
+
+    const Q = window.QRCodeGenerator;
+    const q = new Q(0);
     q.addData(String(text));
     q.make();
-    // qr.min.js: createSvgTag(cellSize, fillColor)
-    const svg = q.createSvgTag(4, "#111");
+
+    // Support both signatures:
+    // - createSvgTag(cellSize, fillColor)
+    // - createSvgTag(cellSize, margin)
+    let svg = "";
+    try{
+      svg = q.createSvgTag(4, "#111");
+      if(typeof svg !== "string" || svg.indexOf("<svg") === -1) throw new Error("bad svg");
+    }catch(_){
+      svg = q.createSvgTag(4, 2);
+    }
     box.innerHTML = svg;
-  }catch(_){
+  }catch(e){
+    // Keep the same UI, but ensure it's still clickable area
     box.innerHTML = "QR indisponible";
   }
 }
