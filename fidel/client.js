@@ -72,29 +72,15 @@ function renderVisualStamps(points){
 
 /* ---------- QR ---------- */
 function qrRender(text){
-  const box = document.getElementById("qrSvg");
-  if(!box) return;
   try{
-    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
-    const q = new window.QRCodeGenerator(0);
+    const q = new QRCodeGenerator(0); // qr.min.js
     q.addData(String(text));
     q.make();
-    box.innerHTML = q.createSvgTag(4, "#111");
-  }catch(_){
-    box.innerHTML = "QR indisponible";
+    // Signature la plus courante: createSvgTag(cellSize, fillColor)
+    document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, "#111");
+  }catch{
+    document.getElementById("qrSvg").innerHTML = "QR indisponible";
   }
-}
-}}
-
-/* ---------- API ---------- */
-async function api(path, opts={}){
-  const res = await fetch(API_BASE + path, {
-    headers: {"content-type":"application/json"},
-    ...opts
-  });
-  const data = await res.json();
-  if(!res.ok) throw new Error(data.error || "API error");
-  return data;
 }
 
 /* ---------- LOAD CARD ---------- */
