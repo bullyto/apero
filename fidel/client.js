@@ -33,12 +33,24 @@ function setCardVisible(v){
   if(card) card.style.display = v ? "block" : "none";
 }
 
+/* --------- QR: wait loader (FIX) --------- */
+function waitForQR(cb, retries = 25){
+  if (typeof window.QRCodeGenerator === "function") {
+    cb();
+  } else if (retries > 0) {
+    setTimeout(() => waitForQR(cb, retries - 1), 120);
+  } else {
+    const box = document.getElementById("qrSvg");
+    if (box) box.innerHTML = "QR indisponible";
+  }
+}
+
 function setMeta(cid){
   const meta = document.getElementById("meta");
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender(cid);
+  if(cid) waitForQR(() => qrRender(cid));
 }
 
 function setApiState(ok, msg){
@@ -83,7 +95,7 @@ function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
   try{
-    if(typeof QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
+    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
     const q = new QRCodeGenerator(0);
     q.addData(String(text));
     q.make();
