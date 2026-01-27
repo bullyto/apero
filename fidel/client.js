@@ -236,7 +236,7 @@ async function startScan(){
         const val = barcodes[0].rawValue || "";
         let cid = null;
         try{ const obj = JSON.parse(val); cid = obj.cid || obj.client_id || null; }
-        catch(_){ cid = val.startsWith("c_") ? val : null; }
+        catch(_){ cid = isValidClientId(val) ? val : null; }
         if(cid){
           localStorage.setItem(LS_KEY, cid);
           scanning = false;
@@ -271,7 +271,7 @@ document.getElementById("btnClose").addEventListener("click", closeRestore);
 document.getElementById("btnStartScan").addEventListener("click", startScan);
 document.getElementById("btnUseManual").addEventListener("click", async ()=>{
   const cid = (document.getElementById("manualCid").value||"").trim();
-  if(!cid.startsWith("c_")){ alert("ID invalide.");; return; }
+  if(!isValidClientId(cid)){ alert("ID invalide."); return; }
   localStorage.setItem(LS_KEY, cid);
   await closeRestore();
   await loadCard();
