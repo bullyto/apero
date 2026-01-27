@@ -1,210 +1,222 @@
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>ADN66 • Carte de fidélité (Client)</title>
-  <meta name="theme-color" content="#050b12" />
-  <style>
-    :root{
-      --bg:#050b12;--card:#0b1420;--card2:#0e1826;
-      --t:rgba(255,255,255,.92);--t2:rgba(255,255,255,.68);--b:rgba(255,255,255,.10);
-      --ok:#21d07a;--warn:#ffcc33;--danger:#ff4d4d;
+// PATH: /fidel/client.js
+// ADN66 • Carte de fidélité — Client
+// Fix QR définitif : QRCodeGenerator(null)
+
+const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
+const GOAL = 8;
+const RESET_HOURS = 24;
+const LS_KEY = "adn66_loyalty_client_id";
+
+/* ---------- Utils ---------- */
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
+function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
+
+function isValidClientId(cid){
+  if(!cid) return false;
+  const s = String(cid).trim();
+  // UUID
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  // ULID
+  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
+  // prefixed
+  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
+  return false;
+}
+
+/* ---------- UI ---------- */
+function setEnvPill(){
+  const pill = document.getElementById("envPill");
+  if(pill){
+    pill.innerHTML = "Mode : <b>Serveur</b>";
+  }
+}
+
+function setCardVisible(v){
+  const form = document.getElementById("formBlock");
+  const card = document.getElementById("cardBlock");
+  if(form) form.style.display = v ? "none" : "block";
+  if(card) card.style.display = v ? "block" : "none";
+}
+
+function setMeta(cid){
+  const meta = document.getElementById("meta");
+  const cidText = document.getElementById("cidText");
+  if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
+  if(cidText) cidText.textContent = cid || "—";
+  if(cid) qrRender(cid);
+}
+
+function setApiState(ok, msg){
+  const dot = document.getElementById("dot");
+  const txt = document.getElementById("apiState");
+  if(dot) dot.className = "dot " + (ok ? "ok" : "warn");
+  if(txt) txt.textContent = msg || (ok ? "Synchronisé" : "Hors ligne");
+}
+
+function setStateText(points, completedAt){
+  const st = document.getElementById("stateText");
+  if(!st) return;
+
+  if(points >= GOAL){
+    if(completedAt){
+      const end = new Date(new Date(completedAt).getTime() + RESET_HOURS*3600*1000);
+      const ms = end.getTime() - Date.now();
+      if(ms > 0){
+        const h = Math.floor(ms/3600000);
+        const m = Math.floor((ms%3600000)/60000);
+        st.textContent = `🎉 Carte complétée (reset dans ${h}h ${m}min)`;
+      }else{
+        st.textContent = "Reset imminent…";
+      }
+    }else{
+      st.textContent = "🎉 Carte complétée";
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      background:radial-gradient(1200px 800px at 50% -10%, rgba(84,180,255,.18), transparent 55%), var(--bg);
-      color:var(--t);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
-    }
-    .wrap{width:min(980px,100%);}
-    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
-    .brand{display:flex;flex-direction:column;gap:2px}
-    .brand b{font-size:16px;letter-spacing:.2px}
-    .brand span{font-size:12px;color:var(--t2)}
-    .pill{border:1px solid var(--b);padding:8px 10px;border-radius:999px;font-size:12px;color:var(--t2);background:rgba(255,255,255,.03)}
-    .card{
-      background:linear-gradient(180deg,var(--card),var(--card2));
-      border:1px solid var(--b);
-      border-radius:18px;
-      box-shadow:0 0 0 1px rgba(255,255,255,.02), 0 20px 60px rgba(0,0,0,.55);
-      overflow:hidden;
-    }
-    .card-h{
-      padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.06);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .card-h h1{margin:0;font-size:14px}
-    .card-h .meta{font-size:12px;color:var(--t2)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;}
-    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
-    .panel{
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:16px;
-      background:rgba(255,255,255,.03);
-      padding:12px;
-    }
-    label{display:block;font-size:12px;color:var(--t2);margin:10px 0 6px}
-    input{
-      width:100%;padding:12px 12px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.25);color:var(--t);outline:none
-    }
-    input:focus{border-color:rgba(84,180,255,.55);box-shadow:0 0 0 4px rgba(84,180,255,.12);}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
-    button{
-      flex:1;min-width:160px;padding:12px 12px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(84,180,255,.14);
-      color:var(--t);font-weight:800;cursor:pointer
-    }
-    button.secondary{background:rgba(255,255,255,.06)}
-    button:active{transform:translateY(1px)}
-    .note{margin-top:10px;font-size:12px;color:var(--t2);line-height:1.35}
-    .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);margin-top:10px}
-    .dot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.18);}
-    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(33,208,122,.15)}
-    .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(255,204,51,.12)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+  }else{
+    st.textContent = "En cours";
+  }
+}
 
-    .cardVisualWrap{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;}
-    .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
-    .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
-    .loyTop .sub{font-size:12px;color:var(--t2)}
-    .visual{width:min(520px,100%);position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.20);}
-    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
+function renderVisualStamps(points){
+  const safe = Math.max(0, Math.min(GOAL, Number(points||0)));
+  document.querySelectorAll(".stamp").forEach(el=>{
+    const slot = Number(el.dataset.slot || "0");
+    el.classList.toggle("filled", slot > 0 && slot <= safe);
+  });
+}
 
-    .stamp{
-      position:absolute;width:11%;aspect-ratio:1/1;border-radius:999px;
-      display:flex;align-items:center;justify-content:center;font-weight:1000;
-      transform:rotate(-10deg);opacity:0;pointer-events:none;
-      box-shadow:0 10px 25px rgba(0,0,0,.35);
-      border:2px solid rgba(33,208,122,.95);
-      background:rgba(33,208,122,.16);
-      color:rgba(33,208,122,.98);
-      text-shadow:0 1px 0 rgba(0,0,0,.25);
-    }
-    .stamp.filled{opacity:1;}
-    .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
+/* ---------- QR (CORRECTION ICI) ---------- */
+function qrRender(text){
+  const box = document.getElementById("qrSvg");
+  if(!box) return;
 
-    /* positions 8 tampons (2 rangées de 4) */
-    .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
-    .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
+  try{
+    // 🔥 CORRECTION DÉFINITIVE : null (auto-choix version QR)
+    const q = new window.QRCodeGenerator(null);
+    q.addData(String(text));
+    q.make();
 
-    .qrbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-    .qr{width:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)}
-    .qr-actions{display:flex;gap:10px;width:100%}
-    .qr-actions button{min-width:auto;flex:1}
+    box.innerHTML = q.createSvgTag(4, "#111");
+  }catch(e){
+    box.innerHTML = "QR indisponible";
+  }
+}
 
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
-    .modal.open{display:flex}
-    .modal .box{width:min(520px,100%);background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(255,255,255,.12);border-radius:18px;overflow:hidden}
-    .modal .box h2{margin:0;font-size:14px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .modal .box .content{padding:14px}
-    .scan{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#000;aspect-ratio:3/4;overflow:hidden;position:relative}
-    video{width:100%;height:100%;object-fit:cover}
-    .hint{margin-top:10px;font-size:12px;color:var(--t2)}
-    .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <b>ADN66 • Carte de fidélité</b>
-        <span>Client</span>
-      </div>
-      <div class="pill" id="envPill">Mode : <b>Démo</b></div>
-    </div>
+/* ---------- API ---------- */
+async function api(path, opts={}){
+  const res = await fetch(API_BASE + path, {
+    headers: {"content-type":"application/json"},
+    ...opts
+  });
+  const data = await res.json().catch(()=> ({}));
+  if(!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  return data;
+}
 
-    <div class="card">
-      <div class="card-h">
-        <h1>Ma carte virtuelle</h1>
-        <div class="meta" id="meta">—</div>
-      </div>
+/* ---------- Load card ---------- */
+async function loadCard(){
+  const cid = localStorage.getItem(LS_KEY);
 
-      <div class="grid">
-        <div class="panel">
-          <div id="formBlock">
-            <div class="note">Crée ta carte en 10 secondes</div>
-            <label>Prénom</label>
-            <input id="name" autocomplete="given-name" placeholder="Ex: Kevin" />
-            <label>Téléphone</label>
-            <input id="phone" inputmode="tel" autocomplete="tel" placeholder="06..." />
-            <div class="row">
-              <button id="btnCreate">Créer ma carte</button>
-              <button class="secondary" id="btnRestore">Restaurer</button>
-            </div>
-            <div class="note">Le QR sert d’identifiant. Les points sont ajoutés uniquement par le livreur (scan + validation).</div>
-          </div>
+  if(!cid){
+    setCardVisible(false);
+    const pts = document.getElementById("points");
+    const goal = document.getElementById("goal");
+    if(pts) pts.textContent = "0";
+    if(goal) goal.textContent = String(GOAL);
+    renderVisualStamps(0);
+    setStateText(0, null);
+    setApiState(true, "Synchronisé");
+    setMeta(null);
+    return;
+  }
 
-          <div id="cardBlock" style="display:none">
-            <div class="status" style="margin-top:0">
-              <span class="dot ok" id="dot"></span>
-              <span id="apiState">Synchronisé</span>
-            </div>
-            <div class="note" style="margin-top:10px">Si tu perds la carte : dis “j’ai perdu ma carte” et on la restaure depuis l’admin (sans SMS).</div>
-          </div>
-        </div>
+  setCardVisible(true);
+  setMeta(cid);
 
-        <div class="panel">
-          <div class="cardVisualWrap">
-            <div class="loyTop">
-              <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
-              <div class="sub" id="stateText">En cours</div>
-            </div>
+  try{
+    const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid));
+    const card = res.card || res;
 
-            <div class="visual" id="visual">
-              <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
-              <div class="stamp s1" data-slot="1"><span>✓</span></div>
-              <div class="stamp s2" data-slot="2"><span>✓</span></div>
-              <div class="stamp s3" data-slot="3"><span>✓</span></div>
-              <div class="stamp s4" data-slot="4"><span>✓</span></div>
-              <div class="stamp s5" data-slot="5"><span>✓</span></div>
-              <div class="stamp s6" data-slot="6"><span>✓</span></div>
-              <div class="stamp s7" data-slot="7"><span>✓</span></div>
-              <div class="stamp s8" data-slot="8"><span>✓</span></div>
-            </div>
+    const points = Number(card.points || 0);
+    const goal = Number(card.goal || GOAL);
 
-            <div class="qrbox" style="width:100%;margin-top:12px">
-              <div class="note" style="margin:0">Mon QR (à montrer)</div>
-              <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
-              <div class="mono" id="cidText">—</div>
-              <div class="qr-actions">
-                <button class="secondary" id="btnRefresh">Rafraîchir</button>
-                <button class="secondary" id="btnCopy">Copier ID</button>
-              </div>
-              <div class="hint">Cloudflare : mets l’URL du Worker dans <span class="mono">API_BASE</span> (client.js).</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    const pts = document.getElementById("points");
+    const g = document.getElementById("goal");
+    if(pts) pts.textContent = String(points);
+    if(g) g.textContent = String(goal);
 
-    <div class="footer">Outils internes. L’entreprise Apéro de Nuit 66®</div>
-  </div>
+    renderVisualStamps(points);
+    setStateText(points, card.completed_at || null);
+    setApiState(true, "Synchronisé");
+  }catch(_){
+    setApiState(false, "Hors ligne");
+  }
+}
 
-  <div class="modal" id="restoreModal">
-    <div class="box">
-      <h2>Restaurer ma carte</h2>
-      <div class="content">
-        <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’ID).</div>
-        <div class="scan"><video id="video" playsinline></video></div>
-        <div class="row">
-          <button id="btnStartScan">Scanner</button>
-          <button class="secondary" id="btnClose">Fermer</button>
-        </div>
-        <label>Ou coller l’ID</label>
-        <input id="manualCid" class="mono" placeholder="c_..." />
-        <div class="row"><button class="secondary" id="btnUseManual">Utiliser cet ID</button></div>
-        <div class="hint" id="scanHint"></div>
-      </div>
-    </div>
-  </div>
+/* ---------- Create ---------- */
+async function createCard(){
+  const nameEl = document.getElementById("name");
+  const phoneEl = document.getElementById("phone");
+  const name = normalizeName(nameEl ? nameEl.value : "");
+  const phone = normalizePhone(phoneEl ? phoneEl.value : "");
 
-  <script src="/fidel/qr.min.js"></script>
-  <script src="/fidel/client.js"></script>
-</body>
-</html>
+  if(!name) return alert("Entre ton prénom.");
+  if(!phone || phone.length < 10) return alert("Numéro invalide.");
+
+  try{
+    const r = await api("/loyalty/register", {
+      method:"POST",
+      body: JSON.stringify({name, phone})
+    });
+    if(!r || !r.client_id) throw new Error("Réponse invalide");
+    localStorage.setItem(LS_KEY, r.client_id);
+    await loadCard();
+  }catch(e){
+    alert("Erreur création carte : " + e.message);
+  }
+}
+
+/* ---------- Restore (manuel uniquement) ---------- */
+async function restoreFromId(raw){
+  const cid = String(raw||"").trim();
+  if(!isValidClientId(cid)) return alert("ID invalide.");
+  localStorage.setItem(LS_KEY, cid);
+  await loadCard();
+  alert("Carte restaurée ✅");
+}
+
+/* ---------- Bind ---------- */
+function bind(){
+  setEnvPill();
+
+  const btnCreate = document.getElementById("btnCreate");
+  const btnRefresh = document.getElementById("btnRefresh");
+  const btnCopy = document.getElementById("btnCopy");
+  const btnRestore = document.getElementById("btnRestore");
+  const btnUseManual = document.getElementById("btnUseManual");
+
+  if(btnCreate) btnCreate.onclick = createCard;
+  if(btnRefresh) btnRefresh.onclick = loadCard;
+  if(btnCopy) btnCopy.onclick = async ()=>{
+    const cid = localStorage.getItem(LS_KEY);
+    if(cid) await navigator.clipboard.writeText(cid);
+  };
+
+  if(btnRestore) btnRestore.onclick = ()=>{
+    const cid = prompt("Colle l’ID de ta carte");
+    if(cid) restoreFromId(cid);
+  };
+
+  if(btnUseManual) btnUseManual.onclick = ()=>{
+    const input = document.getElementById("manualCid");
+    restoreFromId(input ? input.value : "");
+  };
+
+  loadCard();
+}
+
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", bind);
+}else{
+  bind();
+}
