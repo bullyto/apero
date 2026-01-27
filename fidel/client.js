@@ -1,5 +1,7 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
+// Refonte fiabilité QR + chemins relatifs + diagnostics
+// Version: 2026-01-28 qr-hardfix
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -14,18 +16,27 @@ function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
+  // UUID
   if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  // ULID
   if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
+  // Prefixed id
   if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
   return false;
+}
+
+function setDebug(text){
+  const a = document.getElementById("dbg");
+  const b = document.getElementById("dbg2");
+  if(a) a.textContent = text || "—";
+  if(b) b.textContent = text || "—";
 }
 
 /* ---------- UI ---------- */
 function setEnvPill(){
   const pill = document.getElementById("envPill");
-  if(pill){
-    pill.innerHTML = "Mode : <b>Serveur</b>";
-  }
+  if(!pill) return;
+  pill.innerHTML = "Mode : <b>" + (API_BASE ? "Serveur" : "Démo") + "</b>";
 }
 
 function setCardVisible(v){
@@ -81,32 +92,63 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR (FIX ICI) ---------- */
-function qrRender(text){
+/* ---------- QR (HARD FIX) ---------- */
+/**
+ * 1) On attend que la lib soit réellement dispo (PWA/WebView = timing variable)
+ * 2) Si ça plante, on affiche un diagnostic clair (sans casser l'UI)
+ * 3) On garantit un QR rendu dès qu'un ID est présent
+ */
+async function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
 
-  try{
-    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
+  const cid = String(text || "").trim();
+  if(!cid){
+    box.innerHTML = "";
+    return;
+  }
 
-    // ✅ FIX: null (auto version) au lieu de 0
-    const q = new window.QRCodeGenerator(null);
-    q.addData(String(text));
+  // Reset placeholder
+  box.innerHTML = "";
+
+  // Wait for QRCodeGenerator (up to 1s)
+  const start = Date.now();
+  while(typeof window.QRCodeGenerator !== "function"){
+    if(Date.now() - start > 1000) break;
+    await sleep(50);
+  }
+
+  try{
+    if(typeof window.QRCodeGenerator !== "function"){
+      throw new Error("Lib QR absente (qr.min.js non chargé / 404)");
+    }
+
+    // typeNumber = 0 => auto
+    const q = new window.QRCodeGenerator(0);
+    q.addData(cid);
     q.make();
 
-    // ✅ FIX: signature createSvgTag(cellSize, fillColor)
+    // createSvgTag(cellSize, fillColor) – la lib met un fond blanc
     box.innerHTML = q.createSvgTag(4, "#111");
+
+    setDebug(`QR OK • lib=OK • base=${new URL(".", location.href).href}`);
   }catch(e){
-    box.innerHTML = "QR indisponible";
+    box.innerHTML = `<div style="font-size:12px;color:#111;background:#fff;border-radius:10px;padding:10px;border:1px solid rgba(0,0,0,.12)">QR indisponible</div>`;
+    setDebug(`QR KO • ${e && e.message ? e.message : "erreur inconnue"} • base=${new URL(".", location.href).href}`);
   }
 }
 
 /* ---------- API ---------- */
 async function api(path, opts={}){
+  const hasBody = !!opts.body;
+  const headers = Object.assign({}, opts.headers || {});
+  if(hasBody && !headers["content-type"]) headers["content-type"] = "application/json";
+
   const res = await fetch(API_BASE + path, {
-    headers: {"content-type":"application/json"},
-    ...opts
+    ...opts,
+    headers
   });
+
   const data = await res.json().catch(()=> ({}));
   if(!res.ok) throw new Error(data.error || ("HTTP " + res.status));
   return data;
@@ -126,6 +168,7 @@ async function loadCard(){
     setStateText(0, null);
     setApiState(true, "Synchronisé");
     setMeta(null);
+    setDebug(`Init • base=${new URL(".", location.href).href}`);
     return;
   }
 
@@ -133,7 +176,7 @@ async function loadCard(){
   setMeta(cid);
 
   try{
-    const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid));
+    const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid) + "&t=" + Date.now(), {method:"GET"});
     const card = res.card || res;
 
     const points = Number(card.points || 0);
@@ -147,8 +190,10 @@ async function loadCard(){
     renderVisualStamps(points);
     setStateText(points, card.completed_at || null);
     setApiState(true, "Synchronisé");
-  }catch(_){
+    setDebug(`API OK • points=${points}/${goal}`);
+  }catch(e){
     setApiState(false, "Hors ligne");
+    setDebug(`API KO • ${e && e.message ? e.message : "erreur inconnue"}`);
   }
 }
 
@@ -160,7 +205,7 @@ async function createCard(){
   const phone = normalizePhone(phoneEl ? phoneEl.value : "");
 
   if(!name) return alert("Entre ton prénom.");
-  if(!phone || phone.length < 10) return alert("Numéro invalide.");
+  if(!phone || phone.replace(/\D/g,"").length < 10) return alert("Numéro invalide.");
 
   try{
     const r = await api("/loyalty/register", {
@@ -175,16 +220,95 @@ async function createCard(){
   }
 }
 
-/* ---------- Restore (manuel uniquement) ---------- */
+async function copyId(){
+  const cid = localStorage.getItem(LS_KEY);
+  if(!cid) return;
+  try{
+    await navigator.clipboard.writeText(cid);
+  }catch(_){}
+}
+
+/* ---------- Restore (Modal + Scan + Manual) ---------- */
+let restoreStream = null;
+let restoreScanning = false;
+
+function openRestore(){
+  const modal = document.getElementById("restoreModal");
+  if(!modal) return;
+  modal.classList.add("open");
+  const hint = document.getElementById("scanHint");
+  if(hint) hint.textContent = "";
+}
+
+async function stopRestoreScan(){
+  restoreScanning = false;
+  const video = document.getElementById("video");
+  try{ if(video) video.pause(); }catch(_){}
+  if(restoreStream){
+    try{ restoreStream.getTracks().forEach(t=>t.stop()); }catch(_){}
+    restoreStream = null;
+  }
+  if(video) video.srcObject = null;
+}
+
+async function closeRestore(){
+  const modal = document.getElementById("restoreModal");
+  if(modal) modal.classList.remove("open");
+  await stopRestoreScan();
+}
+
 async function restoreFromId(raw){
   const cid = String(raw||"").trim();
   if(!isValidClientId(cid)) return alert("ID invalide.");
   localStorage.setItem(LS_KEY, cid);
+  await closeRestore();
   await loadCard();
   alert("Carte restaurée ✅");
 }
 
-/* ---------- Bind ---------- */
+async function startRestoreScan(){
+  const hint = document.getElementById("scanHint");
+  const video = document.getElementById("video");
+  if(!hint || !video) return;
+
+  if(restoreScanning) return;
+  restoreScanning = true;
+
+  try{
+    if(!("BarcodeDetector" in window)){
+      hint.textContent = "Scanner non supporté ici. Colle l’ID.";
+      restoreScanning = false;
+      return;
+    }
+
+    hint.textContent = "Ouverture caméra…";
+    const detector = new BarcodeDetector({formats:["qr_code"]});
+
+    restoreStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    video.srcObject = restoreStream;
+    await video.play();
+    hint.textContent = "Scan en cours…";
+
+    while(restoreScanning){
+      const codes = await detector.detect(video);
+      if(codes && codes.length){
+        const val = String(codes[0].rawValue || "").trim();
+        if(isValidClientId(val)){
+          await restoreFromId(val);
+          return;
+        }
+      }
+      await sleep(250);
+    }
+  }catch(e){
+    hint.textContent = "Erreur caméra : " + e.message;
+    await stopRestoreScan();
+  }finally{
+    restoreScanning = false;
+  }
+}
+
+/* ---------- Bind events ---------- */
 function bind(){
   setEnvPill();
 
@@ -192,28 +316,37 @@ function bind(){
   const btnRefresh = document.getElementById("btnRefresh");
   const btnCopy = document.getElementById("btnCopy");
   const btnRestore = document.getElementById("btnRestore");
+
+  const btnClose = document.getElementById("btnClose");
+  const btnStartScan = document.getElementById("btnStartScan");
   const btnUseManual = document.getElementById("btnUseManual");
 
   if(btnCreate) btnCreate.onclick = createCard;
   if(btnRefresh) btnRefresh.onclick = loadCard;
-  if(btnCopy) btnCopy.onclick = async ()=>{
-    const cid = localStorage.getItem(LS_KEY);
-    if(cid) await navigator.clipboard.writeText(cid);
-  };
+  if(btnCopy) btnCopy.onclick = copyId;
 
-  if(btnRestore) btnRestore.onclick = ()=>{
-    const cid = prompt("Colle l’ID de ta carte");
-    if(cid) restoreFromId(cid);
-  };
+  if(btnRestore) btnRestore.onclick = openRestore;
+  if(btnClose) btnClose.onclick = closeRestore;
+  if(btnStartScan) btnStartScan.onclick = startRestoreScan;
 
-  if(btnUseManual) btnUseManual.onclick = ()=>{
+  if(btnUseManual) btnUseManual.onclick = async ()=>{
     const input = document.getElementById("manualCid");
-    restoreFromId(input ? input.value : "");
+    await restoreFromId(input ? input.value : "");
   };
 
+  // Close modal if click on backdrop
+  const modal = document.getElementById("restoreModal");
+  if(modal){
+    modal.addEventListener("click", (e)=>{
+      if(e.target === modal) closeRestore();
+    });
+  }
+
+  // First load
   loadCard();
 }
 
+// With defer scripts, DOM is ready before execution, but keep safe:
 if(document.readyState === "loading"){
   document.addEventListener("DOMContentLoaded", bind);
 }else{

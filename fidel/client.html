@@ -107,6 +107,9 @@
     video{width:100%;height:100%;object-fit:cover}
     .hint{margin-top:10px;font-size:12px;color:var(--t2)}
     .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
+
+    /* mini debug (non intrusif) */
+    .dbg{margin-top:10px;font-size:11px;color:rgba(255,255,255,.55)}
   </style>
 </head>
 <body>
@@ -138,6 +141,7 @@
               <button class="secondary" id="btnRestore">Restaurer</button>
             </div>
             <div class="note">Le QR sert d’identifiant. Les points sont ajoutés uniquement par le livreur (scan + validation).</div>
+            <div class="dbg" id="dbg">—</div>
           </div>
 
           <div id="cardBlock" style="display:none">
@@ -146,6 +150,7 @@
               <span id="apiState">Synchronisé</span>
             </div>
             <div class="note" style="margin-top:10px">Si tu perds la carte : dis “j’ai perdu ma carte” et on la restaure depuis l’admin (sans SMS).</div>
+            <div class="dbg" id="dbg2">—</div>
           </div>
         </div>
 
@@ -176,7 +181,7 @@
                 <button class="secondary" id="btnRefresh">Rafraîchir</button>
                 <button class="secondary" id="btnCopy">Copier ID</button>
               </div>
-              <div class="hint">Cloudflare : mets l’URL du Worker dans <span class="mono">API_BASE</span> (client.js).</div>
+              <div class="hint">Astuce : les scripts sont en chemins relatifs (./) pour éviter les 404 sur GitHub Pages.</div>
             </div>
           </div>
         </div>
@@ -197,14 +202,15 @@
           <button class="secondary" id="btnClose">Fermer</button>
         </div>
         <label>Ou coller l’ID</label>
-        <input id="manualCid" class="mono" placeholder="c_..." />
+        <input id="manualCid" class="mono" placeholder="c_... / UUID / ULID" />
         <div class="row"><button class="secondary" id="btnUseManual">Utiliser cet ID</button></div>
         <div class="hint" id="scanHint"></div>
       </div>
     </div>
   </div>
 
-  <script src="/fidel/qr.min.js"></script>
-  <script src="/fidel/client.js"></script>
+  <!-- IMPORTANT : chemins relatifs + defer (ordre garanti) -->
+  <script src="./qr.min.js" defer></script>
+  <script src="./client.js" defer></script>
 </body>
 </html>
