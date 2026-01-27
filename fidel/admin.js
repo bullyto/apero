@@ -2,12 +2,43 @@
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 
-function makeQrSvg(text, cellSize = 4, margin = 2) {
-  if (!window.qrcode) throw new Error("qrcode lib missing");
-  const qr = window.qrcode(0, "M");
-  qr.addData(String(text));
-  qr.make();
-  return qr.createSvgTag(cellSize, margin);
+function makeQrSvg(text, size){
+  // Supports both legacy `qrcode()` API and the bundled `QRCodeGenerator`.
+  size = Number(size || 220);
+  const margin = 2;
+  const cellSize = 4; // will scale via viewBox if needed
+
+  // --- Preferred: QRCodeGenerator (bundled in qr.min.js)
+  try{
+    if (typeof window !== "undefined" && typeof window.QRCodeGenerator === "function"){
+      // typeNumber=0 => auto
+      const q = new window.QRCodeGenerator(0);
+      q.addData(String(text));
+      q.make();
+      // createSvgTag(cellSize, fillColor?) returns <svg ...>
+      let svg = q.createSvgTag(cellSize, "#111");
+      // Normalize width/height to requested `size`
+      svg = svg
+        .replace(/width=\"\d+\"/i, 'width="' + size + '"')
+        .replace(/height=\"\d+\"/i, 'height="' + size + '"')
+        .replace(/<svg/i, '<svg style="display:block;margin:0 auto;"');
+      return svg;
+    }
+  }catch(e){ /* fall through */ }
+
+  // --- Fallback: qrcode(typeNumber, errorCorrectionLevel)
+  try{
+    if (typeof window !== "undefined" && typeof window.qrcode === "function"){
+      const qr = window.qrcode(0, "M");
+      qr.addData(String(text));
+      qr.make();
+      // createSvgTag(cellSize, margin)
+      const svg = qr.createSvgTag(Math.max(1, Math.floor(size / (qr.getModuleCount() + margin*2))), margin);
+      return svg;
+    }
+  }catch(e){ /* fall through */ }
+
+  throw new Error("QR library not available");
 }
 
 function isValidClientId(id) {
