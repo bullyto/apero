@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://raw.githubusercontent.com" crossorigin>
   <link rel="dns-prefetch" href="//raw.githubusercontent.com">
 
-  <script type="application/ld+json">
+  <script type="lication/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
@@ -88,7 +88,7 @@
   <!-- ✅ PWA -->
   <link rel="manifest" href="./manifest.webmanifest?v=20260101">
   <meta name="theme-color" content="#0b1c2d">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260101">
+  <link rel="le-touch-icon" href="assets/le-touch-icon.png?v=20260101">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png?v=20260101">
   <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=20260101">
 
@@ -109,7 +109,7 @@
     body{
       margin:0; min-height:100dvh; display:flex; flex-direction:column;
       padding-bottom: calc(24px + env(safe-area-inset-bottom));
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family:system-ui,-le-system,Segoe UI,Roboto,Arial,sans-serif;
       background:#fff; color:var(--text); overflow-x:hidden; overflow-y:hidden;
     }
 
@@ -133,7 +133,7 @@
       width:min(520px, 92vw);
       text-align:center;
       color:#fff;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family:system-ui,-le-system,Segoe UI,Roboto,Arial,sans-serif;
     }
     #splashTitle{
       font-weight:900;
@@ -629,9 +629,9 @@
     document.documentElement.setAttribute("data-status-boot","1");
   </script>
   <script>
-  // ✅ PATCH STATUS: force la PWA à lire /outil/apps/status/status.json (et plus l'ancien repo /status)
+  // ✅ PATCH STATUS: force la PWA à lire /outil/s/status/status.json (et plus l'ancien repo /status)
   (function(){
-    var NEW_STATUS_URL = "https://bullyto.github.io/outil/apps/status/status.json";
+    var NEW_STATUS_URL = "https://bullyto.github.io/outil/s/status/status.json";
     // Expose/compat
     window.AD_STATUS_URL = NEW_STATUS_URL;
     window.AD_STATUS_JSON_URL = NEW_STATUS_URL;
@@ -651,8 +651,8 @@
             // Remplace plusieurs variantes connues de l'ancien status
             if (u.indexOf('bullyto.github.io/status/status.json') !== -1) u = NEW_STATUS_URL;
             if (u.indexOf('raw.githubusercontent.com/bullyto/status') !== -1) u = NEW_STATUS_URL;
-            // Si quelqu’un appelle /status.json en relatif, on le force aussi
-            if (/\/status\.json(\?|$)/i.test(u) && u.indexOf('/outil/apps/status/status.json') === -1) u = NEW_STATUS_URL;
+            // Si quelqu’un elle /status.json en relatif, on le force aussi
+            if (/\/status\.json(\?|$)/i.test(u) && u.indexOf('/outil/s/status/status.json') === -1) u = NEW_STATUS_URL;
             if (u !== url) {
               if (typeof input === 'string') input = u;
               else if (input && input.url) input = new Request(u, input);
@@ -704,7 +704,7 @@
         <button class="btn primary" id="orderBtn" data-order>Commandez en ligne</button>
 
         <button class="btn secondary pulse" id="installBtn" style="display:none">
-          Télécharger l’app
+          Télécharger l’
           <span class="badge-new" id="newBadge">Nouveau</span>
         </button>
 
@@ -1440,7 +1440,7 @@
 
     <div class="adn-menu-item" id="adnMenuInstall" style="display:none">
       <div class="adn-menu-left">
-        <div class="adn-menu-title">⬇️ Télécharger l’app</div>
+        <div class="adn-menu-title">    ⬇️ Télécharger l’application mobile </div>
       </div>
     </div>
 
