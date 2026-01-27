@@ -19,7 +19,7 @@
   <meta property="og:title" content="Hib’air Drink — Jeu Apéro de Nuit 66">
   <meta property="og:description" content="Hib’air Drink — jeu Apéro de Nuit 66 : participez et découvrez nos offres (Perpignan, 66). Réservé aux majeurs.">
   <meta property="og:url" content="https://www.aperos.net/game/">
-  <meta property="og:image" content="https://www.aperos.net/assets/og-image-1200x630.jpg">
+  <meta property="og:image" content="share-1200x630.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
@@ -27,7 +27,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Hib’air Drink — Jeu Apéro de Nuit 66">
   <meta name="twitter:description" content="Hib’air Drink — jeu Apéro de Nuit 66 : participez et découvrez nos offres (Perpignan, 66). Réservé aux majeurs.">
-  <meta name="twitter:image" content="https://www.aperos.net/assets/og-image-1200x630.jpg">
+  <meta name="twitter:image" content="share-1200x630.png">
 
   <!-- SEO Local -->
   <meta name="geo.region" content="FR-66">
@@ -44,7 +44,7 @@
     "@type": "LocalBusiness",
     "name": "Apéro de Nuit 66",
     "url": "https://www.aperos.net/",
-    "image": "https://www.aperos.net/assets/og-image-1200x630.jpg",
+    "image": "share-1200x630.png",
     "telephone": "+33 6 52 33 64 61",
     "address": {
       "@type": "PostalAddress",
@@ -68,14 +68,14 @@
   <meta property="og:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
   <meta property="og:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
   <meta property="og:url" content="https://game.aperos.net/"/>
-  <meta property="og:image" content="https://game.aperos.net/share-1200x630.png"/>
+  <meta property="og:image" content="share-1200x630.png"/>
   <meta property="og:image:width" content="1200"/>
   <meta property="og:image:height" content="630"/>
 
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
   <meta name="twitter:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
-  <meta name="twitter:image" content="https://game.aperos.net/share-1200x630.png"/>
+  <meta name="twitter:image" content="share-1200x630.png"/>
 
 <link rel="manifest" href="manifest.webmanifest"/>
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
@@ -127,7 +127,7 @@
     #livesDisplay { top:2vh; right:2vw; }
     .heart {
       width:4vh; height:4vh;
-      background-image:url('https://i.postimg.cc/QCzhYMMB/file-00000000c25061f7b431b34a26caa8d5-1.png');
+      background-image:url('./img/coeur.png');
       background-size:cover; display:inline-block; margin-left:1vw;
     }
 
@@ -361,7 +361,7 @@
     <div id="bgLayer2" class="bg-layer"></div>
 
     <!-- Nuage & Canvas -->
-    <img id="cloud" src="https://i.postimg.cc/zfTZ14kC/NUAGE.png" alt="Nuage animé">
+    <img id="cloud" src="./img/NUAGE.png" alt="Nuage animé">
     <canvas id="gameCanvas" width="480" height="640"></canvas>
 
     <!-- HUD -->
@@ -557,7 +557,7 @@
     // Anti-triche (trop de clics)
     // Règles : 10 actions en 2s => triche ; +10s => GAME OVER forcé ; image après 'Perdu' verrouillée 5s
     // =====================
-    const CHEAT_IMAGE_URL = "tricherie.jpeg.gif";
+    const CHEAT_IMAGE_URL = "./img/cheat.png";
     
     // Anti-cheat uniquement sur PC (souris/clavier). Sur mobile/tablette: désactivé.
     const IS_PC = (() => {
@@ -567,7 +567,7 @@
       const finePointer = window.matchMedia && window.matchMedia("(pointer:fine)").matches;
       return !isMobileUA && (!hasTouch || finePointer);
     })();
-const CHEAT_IMAGE_FALLBACK = "https://image.noelshack.com/fichiers/2025/51/2/1765906495-images-9.jpeg";
+const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     let clickHistory = [];
     let cheatDetected = false;
     let cheatTime = 0;
@@ -644,7 +644,7 @@ const CHEAT_IMAGE_FALLBACK = "https://image.noelshack.com/fichiers/2025/51/2/176
     const hibou = { x:10, y:0, width:0, height:0, velocity:0, gravity:0.12, lift:-5.3 };
 
     const hibouImg = new Image();
-    hibouImg.src = 'https://image.noelshack.com/fichiers/2025/50/2/1765303341-file-000000004a8871f99eb95dd6d98feeda.jpg';
+    hibouImg.src = './img/HIBOU.png';
 
     // Étapes de progression
     const BRAND_STEPS = [
@@ -680,11 +680,11 @@ const CHEAT_IMAGE_FALLBACK = "https://image.noelshack.com/fichiers/2025/51/2/176
 
     // Fonds animés
     const levelBackgrounds = [
-      { threshold: 0,  url: 'https://i.postimg.cc/527G0Fx9/file-0000000036c0620aacb1e77bbaa186e1.png' },
-      { threshold: 13, url: 'https://i.postimg.cc/qqQGxLsC/file-000000006a846246a4300fc67ffcc4e0.png' },
-      { threshold: 24, url: 'https://i.postimg.cc/Pq9fPs0C/file-0000000092106246a2177dcebd31a1c6.png' },
-      { threshold: 36, url: 'https://i.postimg.cc/Y0gzJ7BY/file-000000006da0620a8731e1321d49e2a2-1.png' },
-      { threshold: 48, url: 'https://i.postimg.cc/MZR4k2D9/file-000000005b58620aa0ffaa23d3c57622-1.png' }
+      { threshold: 0,  url: './img/file-0000000036c0620aacb1e77bbaa186e1.jpg' },
+      { threshold: 13, url: './img/file-000000006a846246a4300fc67ffcc4e0.jpg' },
+      { threshold: 24, url: './img/file-0000000092106246a2177dcebd31a1c6.jpg' },
+      { threshold: 36, url: './img/file-000000006da0620a8731e1321d49e2a2-(1).jpg' },
+      { threshold: 48, url: './img/file-0000000005b58620aa0ffaa23d3c57622-(1).jpg' }
     ];
     levelBackgrounds.forEach(bg=>{ const img=new Image(); img.src=bg.url; });
 
@@ -746,22 +746,22 @@ const CHEAT_IMAGE_FALLBACK = "https://image.noelshack.com/fichiers/2025/51/2/176
 
     // Sprites
     const avionsImgs = [
-      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000009d4471f4a18d957bd44dc336.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000000e80722fa95c5400fc4fa9c1.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-0000000047f8722fa5676a50442d4c33.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/2/1765303468-file-000000001230722faf0c2566f21676ae.jpg'
+      './img/avion1.png',
+      './img/avion2.png',
+      './img/avion3.png',
+      './img/avion4.png'
     ].map(src=>{ const i=new Image(); i.src=src; return i; });
 
     const bottlesImgs = [
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324367-file-000000003bf47243b504a2b9b1dc72a8.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324476-file-000000001f1871f49e12ae4ea620a531.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324475-file-00000000eea072438e28480eb9d354ec.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324475-file-0000000037e872438fc532c60fd60d13.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324476-file-00000000c12471f49b992bd61a2ee6e1.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-000000008b187243842beb121fb85782.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-00000000819c71f49ae4d45a3e18c3c1.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-000000001b707243aa7ad1b15233dcca.jpg',
-      'https://image.noelshack.com/fichiers/2025/50/3/1765324519-file-00000000c4c871f49e8f975ed8c906e3.jpg'
+      './img/bouteil1.png',
+      './img/bouteil2.png',
+      './img/bouteil3.png',
+      './img/bouteil4.png',
+      './img/bouteil5.png',
+      './img/bouteil6.png',
+      './img/bouteil7.png',
+      './img/bouteil8.png',
+      './img/bouteil9.png'
     ].map(src=>{ const i=new Image(); i.src=src; return i; });
 
     // Hitbox util
