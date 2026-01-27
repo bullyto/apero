@@ -4,6 +4,15 @@ const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 
 // Règles fidélité
 const GOAL = 8;
+
+function isValidClientId(cid){
+  if(!cid) return false;
+  // Accept legacy format: c_ + 26 chars (base32/ulid-like)
+  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(cid)) return true;
+  // Accept UUID (v4/v1 etc) 36 chars with hyphens
+  if(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(cid)) return true;
+  return false;
+}
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
@@ -119,7 +128,7 @@ async function loadCard(){
   }
 
   try{
-    const me = await api("/loyalty/me?client_id="+encodeURIComponent(cid), {method:"GET"});
+    const me = await api("/loyalty/me?client_id="+encodeURIComponent(cid)+"&t="+Date.now(), {method:"GET"});
     const points = Number(me.points||0);
     document.getElementById("points").textContent = String(points);
     document.getElementById("goal").textContent = String(me.goal || GOAL);
