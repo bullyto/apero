@@ -70,10 +70,10 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR (CORRIGÉ ICI UNIQUEMENT) ---------- */
+/* ---------- QR ---------- */
 function qrRender(text){
   try{
-    const q = new QRCodeGenerator(0); // ✅ correction
+    const q = new QRCodeGenerator(0);
     q.addData(String(text));
     q.make();
     document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, 2);
@@ -121,7 +121,7 @@ async function loadCard(){
     renderVisualStamps(points);
     setStateText(points, card.completed_at || null);
     setApiState(true, "Synchronisé");
-  }catch(e){
+  }catch{
     setApiState(false, "Hors ligne");
   }
 }
@@ -141,12 +141,68 @@ async function createCard(){
   await loadCard();
 }
 
+/* ---------- RESTORE ---------- */
+const modal = document.getElementById("restoreModal");
+const video = document.getElementById("video");
+const scanHint = document.getElementById("scanHint");
+
+let stream = null;
+let scanning = false;
+
+function openRestore(){ modal.classList.add("open"); scanHint.textContent=""; }
+async function closeRestore(){
+  modal.classList.remove("open");
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+}
+
+async function startScan(){
+  if(!("BarcodeDetector" in window)){
+    scanHint.textContent = "Scanner non supporté. Colle l’ID.";
+    return;
+  }
+
+  scanning = true;
+  const detector = new BarcodeDetector({formats:["qr_code"]});
+  stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+  video.srcObject = stream;
+  await video.play();
+
+  while(scanning){
+    const codes = await detector.detect(video);
+    if(codes.length){
+      const val = codes[0].rawValue;
+      if(isValidClientId(val)){
+        localStorage.setItem(LS_KEY, val);
+        scanning = false;
+        await closeRestore();
+        await loadCard();
+        alert("Carte restaurée ✅");
+        return;
+      }
+    }
+    await sleep(300);
+  }
+}
+
 /* ---------- EVENTS ---------- */
 document.getElementById("btnCreate").onclick = createCard;
 document.getElementById("btnRefresh").onclick = loadCard;
 document.getElementById("btnCopy").onclick = ()=>{
   const cid = localStorage.getItem(LS_KEY);
-  navigator.clipboard.writeText(cid);
+  if(cid) navigator.clipboard.writeText(cid);
 };
 
+document.getElementById("btnRestore").onclick = openRestore;
+document.getElementById("btnClose").onclick = closeRestore;
+document.getElementById("btnStartScan").onclick = startScan;
+
+document.getElementById("btnUseManual").onclick = async ()=>{
+  const cid = document.getElementById("manualCid").value.trim();
+  if(!isValidClientId(cid)) return alert("ID invalide");
+  localStorage.setItem(LS_KEY, cid);
+  await closeRestore();
+  await loadCard();
+};
+
+/* ---------- INIT ---------- */
 loadCard();
