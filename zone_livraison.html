@@ -431,10 +431,7 @@
     bindUI();
 
     applyCachedCoords(sorted);
-    buildOrUpdateMarkers(sorted);
-    ensureLoadUI();
-    setLoadedPoints(markersByKey.size);
-    fitToAll();
+    buildMarkersProgressive(sorted);
 
     installAutoRefresh();
     refreshMapSize();
@@ -583,38 +580,78 @@
   }
 
   // ========= MARKERS =========
+  function addOrUpdateMarker(c, idx){
+    if (!map) return false;
+    const key = makeKey(c);
+    const n = idx + 1;
+
+    if (!isValidLatLng(c.lat, c.lng)) return false;
+
+    const icon = L.divIcon({
+      className: "",
+      html: `<div class="adn66-num-marker">${n}</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      popupAnchor: [0, -14]
+    });
+
+    const popupHtml = popupFor(c);
+    const existing = markersByKey.get(key);
+
+    if (existing) {
+      existing.setLatLng([c.lat, c.lng]);
+      existing.setIcon(icon);
+      existing.setPopupContent(popupHtml);
+    } else {
+      const marker = L.marker([c.lat, c.lng], { icon })
+        .addTo(map)
+        .bindPopup(popupHtml, { maxWidth: 260 });
+      markersByKey.set(key, marker);
+    }
+    return true;
+  }
+
   function buildOrUpdateMarkers(list){
     if (!map) return;
-    list.forEach((c, idx) => {
-      const key = makeKey(c);
-      const n = idx + 1;
-      if (!isValidLatLng(c.lat, c.lng)) return;
+    list.forEach((c, idx) => addOrUpdateMarker(c, idx));
+  }
 
-      const icon = L.divIcon({
-        className: "",
-        html: `<div class="adn66-num-marker">${n}</div>`,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
-        popupAnchor: [0, -14]
-      });
+  // ✅ Ajout progressif des marqueurs pour une progression "en direct"
+  // (permet au DOM de se rafraîchir entre les lots)
+  function buildMarkersProgressive(list){
+    if (!map) return;
+    ensureLoadUI();
 
-      const popupHtml = popupFor(c);
-      const existing = markersByKey.get(key);
+    // On suit l'avancement sur la base du nombre d'éléments à traiter (ex: 50)
+    totalPoints = (list && list.length) ? list.length : 0;
+    loadedPoints = 0;
+    renderLoadUI();
 
-      if (existing) {
-        existing.setLatLng([c.lat, c.lng]);
-        existing.setIcon(icon);
-        existing.setPopupContent(popupHtml);
-      } else {
-        const marker = L.marker([c.lat, c.lng], { icon })
-          .addTo(map)
-          .bindPopup(popupHtml, { maxWidth: 260 });
-        markersByKey.set(key, marker);
+    let i = 0;
+    const batchSize = 3; // petites rafales = progression fluide sans lag
+
+    const step = () => {
+      const end = Math.min(i + batchSize, totalPoints);
+      for (; i < end; i++){
+        // Même si une coordonnée est invalide, on compte l'élément comme "traité"
+        addOrUpdateMarker(list[i], i);
       }
-    });
+      setLoadedPoints(i);
+
+      if (i < totalPoints) {
+        requestAnimationFrame(step);
+      } else {
+        // terminé
+        setLoadedPoints(totalPoints);
+        try { fitToAll(); } catch(e) {}
+      }
+    };
+
+    requestAnimationFrame(step);
   }
 
   function popupFor(c){
+(c){
     const name = escapeHtml(c.name);
     const cp = escapeHtml(c.cp);
     const delay = escapeHtml((c.delay && c.delay.trim()) ? c.delay : "—");
