@@ -123,8 +123,8 @@ async function qrRender(text){
       throw new Error("Lib QR absente (qr.min.js non chargé / 404)");
     }
 
-    // typeNumber = 0 => auto
-    const q = new window.QRCodeGenerator(0);
+    // typeNumber = null => auto (important: 0 casse cette lib)
+    const q = new window.QRCodeGenerator(null);
     q.addData(cid);
     q.make();
 
