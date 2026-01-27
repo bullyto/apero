@@ -534,13 +534,17 @@
 
     .adn-menu-left{ min-width:0; display:flex; flex-direction:column; gap:2px; }
     .adn-menu-title{ font-size:15px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .adn-menu-sub{
-      font-size:12px;
-      font-weight:750;
-      color:rgba(255,255,255,.72);
-      line-height:1.1;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
+.adn-menu-sub{
+  font-size:10px;          /* légèrement plus petit */
+  font-weight:750;
+  color:rgba(255,255,255,.72);
+  line-height:1.05;        /* texte plus compact */
+  margin-top:-2px;         /* remonte le sous-texte vers le titre */
+  white-space:nowrap; 
+  overflow:hidden; 
+  text-overflow:ellipsis;
+}
+
 
 
     /* ADN66 — Icônes image menu (remplace les emojis) */
