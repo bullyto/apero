@@ -190,15 +190,48 @@
 
     /* ✅ SELECT : forcer rendu "2 lignes" quand supporté */
     #adn66CommuneSelect{
-      white-space: pre-line;         /* supporte \n quand possible */
-      line-height: 1.15;
+      white-space: pre-line;         /* supporte 
+ quand possible */
+      line-height: 1.12;
+      font-size:13px;
+      font-weight:900;              /* "plus petit et en gras" (limitation native <select>) */
     }
 
+    /* ✅ Chargement des points (barre + x/total) */
     #adn66CountInfo{
-      margin-top:2px;
+      margin-top:6px;
       font-size:11px;
       font-weight:900;
-      color:rgba(11,28,45,.70);
+      color:rgba(11,28,45,.78);
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .adn66LoadRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      letter-spacing:.2px;
+    }
+    .adn66Progress{
+      width:100%;
+      height:10px;
+      border-radius:999px;
+      overflow:hidden;
+      background:rgba(11,28,45,.10);
+      border:1px solid rgba(11,28,45,.12);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+    }
+    #adn66ProgressBar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(93,183,238,1), rgba(93,183,238,.65));
+      border-radius:999px;
+      transition:width .25s ease;
+    }
+    #adn66CountText{
+      opacity:.9;
     }
 
     /* ✅ MARKER BLEU */
@@ -239,7 +272,16 @@
       <div class="filters">
         <select id="adn66CommuneSelect" class="adn66Field"></select>
         <input id="adn66SearchInput" class="adn66Field" type="text" placeholder="Rechercher une commune…" autocomplete="off" />
-        <div id="adn66CountInfo"></div>
+        <div id="adn66CountInfo">
+          <div class="adn66LoadRow">
+            <span id="adn66LoadLabel">Chargement des points…</span>
+            <span id="adn66LoadFrac">0/0</span>
+          </div>
+          <div class="adn66Progress" aria-hidden="true">
+            <div id="adn66ProgressBar"></div>
+          </div>
+          <div id="adn66CountText"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -325,6 +367,9 @@
   let map = null;
   let sorted = [];
   let markersByKey = new Map();
+  let totalPoints = 0;
+  let loadedPoints = 0;
+  let loadUiReady = false;
   let geoCache = loadGeoCache();
   let geoQueueRunning = false;
   let inited = false;
@@ -372,6 +417,7 @@
     inited = true;
 
     sorted = normalizeAndSort(COMMUNES);
+    totalPoints = sorted.length;
 
     map = L.map("adn66Map", { scrollWheelZoom:true, attributionControl:false })
       .setView(CENTER, DEFAULT_ZOOM);
@@ -386,6 +432,8 @@
 
     applyCachedCoords(sorted);
     buildOrUpdateMarkers(sorted);
+    ensureLoadUI();
+    setLoadedPoints(markersByKey.size);
     fitToAll();
 
     installAutoRefresh();
@@ -459,8 +507,53 @@
     }
   }
 
+
+  // ========= LOAD UI (progress points) =========
+  function ensureLoadUI(){
+    if (loadUiReady) return;
+    totalPoints = sorted.length;
+    loadedPoints = markersByKey.size;
+
+    const fracEl = document.getElementById("adn66LoadFrac");
+    const barEl = document.getElementById("adn66ProgressBar");
+    const labelEl = document.getElementById("adn66LoadLabel");
+    const countTextEl = document.getElementById("adn66CountText");
+
+    if (!fracEl || !barEl || !labelEl || !countTextEl) return;
+
+    loadUiReady = true;
+    renderLoadUI();
+  }
+
+  function setLoadedPoints(n){
+    loadedPoints = Math.max(0, Math.min(totalPoints || 0, Number(n) || 0));
+    renderLoadUI();
+  }
+
+  function renderLoadUI(){
+    if (!loadUiReady) return;
+    const fracEl = document.getElementById("adn66LoadFrac");
+    const barEl = document.getElementById("adn66ProgressBar");
+    const labelEl = document.getElementById("adn66LoadLabel");
+    if (!fracEl || !barEl || !labelEl) return;
+
+    const t = totalPoints || 0;
+    const n = Math.max(0, Math.min(t, loadedPoints || 0));
+    const pct = (t > 0) ? Math.round((n / t) * 100) : 0;
+
+    fracEl.textContent = `${n}/${t}`;
+    barEl.style.width = `${pct}%`;
+
+    if (t > 0 && n >= t) {
+      labelEl.textContent = "Points chargés";
+    } else {
+      labelEl.textContent = "Chargement des points…";
+    }
+  }
+
   function updateCountInfo(shown){
-    const el = document.getElementById("adn66CountInfo");
+    ensureLoadUI();
+    const el = document.getElementById("adn66CountText");
     if (!el) return;
     const total = sorted.length;
     const n = (typeof shown === "number") ? shown : total;
