@@ -29,7 +29,7 @@ function qrRender(obj){
     const q = new window.QRCodeGenerator(null);
     q.addData(text);
     q.make();
-    document.getElementById("qrSvg").innerHTML = q.createSvgTag(7, "#000");
+    document.getElementById("qrSvg").innerHTML = q.createSvgTag(7, 2);
   }catch(e){
     document.getElementById("qrSvg").textContent = "QR indisponible";
   }
@@ -140,7 +140,7 @@ async function stamp(){
   const key = (document.getElementById("adminKey").value||"").trim();
   const cid = (document.getElementById("clientId").value||"").trim();
   if(!key) return alert("Clé admin manquante");
-  if(!cid.startsWith("c_")) return alert("ID client invalide");
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cid)) return alert("ID client invalide");
 
   localStorage.setItem(ADMIN_LS, key);
   document.getElementById("who").textContent = "PIN: " + key;
@@ -190,8 +190,8 @@ async function search(){
   }
 
   try{
-    const items = await api("/admin/loyalty/search?phone="+encodeURIComponent(phone)+"&key="+encodeURIComponent(key), {method:"GET"});
-    renderResults(items.results || []);
+    const items = await api("/admin/loyalty/search?phone="+encodeURIComponent(phone)+"&admin_key="+encodeURIComponent(key), {method:"GET"});
+    renderResults(items.found && items.client ? [items.client] : (items.results || []));
     setApiState(true, "OK");
   }catch(e){
     setApiState(false, "Erreur");

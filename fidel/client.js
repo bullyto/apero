@@ -29,7 +29,7 @@ function qrRender(obj){
     const q = new window.QRCodeGenerator(null);
     q.addData(text);
     q.make();
-    document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, "#000");
+    document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, 2);
   }catch(e){
     document.getElementById("qrSvg").innerHTML = "<div style='padding:10px;color:#000;font-family:monospace'>QR indisponible</div>";
   }
