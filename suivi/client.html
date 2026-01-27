@@ -433,6 +433,28 @@
   </section>
 
 
+
+  <!-- TUTORIEL GPS (POPUP GÉANTE) -->
+  <section class="clientPopup clientPopupOverlay" id="adnTutorial" style="display:none" aria-live="polite" aria-modal="true" role="dialog">
+    <div class="clientPopupCard adnTutorialCard">
+      <div class="adnTutHeader">
+        <div class="adnTutStep" id="adnTutStep">1/2</div>
+        <button class="adnTutClose" id="adnTutClose" type="button" aria-label="Fermer">✕</button>
+      </div>
+
+      <img id="adnTutImg" class="adnTutImg" src="" alt="Tutoriel autorisation GPS" loading="eager" />
+
+      <h2 class="clientPopupTitle" id="adnTutTitle">Autoriser la position</h2>
+      <p class="clientPopupSub" id="adnTutText"></p>
+
+      <div class="clientBtnRow">
+        <button class="clientBtn" id="adnTutPrimary" type="button">Suivant</button>
+        <button class="clientBtn secondary" id="adnTutSecondary" type="button">Relancer l’application</button>
+      </div>
+    </div>
+  </section>
+
+
   <!-- BANDE INFO (premier plan) -->
   <div class="clientBottombar">Le livreur est libre de refuser le partage de sa position.</div>
 
@@ -648,6 +670,58 @@
     }
   };
 
+
+  // ===== Tutoriel GPS (2 étapes) =====
+  const tut = document.getElementById('adnTutorial');
+  const tutStep = document.getElementById('adnTutStep');
+  const tutImg = document.getElementById('adnTutImg');
+  const tutTitle = document.getElementById('adnTutTitle');
+  const tutText = document.getElementById('adnTutText');
+  const tutPrimary = document.getElementById('adnTutPrimary');
+  const tutSecondary = document.getElementById('adnTutSecondary');
+  const tutClose = document.getElementById('adnTutClose');
+
+  const showTut = () => { if (tut) tut.style.display = ''; };
+  const hideTut = () => { if (tut) tut.style.display = 'none'; };
+
+  const showTutorialStep = (step) => {
+    // Images dans /suivi/assets/ => depuis client.html: assets/tuto1.jpg
+    const img1 = 'assets/tuto1.jpg';
+    const img2 = 'assets/tuto2.jpg';
+
+    if (step === 1) {
+      if (tutStep) tutStep.textContent = '1/2';
+      if (tutImg) tutImg.src = img1;
+      if (tutTitle) tutTitle.textContent = 'Autoriser la position (étape 1/2)';
+      if (tutText) tutText.innerHTML =
+        'Maintenez appuyé <b>3 secondes</b> sur l’icône de l’application, relâchez le doigt, puis appuyez sur <b>Site Settings</b>.';
+      if (tutPrimary) tutPrimary.textContent = 'Suivant';
+      if (tutSecondary) tutSecondary.style.display = 'none';
+
+      if (tutPrimary) tutPrimary.onclick = () => showTutorialStep(2);
+    } else {
+      if (tutStep) tutStep.textContent = '2/2';
+      if (tutImg) tutImg.src = img2;
+      if (tutTitle) tutTitle.textContent = 'Autoriser la position (étape 2/2)';
+      if (tutText) tutText.innerHTML =
+        'Dans <b>Position</b>, activez l’autorisation, puis revenez ici et appuyez sur <b>Relancer l’application</b>.';
+      if (tutPrimary) tutPrimary.textContent = 'Relancer l’application';
+      if (tutSecondary) {
+        tutSecondary.style.display = '';
+        tutSecondary.textContent = 'Relancer la demande';
+        tutSecondary.onclick = () => requestGeoAgain();
+      }
+      if (tutPrimary) tutPrimary.onclick = () => {
+        // tente de relancer le prompt + recharge la page
+        requestGeoAgain();
+        try { window.location.reload(); } catch (e) {}
+      };
+    }
+    showTut();
+  };
+
+  if (tutClose) tutClose.onclick = () => hideTut();
+
   const showRefuseAfterDelay = () => {
     t.textContent = 'Partage de position obligatoire';
     txt.innerHTML =
@@ -655,7 +729,8 @@
       'Sans autorisation, le suivi ne peut pas fonctionner.';
     setButtons('Relancer', () => {
       hide();
-      requestGeoAgain();
+      // Ouvre le tutoriel (2 étapes) si l'utilisateur a refusé le GPS
+      showTutorialStep(1);
     }, 'Fermer', () => hide());
     show();
   };
