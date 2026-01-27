@@ -336,6 +336,26 @@
       box-sizing:border-box !important;
     }
 
+
+    /* ===== INPUT HEIGHT + SPACING (ANTI-CHEVAUCHEMENT) ===== */
+    .clientInput{
+      height:56px;
+      line-height:1.2;
+      box-sizing:border-box;
+      display:block;
+    }
+    #name{ margin-bottom:10px; }
+
+
+    /* ===== OVERLAY POPUPS (AU-DESSUS DE LA POPUP EXISTANTE) ===== */
+    .clientPopupOverlay{
+      z-index:99999 !important;
+      pointer-events:auto;
+    }
+    .clientPopupOverlay .clientPopupCard{
+      pointer-events:auto;
+    }
+
 </style>
 </head>
 
@@ -390,7 +410,7 @@
   maxlength="20"
   autocomplete="tel"
   inputmode="tel"
-  placeholder="Votre téléphone (ex: 06 12 34 56 78)"
+  placeholder="Votre téléphone (ex: 0652336461)"
 >
       <div class="clientBtnRow">
         <button id="btnRequest" class="clientBtn">Activer le suivi</button>
@@ -398,6 +418,20 @@
       </div>
     </div>
   </section>
+
+
+  <!-- OVERLAY POPUPS (même style / superposées à l'identique) -->
+  <section class="clientPopup clientPopupOverlay" id="adnOverlay" style="display:none" aria-live="polite" aria-modal="true" role="dialog">
+    <div class="clientPopupCard" id="adnOverlayCard">
+      <h2 class="clientPopupTitle" id="adnOverlayTitle">Information importante</h2>
+      <p class="clientPopupSub" id="adnOverlayText">…</p>
+      <div class="clientBtnRow" id="adnOverlayButtons">
+        <button class="clientBtn" id="adnOverlayPrimary" type="button">Suivant</button>
+        <button class="clientBtn secondary" id="adnOverlaySecondary" type="button" style="display:none">Fermer</button>
+      </div>
+    </div>
+  </section>
+
 
   <!-- BANDE INFO (premier plan) -->
   <div class="clientBottombar">Le livreur est libre de refuser le partage de sa position.</div>
@@ -543,6 +577,127 @@
   setInterval(tick, 350);
 })();
 </script>
+
+
+<script>
+/* ===== ADN66 POPUPS SUPPLÉMENTAIRES (SAFE) =====
+   - Popup INFO RGPD (1 fois / 30 jours) : explique accès livreur (prénom/tél/GPS)
+   - Popup REFUS GPS CLIENT (après 4s) : explique obligatoire + bouton "Relancer" (redemande autorisation)
+   - Superposées à l'identique (même card), au-dessus de la popup existante
+*/
+(() => {
+  const overlay = document.getElementById('adnOverlay');
+  const t = document.getElementById('adnOverlayTitle');
+  const txt = document.getElementById('adnOverlayText');
+  const btn1 = document.getElementById('adnOverlayPrimary');
+  const btn2 = document.getElementById('adnOverlaySecondary');
+
+  const nameInput = document.getElementById('name');
+  const phoneInput = document.getElementById('phone');
+
+  const LS_INFO_TS = 'adn_client_info_driver_access_ts_v1';
+  const LS_PHASE = 'adn_client_track_phase_v1'; // déjà utilisé plus bas dans la page
+
+  const DAY = 24 * 60 * 60 * 1000;
+  const show = () => { if (overlay) overlay.style.display = ''; };
+  const hide = () => { if (overlay) overlay.style.display = 'none'; };
+
+  const setButtons = (primaryLabel, onPrimary, secondaryLabel, onSecondary) => {
+    btn1.textContent = primaryLabel || 'OK';
+    btn1.onclick = onPrimary || (() => hide());
+
+    if (secondaryLabel) {
+      btn2.style.display = '';
+      btn2.textContent = secondaryLabel;
+      btn2.onclick = onSecondary || (() => hide());
+    } else {
+      btn2.style.display = 'none';
+      btn2.onclick = null;
+    }
+  };
+
+  const showInfoMonthly = () => {
+    t.textContent = 'Information importante — Suivi de livraison';
+    txt.innerHTML =
+      'Dans le cadre du service de suivi de livraison, le livreur a accès à votre <b>prénom</b>, votre <b>numéro de téléphone</b> et votre <b>position GPS</b>.<br><br>' +
+      'Ces informations sont utilisées <b>uniquement</b> pour des raisons de <b>sécurité</b> et de <b>gestion de la livraison</b>.<br><br>' +
+      'L’accès au suivi est <b>strictement limité dans le temps</b>.';
+    setButtons('Suivant', () => {
+      try { localStorage.setItem(LS_INFO_TS, String(Date.now())); } catch (e) {}
+      hide();
+    }, null, null);
+    show();
+  };
+
+  const requestGeoAgain = () => {
+    // Relance du prompt d'autorisation (si possible)
+    if (navigator.geolocation && typeof navigator.geolocation.getCurrentPosition === 'function') {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          () => { /* ok */ },
+          () => { /* refus ou erreur */ },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } catch (e) {}
+    }
+    // Si un bouton "Relancer" existe déjà côté UI, on le déclenche (sans dépendre du client.js)
+    const btnReset = document.getElementById('btnReset');
+    if (btnReset) {
+      btnReset.style.display = '';
+      try { btnReset.click(); } catch (e) {}
+    }
+  };
+
+  const showRefuseAfterDelay = () => {
+    t.textContent = 'Partage de position obligatoire';
+    txt.innerHTML =
+      'Pour accéder au service de suivi, le <b>partage de votre position</b> est <b>obligatoire</b>.<br><br>' +
+      'Sans autorisation, le suivi ne peut pas fonctionner.';
+    setButtons('Relancer', () => {
+      hide();
+      requestGeoAgain();
+    }, 'Fermer', () => hide());
+    show();
+  };
+
+  // 1) INFO mensuelle (30 jours)
+  try {
+    const last = parseInt(localStorage.getItem(LS_INFO_TS) || '0', 10) || 0;
+    if (!last || (Date.now() - last) > (30 * DAY)) {
+      // petit délai pour laisser la page se poser
+      setTimeout(showInfoMonthly, 400);
+    }
+  } catch (e) {}
+
+  // 2) Refus GPS client : si phase => refused, afficher après 4s
+  let refuseTimer = null;
+  let lastPhase = null;
+
+  const checkRefused = () => {
+    let phase = null;
+    try { phase = localStorage.getItem(LS_PHASE) || ''; } catch (e) { phase = ''; }
+
+    if (phase !== lastPhase) {
+      lastPhase = phase;
+      if (refuseTimer) { clearTimeout(refuseTimer); refuseTimer = null; }
+
+      if (String(phase).toLowerCase() === 'refused') {
+        refuseTimer = setTimeout(() => {
+          // si entre-temps on n'est plus refusé, on n'affiche pas
+          let p2 = '';
+          try { p2 = localStorage.getItem(LS_PHASE) || ''; } catch (e) {}
+          if (String(p2).toLowerCase() === 'refused') showRefuseAfterDelay();
+        }, 4000);
+      }
+    }
+  };
+
+  // boucle légère
+  checkRefused();
+  setInterval(checkRefused, 350);
+})();
+</script>
+
 
 </body>
 </html>
