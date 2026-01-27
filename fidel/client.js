@@ -1,11 +1,12 @@
 // PATH: /fidel/client.js
+// ADN66 – Carte de fidélité (Client)
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
-/* ---------- Utils ---------- */
+/* ---------------- UTILS ---------------- */
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
 function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
@@ -17,13 +18,14 @@ function isValidClientId(cid){
   return false;
 }
 
-/* ---------- UI ---------- */
+/* ---------------- ENV ---------------- */
 function setEnvPill(){
   const pill = document.getElementById("envPill");
   pill.innerHTML = "Mode : <b>" + (API_BASE ? "Serveur" : "Démo") + "</b>";
 }
 setEnvPill();
 
+/* ---------------- UI ---------------- */
 function setCardVisible(v){
   document.getElementById("formBlock").style.display = v ? "none" : "block";
   document.getElementById("cardBlock").style.display = v ? "block" : "none";
@@ -70,19 +72,31 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR ---------- */
+/* ---------------- QR ---------------- */
 function qrRender(text){
   try{
-    const q = new QRCodeGenerator(0, "M");
-    q.addData(String(text));
-    q.make();
-    document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, 2);
-  }catch{
-    document.getElementById("qrSvg").innerHTML = "QR indisponible";
+    const qr = new QRCodeGenerator(0); // ✅ bon usage de qr.min.js
+    qr.addData(String(text));
+    qr.make();
+
+    let svg = qr.createSvgTag(4, "#000");
+
+    svg = svg
+      .replace(/width=\"\d+\"/i, 'width="220"')
+      .replace(/height=\"\d+\"/i, 'height="220"')
+      .replace(
+        "<svg",
+        '<svg style="display:block;margin:auto;background:#fff;border-radius:12px;padding:8px"'
+      );
+
+    document.getElementById("qrSvg").innerHTML = svg;
+  }catch(e){
+    document.getElementById("qrSvg").innerHTML =
+      "<div style='padding:12px;color:#000;font-family:monospace'>QR indisponible</div>";
   }
 }
 
-/* ---------- API ---------- */
+/* ---------------- API ---------------- */
 async function api(path, opts={}){
   const res = await fetch(API_BASE + path, {
     headers: {"content-type":"application/json"},
@@ -93,7 +107,7 @@ async function api(path, opts={}){
   return data;
 }
 
-/* ---------- LOAD CARD ---------- */
+/* ---------------- LOAD CARD ---------------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
   if(!cid){
@@ -110,7 +124,7 @@ async function loadCard(){
 
   try{
     const res = await api(`/loyalty/me?client_id=${encodeURIComponent(cid)}`);
-    const card = res.card; // 🔥 CORRECTION ICI
+    const card = res.card; // ✅ structure API correcte
 
     const points = Number(card.points || 0);
     const goal = Number(card.goal || GOAL);
@@ -126,27 +140,34 @@ async function loadCard(){
   }
 }
 
-/* ---------- CREATE ---------- */
+/* ---------------- CREATE ---------------- */
 async function createCard(){
   const name = normalizeName(document.getElementById("name").value);
   const phone = normalizePhone(document.getElementById("phone").value);
-  if(!name || phone.length < 10) return alert("Infos invalides");
 
-  const r = await api("/loyalty/register", {
-    method:"POST",
-    body: JSON.stringify({name, phone})
-  });
+  if(!name) return alert("Entre ton prénom.");
+  if(!phone || phone.length < 10) return alert("Numéro invalide.");
 
-  localStorage.setItem(LS_KEY, r.client_id);
-  await loadCard();
+  try{
+    const r = await api("/loyalty/register", {
+      method:"POST",
+      body: JSON.stringify({name, phone})
+    });
+
+    localStorage.setItem(LS_KEY, r.client_id);
+    await loadCard();
+  }catch(e){
+    alert("Erreur création carte : " + e.message);
+  }
 }
 
-/* ---------- EVENTS ---------- */
+/* ---------------- ACTIONS ---------------- */
 document.getElementById("btnCreate").onclick = createCard;
 document.getElementById("btnRefresh").onclick = loadCard;
 document.getElementById("btnCopy").onclick = ()=>{
   const cid = localStorage.getItem(LS_KEY);
-  navigator.clipboard.writeText(cid);
+  if(cid) navigator.clipboard.writeText(cid);
 };
 
+/* ---------------- INIT ---------------- */
 loadCard();
