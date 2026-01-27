@@ -1,6 +1,5 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 restore-fix
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -15,11 +14,8 @@ function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
-  // UUID
   if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
-  // ULID
   if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
-  // Prefixed id
   if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
   return false;
 }
@@ -27,8 +23,9 @@ function isValidClientId(cid){
 /* ---------- UI ---------- */
 function setEnvPill(){
   const pill = document.getElementById("envPill");
-  if(!pill) return;
-  pill.innerHTML = "Mode : <b>" + (API_BASE ? "Serveur" : "Démo") + "</b>";
+  if(pill){
+    pill.innerHTML = "Mode : <b>Serveur</b>";
+  }
 }
 
 function setCardVisible(v){
@@ -84,18 +81,22 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR ---------- */
+/* ---------- QR (FIX ICI) ---------- */
 function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
+
   try{
     if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
-    const q = new window.QRCodeGenerator(0);
+
+    // ✅ FIX: null (auto version) au lieu de 0
+    const q = new window.QRCodeGenerator(null);
     q.addData(String(text));
     q.make();
-    // qr.min.js: createSvgTag(cellSize, fillColor)
+
+    // ✅ FIX: signature createSvgTag(cellSize, fillColor)
     box.innerHTML = q.createSvgTag(4, "#111");
-  }catch(_){
+  }catch(e){
     box.innerHTML = "QR indisponible";
   }
 }
@@ -132,7 +133,7 @@ async function loadCard(){
   setMeta(cid);
 
   try{
-    const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid) + "&t=" + Date.now(), {method:"GET"});
+    const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid));
     const card = res.card || res;
 
     const points = Number(card.points || 0);
@@ -174,95 +175,16 @@ async function createCard(){
   }
 }
 
-async function copyId(){
-  const cid = localStorage.getItem(LS_KEY);
-  if(!cid) return;
-  try{
-    await navigator.clipboard.writeText(cid);
-  }catch(_){}
-}
-
-/* ---------- Restore (Modal + Scan + Manual) ---------- */
-let restoreStream = null;
-let restoreScanning = false;
-
-function openRestore(){
-  const modal = document.getElementById("restoreModal");
-  if(!modal) return;
-  modal.classList.add("open");
-  const hint = document.getElementById("scanHint");
-  if(hint) hint.textContent = "";
-}
-
-async function stopRestoreScan(){
-  restoreScanning = false;
-  const video = document.getElementById("video");
-  try{ if(video) video.pause(); }catch(_){}
-  if(restoreStream){
-    try{ restoreStream.getTracks().forEach(t=>t.stop()); }catch(_){}
-    restoreStream = null;
-  }
-  if(video) video.srcObject = null;
-}
-
-async function closeRestore(){
-  const modal = document.getElementById("restoreModal");
-  if(modal) modal.classList.remove("open");
-  await stopRestoreScan();
-}
-
+/* ---------- Restore (manuel uniquement) ---------- */
 async function restoreFromId(raw){
   const cid = String(raw||"").trim();
   if(!isValidClientId(cid)) return alert("ID invalide.");
   localStorage.setItem(LS_KEY, cid);
-  await closeRestore();
   await loadCard();
   alert("Carte restaurée ✅");
 }
 
-async function startRestoreScan(){
-  const hint = document.getElementById("scanHint");
-  const video = document.getElementById("video");
-  if(!hint || !video) return;
-
-  if(restoreScanning) return;
-  restoreScanning = true;
-
-  try{
-    if(!("BarcodeDetector" in window)){
-      hint.textContent = "Scanner non supporté ici. Colle l’ID.";
-      restoreScanning = false;
-      return;
-    }
-
-    hint.textContent = "Ouverture caméra…";
-    const detector = new BarcodeDetector({formats:["qr_code"]});
-
-    restoreStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
-    video.srcObject = restoreStream;
-    await video.play();
-    hint.textContent = "Scan en cours…";
-
-    while(restoreScanning){
-      const codes = await detector.detect(video);
-      if(codes && codes.length){
-        const val = String(codes[0].rawValue || "").trim();
-        if(isValidClientId(val)){
-          await restoreFromId(val);
-          return;
-        }
-      }
-      await sleep(250);
-    }
-  }catch(e){
-    hint.textContent = "Erreur caméra : " + e.message;
-    await stopRestoreScan();
-  }finally{
-    restoreScanning = false;
-  }
-}
-
-/* ---------- Bind events ---------- */
+/* ---------- Bind ---------- */
 function bind(){
   setEnvPill();
 
@@ -270,31 +192,24 @@ function bind(){
   const btnRefresh = document.getElementById("btnRefresh");
   const btnCopy = document.getElementById("btnCopy");
   const btnRestore = document.getElementById("btnRestore");
-
-  const btnClose = document.getElementById("btnClose");
-  const btnStartScan = document.getElementById("btnStartScan");
   const btnUseManual = document.getElementById("btnUseManual");
 
   if(btnCreate) btnCreate.onclick = createCard;
   if(btnRefresh) btnRefresh.onclick = loadCard;
-  if(btnCopy) btnCopy.onclick = copyId;
-
-  if(btnRestore) btnRestore.onclick = openRestore;
-  if(btnClose) btnClose.onclick = closeRestore;
-  if(btnStartScan) btnStartScan.onclick = startRestoreScan;
-
-  if(btnUseManual) btnUseManual.onclick = async ()=>{
-    const input = document.getElementById("manualCid");
-    await restoreFromId(input ? input.value : "");
+  if(btnCopy) btnCopy.onclick = async ()=>{
+    const cid = localStorage.getItem(LS_KEY);
+    if(cid) await navigator.clipboard.writeText(cid);
   };
 
-  // Close modal if click on backdrop
-  const modal = document.getElementById("restoreModal");
-  if(modal){
-    modal.addEventListener("click", (e)=>{
-      if(e.target === modal) closeRestore();
-    });
-  }
+  if(btnRestore) btnRestore.onclick = ()=>{
+    const cid = prompt("Colle l’ID de ta carte");
+    if(cid) restoreFromId(cid);
+  };
+
+  if(btnUseManual) btnUseManual.onclick = ()=>{
+    const input = document.getElementById("manualCid");
+    restoreFromId(input ? input.value : "");
+  };
 
   loadCard();
 }
