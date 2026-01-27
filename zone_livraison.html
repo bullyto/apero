@@ -548,6 +548,12 @@
     }
   }
 
+  function syncLoadedToMarkers(){
+    ensureLoadUI();
+    // ✅ progression basée sur les points réellement affichés sur la carte
+    setLoadedPoints(markersByKey.size);
+  }
+
   function updateCountInfo(shown){
     ensureLoadUI();
     const el = document.getElementById("adn66CountText");
@@ -607,6 +613,9 @@
         .addTo(map)
         .bindPopup(popupHtml, { maxWidth: 260 });
       markersByKey.set(key, marker);
+
+      // ✅ 1 point vient réellement d'apparaître sur la carte
+      syncLoadedToMarkers();
     }
     return true;
   }
@@ -622,33 +631,33 @@
     if (!map) return;
     ensureLoadUI();
 
-    // On suit l'avancement sur la base du nombre d'éléments à traiter (ex: 50)
     totalPoints = (list && list.length) ? list.length : 0;
-    loadedPoints = 0;
     renderLoadUI();
+    syncLoadedToMarkers();
 
     let i = 0;
-    const batchSize = 3; // petites rafales = progression fluide sans lag
+    const batchSize = 3; // petites rafales = fluide sans lag
 
     const step = () => {
       const end = Math.min(i + batchSize, totalPoints);
       for (; i < end; i++){
-        // Même si une coordonnée est invalide, on compte l'élément comme "traité"
+        // ✅ incrément uniquement si le marker est réellement ajouté (lat/lng valides)
         addOrUpdateMarker(list[i], i);
       }
-      setLoadedPoints(i);
+
+      // ✅ met à jour la barre selon les markers réellement présents
+      syncLoadedToMarkers();
 
       if (i < totalPoints) {
         requestAnimationFrame(step);
       } else {
-        // terminé
-        setLoadedPoints(totalPoints);
         try { fitToAll(); } catch(e) {}
       }
     };
 
     requestAnimationFrame(step);
   }
+
 
   function popupFor(c){
 
@@ -708,6 +717,7 @@
         if (isValidLatLng(c.lat, c.lng)) continue;
         await geocodeOne(c);
         buildOrUpdateMarkers(list);
+        syncLoadedToMarkers();
         saveGeoCache();
         await sleep(1100);
       }
