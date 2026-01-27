@@ -71,7 +71,7 @@ setEnvPill();
 function qrRender(obj){
   const text = typeof obj === "string" ? obj : JSON.stringify(obj);
   try{
-    const q = null;
+    const q = (window.QRCodeGenerator ? window.QRCodeGenerator(0, 'M') : null);
     q.addData(text);
     q.make();
     document.getElementById("qrSvg").innerHTML = q.createSvgTag(4, 2);
@@ -277,4 +277,8 @@ document.getElementById("btnUseManual").addEventListener("click", async ()=>{
   await loadCard();
 });
 
-loadCard();
+loadCard();function cleanClientId(v){
+  return String(v||"").trim().toLowerCase().replace(/\s+/g,"").replace(/^client:/,"");
+}
+
+

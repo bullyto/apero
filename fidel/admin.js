@@ -57,7 +57,7 @@ async function api(path, opts={}){
 function qrRender(obj){
   const text = typeof obj === "string" ? obj : JSON.stringify(obj);
   try{
-    const q = new window.QRCodeGenerator(null);
+    const q = window.QRCodeGenerator(0, 'M');
     q.addData(text);
     q.make();
     document.getElementById("qrSvg").innerHTML = q.createSvgTag(7, 2);
