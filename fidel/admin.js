@@ -1,6 +1,6 @@
 // PATH: /fidel/admin.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
-const API_BASE = "";
+const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const ADMIN_LS = "adn66_loyalty_admin_key";
 
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
@@ -60,7 +60,11 @@ async function startScan(){
         const val = barcodes[0].rawValue || "";
         let cid = null;
         try{ const obj = JSON.parse(val); cid = obj.cid || obj.client_id || null; }
-        catch(_){ cid = val.startsWith("c_") ? val : null; }
+        catch(_){
+          const v = (val||"").trim();
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
+          cid = isUuid ? v : null;
+        }
         if(cid){
           document.getElementById("clientId").value = cid;
           scanHint.textContent = "QR détecté ✅";

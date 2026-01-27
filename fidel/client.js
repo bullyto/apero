@@ -1,6 +1,6 @@
 // PATH: /fidel/client.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
-const API_BASE = "";
+const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 
 // Règles fidélité
 const GOAL = 8;
@@ -43,7 +43,7 @@ function setCardVisible(visible){
 function setMeta(cid){
   document.getElementById("meta").textContent = cid ? ("ID: " + cid) : "—";
   document.getElementById("cidText").textContent = cid || "—";
-  if(cid) qrRender({cid});
+  if(cid) qrRender(cid);
 }
 
 function setApiState(ok, msg){
