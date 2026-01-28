@@ -34,7 +34,7 @@
       padding:16px;
     }
 
-    .wrap{width:min(820px,100%);}
+    .wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;}
 
     /* En-tête "bar" comme livraison */
     .brand{
@@ -64,7 +64,7 @@
       white-space:nowrap;
     }
 
-    .card{color:var(--text);
+    .card{width:min(560px,100%);margin:0 auto;color:var(--text);color:var(--text);
       border:1px solid var(--line);
       border-radius:var(--radiusCard);
       background:#fff;
@@ -158,14 +158,7 @@
     /* Modal (pop-up) */
     .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
     .modal.open{display:flex}
-    .modal .box{
-      width:min(560px,100%);
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-    }
+    .modal .box{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);}
     .modal .box .head{
       padding:12px 14px;
       border-bottom:1px solid var(--line);
@@ -248,7 +241,7 @@
 </head>
 <body>
   <div class="wrap">
-<div class="badge">Fidélité</div></div>
+<div class="badge"></div></div>
 
     <div class="card">
       <div class="card-h">
