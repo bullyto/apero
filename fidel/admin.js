@@ -3,45 +3,37 @@
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 
 function makeQrSvg(text, size){
-  // Même lib & même rendu que côté client : qr.min.js (Kazuhiko Arase)
+  // Supports both legacy `qrcode()` API and the bundled `QRCodeGenerator`.
   size = Number(size || 220);
+  const margin = 2;
+  const cellSize = 4; // will scale via viewBox if needed
 
-  // Quiet zone (bordure blanche) large pour un scan fiable
-  const margin = 8;
-
-  // Preferred API: qrcode(typeNumber, errorCorrectionLevel)
+  // --- Preferred: QRCodeGenerator (bundled in qr.min.js)
   try{
-    if (typeof window !== "undefined" && typeof window.qrcode === "function"){
-      const qr = window.qrcode(0, "M"); // 0 => auto
-      qr.addData(String(text));
-      qr.make();
-
-      // cellSize fixe, on normalise la taille via CSS/attributs ensuite
-      const cellSize = 6;
-      let svg = qr.createSvgTag(cellSize, margin);
-
-      // Normaliser width/height à `size`
+    if (typeof window !== "undefined" && typeof window.QRCodeGenerator === "function"){
+      // typeNumber=0 => auto
+      const q = new window.QRCodeGenerator(0);
+      q.addData(String(text));
+      q.make();
+      // createSvgTag(cellSize, fillColor?) returns <svg ...>
+      let svg = q.createSvgTag(cellSize, "#111");
+      // Normalize width/height to requested `size`
       svg = svg
         .replace(/width=\"\d+\"/i, 'width="' + size + '"')
         .replace(/height=\"\d+\"/i, 'height="' + size + '"')
         .replace(/<svg/i, '<svg style="display:block;margin:0 auto;"');
-
       return svg;
     }
   }catch(e){ /* fall through */ }
 
-  // Fallback: some bundles expose QRCodeGenerator as alias to qrcode()
+  // --- Fallback: qrcode(typeNumber, errorCorrectionLevel)
   try{
-    if (typeof window !== "undefined" && typeof window.QRCodeGenerator === "function"){
-      const q = window.QRCodeGenerator(0, "M");
-      q.addData(String(text));
-      q.make();
-      const cellSize = 6;
-      let svg = q.createSvgTag(cellSize, margin);
-      svg = svg
-        .replace(/width=\"\d+\"/i, 'width="' + size + '"')
-        .replace(/height=\"\d+\"/i, 'height="' + size + '"')
-        .replace(/<svg/i, '<svg style="display:block;margin:0 auto;"');
+    if (typeof window !== "undefined" && typeof window.qrcode === "function"){
+      const qr = window.qrcode(0, "M");
+      qr.addData(String(text));
+      qr.make();
+      // createSvgTag(cellSize, margin)
+      const svg = qr.createSvgTag(Math.max(1, Math.floor(size / (qr.getModuleCount() + margin*2))), margin);
       return svg;
     }
   }catch(e){ /* fall through */ }
@@ -95,12 +87,13 @@ async function api(path, opts={}){
 
 function qrRender(obj){
   const text = typeof obj === "string" ? obj : JSON.stringify(obj);
-  const host = document.getElementById("qrSvg");
-  if(!host) return;
   try{
-    host.innerHTML = makeQrSvg(text, 320);
+    const q = window.QRCodeGenerator(0, 'M');
+    q.addData(text);
+    q.make();
+    document.getElementById("qrSvg").innerHTML = q.createSvgTag(7, 2);
   }catch(e){
-    host.textContent = "QR indisponible";
+    document.getElementById("qrSvg").textContent = "QR indisponible";
   }
 }
 
@@ -199,10 +192,72 @@ function renderResults(items){
   });
 }
 
-function showRecoveryQr(cid){
-  document.getElementById("qrSub").textContent = "ID: " + cid + " — le client doit scanner ce QR pour restaurer.";
-  qrRender({cid});
-  document.getElementById("qrFull").classList.add("open");
+function showRecoveryQr(clientId){
+  // QR de récupération = URL http(s) cliquable + scannable
+  // Le client scanne → ouvre la page client qui restaure automatiquement.
+  const id = String(clientId || "").trim();
+  if(!id){
+    toast("ID manquant", "warn");
+    return;
+  }
+
+  // URL de restauration (client)
+  // ⚠️ adapte si tu changes la route : /fidel/client.html
+  const base = (location.origin || "") + "/fidel/client.html";
+  const restoreUrl = base + "?restore=1&id=" + encodeURIComponent(id);
+
+  // UI popup existante
+  openModal(`
+    <div class="modalHead">
+      <div class="modalTitle">QR de récupération</div>
+      <button class="btn btnGhost" id="btnCloseModal">Fermer</button>
+    </div>
+    <div class="modalBody">
+      <div class="muted">Le client doit scanner ce QR pour restaurer sa carte.</div>
+      <div class="qrBox" style="margin-top:12px; display:flex; justify-content:center;">
+        <img id="recoveryQrImg" alt="QR récupération" style="width:260px;height:260px;border-radius:18px;background:#fff;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);" />
+      </div>
+      <div class="muted" style="margin-top:10px;word-break:break-all;">
+        <strong>URL :</strong> <span id="recoveryUrlText"></span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button class="btn" id="btnCopyRecoveryUrl">Copier URL</button>
+        <a class="btn btnGhost" id="btnOpenRecoveryUrl" target="_blank" rel="noopener">Ouvrir</a>
+      </div>
+      <div class="muted" style="margin-top:10px;">
+        ID : ${escapeHtml(id)}
+      </div>
+    </div>
+  `);
+
+  const closeBtn = document.getElementById("btnCloseModal");
+  if(closeBtn) closeBtn.addEventListener("click", closeModal);
+
+  const urlText = document.getElementById("recoveryUrlText");
+  if(urlText) urlText.textContent = restoreUrl;
+
+  const openA = document.getElementById("btnOpenRecoveryUrl");
+  if(openA) openA.href = restoreUrl;
+
+  const img = document.getElementById("recoveryQrImg");
+  if(img){
+    // Service QR externe fiable (pas de librairie JS, pas de qr.min.js)
+    // margin large -> bordure blanche
+    const qrApi = "https://api.qrserver.com/v1/create-qr-code/";
+    img.src = qrApi + "?size=260x260&margin=18&data=" + encodeURIComponent(restoreUrl);
+  }
+
+  const copyBtn = document.getElementById("btnCopyRecoveryUrl");
+  if(copyBtn){
+    copyBtn.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(restoreUrl);
+        toast("URL copiée", "ok");
+      }catch(e){
+        toast("Copie impossible", "warn");
+      }
+    });
+  }
 }
 
 async function stamp(){
