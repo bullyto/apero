@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ADN66 • Scan QR</title>
+  <meta name="theme-color" content="#050b12" />
+  <style>
+    :root{--bg:#050b12;--card:#0b1420;--text:rgba(255,255,255,.92);--muted:rgba(255,255,255,.68);--bd:rgba(255,255,255,.10);--ok:#21d07a;}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#050b12,#070f19);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .wrap{max-width:520px;margin:0 auto;padding:16px}
+    .card{background:rgba(11,20,32,.92);border:1px solid var(--bd);border-radius:18px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    h1{font-size:18px;margin:0 0 6px}
+    .muted{color:var(--muted);font-size:13px;line-height:1.35}
+    .cid{margin-top:12px;background:rgba(255,255,255,.06);border:1px solid var(--bd);border-radius:14px;padding:12px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .row{display:flex;gap:10px;margin-top:12px}
+    .btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:14px;border:1px solid var(--bd);background:rgba(255,255,255,.06);color:var(--text);font-weight:800}
+    .btn.primary{background:rgba(33,208,122,.12);border-color:rgba(33,208,122,.35)}
+    .btn:active{transform:translateY(1px)}
+    .badge{display:inline-flex;align-items:center;gap:8px;margin-top:10px;color:var(--muted);font-size:12px}
+    .dot{width:10px;height:10px;border-radius:99px;background:rgba(255,255,255,.25)}
+    .dot.ok{background:var(--ok);box-shadow:0 0 14px rgba(33,208,122,.45)}
+    .footer{margin-top:14px;color:rgba(255,255,255,.52);font-size:12px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Scan QR • Carte de fidélité</h1>
+      <div class="muted">Ce QR contient une URL standard pour une compatibilité maximale. L’ID client est extrait ci-dessous.</div>
+
+      <div class="badge"><span class="dot ok"></span><span id="state">QR reconnu</span></div>
+
+      <div class="cid" id="cid">—</div>
+
+      <div class="row">
+        <button class="btn primary" id="copyBtn">Copier ID</button>
+        <a class="btn" id="openAdminBtn" href="#" rel="noopener">Ouvrir Admin</a>
+      </div>
+
+      <div class="muted" style="margin-top:10px">
+        Astuce : si l’admin ne s’ouvre pas automatiquement, colle l’ID dans ton écran admin de validation.
+      </div>
+    </div>
+
+    <div class="footer">Outils internes. L’entreprise Apéro de Nuit 66®</div>
+  </div>
+
+  <script src="./scan.js"></script>
+</body>
+</html>

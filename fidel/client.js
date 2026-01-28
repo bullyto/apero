@@ -7,6 +7,9 @@ const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
+// QR payload (URL encapsulation) — lisible par tous les scanners
+const QR_SCAN_BASE = "https://aperos.net/fidel/scan?cid=";
+
 /* ---------- Utils ---------- */
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
@@ -40,7 +43,7 @@ function setMeta(cid){
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender(cid);
+  if(cid) qrRender(QR_SCAN_BASE + encodeURIComponent(cid));
 }
 
 function setApiState(ok, msg){
