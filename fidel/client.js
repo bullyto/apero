@@ -1,22 +1,22 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 restore-fix
+// Version: 2026-01-28 minimal-ui + qr-popup + copy-link
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
+// IMPORTANT: le QR + copie = URL (pas d'ID affiché)
+const PUBLIC_RESTORE_URL_BASE = "https://www.aperos.net/fidel/client.html?restore=1&id=";
+
 /* ---------- Restore: extraction (même logique que Admin) ---------- */
 function extractClientIdFromAny(raw){
-  // Nettoyage agressif (espaces, retours, caractères invisibles)
   let s = String(raw || "");
   s = s.replace(/[\u200B-\u200D\uFEFF]/g, ""); // zero-width
   s = s.trim();
   if(!s) return "";
 
-  // 0) Si on voit "id=" quelque part, on extrait direct (le plus robuste)
-  //    Ex: https://.../client.html?restore=1&id=UUID
   try{
     const mId = s.match(/[?&#]id=([^&#\s]+)/i) || s.match(/\bid=([^&#\s]+)/i);
     if(mId && mId[1]){
@@ -25,7 +25,6 @@ function extractClientIdFromAny(raw){
     }
   }catch(_){}
 
-  // 1) URL -> ?id=...
   try{
     if(/^https?:\/\//i.test(s)){
       const u = new URL(s);
@@ -34,7 +33,6 @@ function extractClientIdFromAny(raw){
     }
   }catch(_){}
 
-  // 2) JSON -> {cid:"..."} ou {id:"..."}
   try{
     if(s[0] === "{"){
       const o = JSON.parse(s);
@@ -43,14 +41,11 @@ function extractClientIdFromAny(raw){
     }
   }catch(_){}
 
-  // 3) Fallback : extraire un UUID dans le texte (même si c'est une URL complète)
   const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
   if(mm && mm[0]) return mm[0];
 
-  // 4) Sinon, renvoie le texte brut
   return s;
 }
-
 
 /* ---------- Utils ---------- */
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -60,46 +55,35 @@ function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
-  // UUID
-  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
-  // ULID
-  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
-  // Prefixed id
-  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true; // UUID
+  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true; // ULID
+  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true; // Prefixed
   return false;
 }
 
+function getRestoreUrl(cid){
+  const safeCid = String(cid || "").trim();
+  if(!safeCid) return "";
+  return PUBLIC_RESTORE_URL_BASE + encodeURIComponent(safeCid);
+}
+
 /* ---------- UI ---------- */
-function setEnvPill(){
-  const pill = document.getElementById("envPill");
-  if(!pill) return;
-  pill.innerHTML = "Mode : <b>" + (API_BASE ? "Serveur" : "Démo") + "</b>";
+function $(id){ return document.getElementById(id); }
+
+function setScreen(hasCard){
+  const startBlock = $("startBlock");
+  const cardBlock = $("cardBlock");
+  if(startBlock) startBlock.style.display = hasCard ? "none" : "block";
+  if(cardBlock) cardBlock.style.display = hasCard ? "block" : "none";
 }
 
-function setCardVisible(v){
-  const form = document.getElementById("formBlock");
-  const card = document.getElementById("cardBlock");
-  if(form) form.style.display = v ? "none" : "block";
-  if(card) card.style.display = v ? "block" : "none";
-}
-
-function setMeta(cid){
-  const meta = document.getElementById("meta");
-  const cidText = document.getElementById("cidText");
-  if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
-  if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender("https://aperos.net/fidel/scan?cid=" + encodeURIComponent(cid));
-}
-
-function setApiState(ok, msg){
-  const dot = document.getElementById("dot");
-  const txt = document.getElementById("apiState");
-  if(dot) dot.className = "dot " + (ok ? "ok" : "warn");
-  if(txt) txt.textContent = msg || (ok ? "Synchronisé" : "Hors ligne");
+function setSyncText(ok){
+  const t = $("syncText");
+  if(t) t.textContent = ok ? "Synchronisé" : "Hors ligne";
 }
 
 function setStateText(points, completedAt){
-  const st = document.getElementById("stateText");
+  const st = $("stateText");
   if(!st) return;
 
   if(points >= GOAL){
@@ -131,12 +115,10 @@ function renderVisualStamps(points){
 
 /* ---------- QR ---------- */
 function qrRender(text){
-  const box = document.getElementById("qrSvg");
+  const box = $("qrSvg");
   if(!box) return;
 
   const payload = String(text || "").trim();
-
-  // clear previous
   box.innerHTML = "";
 
   if(!payload){
@@ -145,7 +127,6 @@ function qrRender(text){
     return;
   }
 
-  // qrcodejs (QRCode) expects a container element
   if(typeof window.QRCode !== "function"){
     box.textContent = "QR indisponible";
     box.style.color = "#111";
@@ -153,14 +134,13 @@ function qrRender(text){
   }
 
   try{
-    // qrcodejs will append a canvas or img inside the container
     new window.QRCode(box, {
       text: payload,
       width: 220,
       height: 220,
       correctLevel: window.QRCode.CorrectLevel.M
     });
-  }catch(e){
+  }catch(_){
     box.textContent = "QR indisponible";
     box.style.color = "#111";
   }
@@ -177,25 +157,83 @@ async function api(path, opts={}){
   return data;
 }
 
+/* ---------- Modal (Créer/Restaurer) ---------- */
+let restoreStream = null;
+let restoreScanning = false;
+
+function showModal(mode){
+  const modal = $("actionModal");
+  if(!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  setModalMode(mode || "create");
+}
+
+function closeModal(){
+  const modal = $("actionModal");
+  if(modal){
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+  }
+  stopRestoreScan();
+}
+
+function setModalMode(mode){
+  const createView = $("createView");
+  const restoreView = $("restoreView");
+  const tabCreate = $("tabCreate");
+  const tabRestore = $("tabRestore");
+  const title = $("modalTitle");
+
+  const isCreate = mode === "create";
+
+  if(createView) createView.style.display = isCreate ? "block" : "none";
+  if(restoreView) restoreView.style.display = isCreate ? "none" : "block";
+
+  if(tabCreate) tabCreate.classList.toggle("active", isCreate);
+  if(tabRestore) tabRestore.classList.toggle("active", !isCreate);
+
+  if(title) title.textContent = isCreate ? "Créer ma carte" : "Restaurer ma carte";
+
+  // reset hint
+  const hint = $("scanHint");
+  if(hint) hint.textContent = "";
+}
+
+/* ---------- Modal QR ---------- */
+function openQrModal(){
+  const cid = localStorage.getItem(LS_KEY);
+  if(!cid) return;
+  const modal = $("qrModal");
+  if(!modal) return;
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  qrRender(getRestoreUrl(cid));
+}
+function closeQrModal(){
+  const modal = $("qrModal");
+  if(!modal) return;
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+}
+
 /* ---------- Load card ---------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
 
   if(!cid){
-    setCardVisible(false);
-    const pts = document.getElementById("points");
-    const goal = document.getElementById("goal");
+    setScreen(false);
+    const pts = $("points");
+    const goal = $("goal");
     if(pts) pts.textContent = "0";
     if(goal) goal.textContent = String(GOAL);
     renderVisualStamps(0);
     setStateText(0, null);
-    setApiState(true, "Synchronisé");
-    setMeta(null);
+    setSyncText(true);
     return;
   }
 
-  setCardVisible(true);
-  setMeta(cid);
+  setScreen(true);
 
   try{
     const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid) + "&t=" + Date.now(), {method:"GET"});
@@ -204,25 +242,23 @@ async function loadCard(){
     const points = Number(card.points || 0);
     const goal = Number(card.goal || GOAL);
 
-    const pts = document.getElementById("points");
-    const g = document.getElementById("goal");
+    const pts = $("points");
+    const g = $("goal");
     if(pts) pts.textContent = String(points);
     if(g) g.textContent = String(goal);
 
     renderVisualStamps(points);
     setStateText(points, card.completed_at || null);
-    setApiState(true, "Synchronisé");
+    setSyncText(true);
   }catch(_){
-    setApiState(false, "Hors ligne");
+    setSyncText(false);
   }
 }
 
 /* ---------- Create ---------- */
 async function createCard(){
-  const nameEl = document.getElementById("name");
-  const phoneEl = document.getElementById("phone");
-  const name = normalizeName(nameEl ? nameEl.value : "");
-  const phone = normalizePhone(phoneEl ? phoneEl.value : "");
+  const name = normalizeName(($("name") && $("name").value) ? $("name").value : "");
+  const phone = normalizePhone(($("phone") && $("phone").value) ? $("phone").value : "");
 
   if(!name) return alert("Entre ton prénom.");
   if(!phone || phone.length < 10) return alert("Numéro invalide.");
@@ -234,35 +270,27 @@ async function createCard(){
     });
     if(!r || !r.client_id) throw new Error("Réponse invalide");
     localStorage.setItem(LS_KEY, r.client_id);
+    closeModal();
     await loadCard();
   }catch(e){
     alert("Erreur création carte : " + e.message);
   }
 }
 
-async function copyId(){
+/* ---------- Copy link (QR payload) ---------- */
+async function copyLink(){
   const cid = localStorage.getItem(LS_KEY);
   if(!cid) return;
+  const link = getRestoreUrl(cid);
   try{
-    await navigator.clipboard.writeText(cid);
+    await navigator.clipboard.writeText(link);
   }catch(_){}
 }
 
-/* ---------- Restore (Modal + Scan + Manual) ---------- */
-let restoreStream = null;
-let restoreScanning = false;
-
-function openRestore(){
-  const modal = document.getElementById("restoreModal");
-  if(!modal) return;
-  modal.classList.add("open");
-  const hint = document.getElementById("scanHint");
-  if(hint) hint.textContent = "";
-}
-
+/* ---------- Restore (Scan + Manual) ---------- */
 async function stopRestoreScan(){
   restoreScanning = false;
-  const video = document.getElementById("video");
+  const video = $("video");
   try{ if(video) video.pause(); }catch(_){}
   if(restoreStream){
     try{ restoreStream.getTracks().forEach(t=>t.stop()); }catch(_){}
@@ -271,43 +299,29 @@ async function stopRestoreScan(){
   if(video) video.srcObject = null;
 }
 
-async function closeRestore(){
-  const modal = document.getElementById("restoreModal");
-  if(modal) modal.classList.remove("open");
-  await stopRestoreScan();
-}
-
-async function restoreFromId(raw){
+async function restoreFromAny(raw){
   const cid = extractClientIdFromAny(raw);
   if(!isValidClientId(cid)) return alert("ID invalide.");
   localStorage.setItem(LS_KEY, cid);
-
-  await closeRestore();
+  closeModal();
   await loadCard();
-  alert("Carte restaurée ✅");
 }
 
 async function startRestoreScan(){
-  const hint = document.getElementById("scanHint");
-  const video = document.getElementById("video");
+  const hint = $("scanHint");
+  const video = $("video");
   if(!hint || !video) return;
 
   if(restoreScanning) return;
   restoreScanning = true;
 
-  // Toujours viser la caméra arrière
   const constraints = { video: { facingMode: { ideal: "environment" } }, audio: false };
 
-  // Helper: extraire un clientId depuis n'importe quel contenu (URL, JSON, texte)
-  const pickCid = (raw) => {
-    const cid = extractClientIdFromAny(raw);
-    return cid || "";
-  };
+  const pickCid = (raw) => extractClientIdFromAny(raw) || "";
 
   try{
     hint.textContent = "Ouverture caméra…";
 
-    // 1) Option rapide si supporté : BarcodeDetector (Chrome récent)
     if("BarcodeDetector" in window){
       const detector = new BarcodeDetector({formats:["qr_code"]});
       restoreStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -322,7 +336,7 @@ async function startRestoreScan(){
           const raw = String(codes[0].rawValue || "").trim();
           const cid = pickCid(raw);
           if(cid && isValidClientId(cid)){
-            await restoreFromId(cid);
+            await restoreFromAny(cid);
             return;
           }
         }
@@ -331,8 +345,6 @@ async function startRestoreScan(){
       return;
     }
 
-    // 2) Fallback robuste : ZXing (@zxing/browser) via script UMD
-    //    (on le charge à la volée si absent)
     if(!(window.ZXing && window.ZXing.BrowserQRCodeReader)){
       hint.textContent = "Chargement scanner…";
       await new Promise((resolve, reject)=>{
@@ -346,7 +358,7 @@ async function startRestoreScan(){
     }
 
     if(!(window.ZXing && window.ZXing.BrowserQRCodeReader)){
-      hint.textContent = "Scanner non supporté ici. Colle l’ID.";
+      hint.textContent = "Scanner non supporté ici. Colle l’URL / l’ID.";
       restoreScanning = false;
       return;
     }
@@ -357,13 +369,13 @@ async function startRestoreScan(){
     hint.textContent = "Scan en cours…";
 
     const codeReader = new window.ZXing.BrowserQRCodeReader();
-    await codeReader.decodeFromVideoElementContinuously(video, async (result, err) => {
+    await codeReader.decodeFromVideoElementContinuously(video, async (result) => {
       if(!restoreScanning) return;
       if(result && result.getText){
         const raw = result.getText();
         const cid = pickCid(raw);
         if(cid && isValidClientId(cid)){
-          await restoreFromId(cid);
+          await restoreFromAny(cid);
           return;
         }
       }
@@ -374,29 +386,59 @@ async function startRestoreScan(){
   }
 }
 
+/* ---------- Auto-restore via URL ?id=... ---------- */
+function tryAutoRestoreFromUrl(){
+  try{
+    const u = new URL(location.href);
+    const id = u.searchParams.get("id") || "";
+    if(id){
+      const cid = extractClientIdFromAny(id);
+      if(isValidClientId(cid)){
+        localStorage.setItem(LS_KEY, cid);
+        // Nettoyer l'URL (optionnel) : on retire les params
+        u.searchParams.delete("restore");
+        u.searchParams.delete("id");
+        history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+      }
+    }
+  }catch(_){}
+}
 
 /* ---------- Bind events ---------- */
 function bind(){
-  setEnvPill();
+  tryAutoRestoreFromUrl();
 
-  const btnCreate = document.getElementById("btnCreate");
-  const btnRefresh = document.getElementById("btnRefresh");
-  const btnCopy = document.getElementById("btnCopy");
-  const btnRestore = document.getElementById("btnRestore");
+  const btnOpenCreate = $("btnOpenCreate");
+  const btnOpenRestore = $("btnOpenRestore");
+  const tabCreate = $("tabCreate");
+  const tabRestore = $("tabRestore");
 
-  const btnClose = document.getElementById("btnClose");
-  const btnStartScan = document.getElementById("btnStartScan");
-  const btnUseManual = document.getElementById("btnUseManual");
+  const btnCreate = $("btnCreate");
+  const btnClose1 = $("btnCloseModal1");
+  const btnClose2 = $("btnCloseModal2");
+
+  const btnStartScan = $("btnStartScan");
+  const btnUseManual = $("btnUseManual");
+  const manual = $("manualCid");
+
+  const btnRefresh = $("btnRefresh");
+  const btnShowQr = $("btnShowQr");
+
+  const qrClose = $("qrClose");
+  const btnCopyLink = $("btnCopyLink");
+
+  if(btnOpenCreate) btnOpenCreate.onclick = ()=>showModal("create");
+  if(btnOpenRestore) btnOpenRestore.onclick = ()=>showModal("restore");
+
+  if(tabCreate) tabCreate.onclick = ()=>setModalMode("create");
+  if(tabRestore) tabRestore.onclick = ()=>setModalMode("restore");
 
   if(btnCreate) btnCreate.onclick = createCard;
-  if(btnRefresh) btnRefresh.onclick = loadCard;
-  if(btnCopy) btnCopy.onclick = copyId;
+  if(btnClose1) btnClose1.onclick = closeModal;
+  if(btnClose2) btnClose2.onclick = closeModal;
 
-  if(btnRestore) btnRestore.onclick = openRestore;
-  if(btnClose) btnClose.onclick = closeRestore;
   if(btnStartScan) btnStartScan.onclick = startRestoreScan;
-  // Auto-tri (invisible) : si on colle une URL dans le champ, on garde uniquement l'ID
-  const manual = document.getElementById("manualCid");
+
   if(manual){
     const clean = ()=>{ manual.value = extractClientIdFromAny(manual.value); };
     manual.addEventListener("input", clean, true);
@@ -404,18 +446,28 @@ function bind(){
     manual.addEventListener("blur", clean, true);
     manual.addEventListener("paste", ()=>setTimeout(clean, 0), true);
   }
-
-
   if(btnUseManual) btnUseManual.onclick = async ()=>{
-    const input = document.getElementById("manualCid");
-    await restoreFromId(input ? input.value : "");
+    const input = $("manualCid");
+    await restoreFromAny(input ? input.value : "");
   };
 
-  // Close modal if click on backdrop
-  const modal = document.getElementById("restoreModal");
-  if(modal){
-    modal.addEventListener("click", (e)=>{
-      if(e.target === modal) closeRestore();
+  if(btnRefresh) btnRefresh.onclick = loadCard;
+  if(btnShowQr) btnShowQr.onclick = openQrModal;
+
+  if(btnCopyLink) btnCopyLink.onclick = copyLink;
+  if(qrClose) qrClose.onclick = closeQrModal;
+
+  // close modals on backdrop click
+  const actionModal = $("actionModal");
+  if(actionModal){
+    actionModal.addEventListener("click", (e)=>{
+      if(e.target === actionModal) closeModal();
+    });
+  }
+  const qrModal = $("qrModal");
+  if(qrModal){
+    qrModal.addEventListener("click", (e)=>{
+      if(e.target === qrModal) closeQrModal();
     });
   }
 
