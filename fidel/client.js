@@ -16,50 +16,7 @@ function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
   // UUID
-  if(/^[0-9a-f]{8}
-
-/* ---------- Extract client id from URL/QR/any text ---------- */
-function extractClientIdFromAny(raw){
-  let s = String(raw || "");
-  s = s.replace(/[\u200B-\u200D\uFEFF]/g, "");
-  s = s.trim();
-  if(!s) return "";
-
-  // If we see id=... anywhere (most robust)
-  try{
-    const mId = s.match(/[?&#]id=([^&#\s]+)/i) || s.match(/\bid=([^&#\s]+)/i);
-    if(mId && mId[1]){
-      const v = decodeURIComponent(mId[1]);
-      if(v) s = String(v).trim();
-    }
-  }catch(_){}
-
-  // URL -> ?id=...
-  try{
-    if(/^https?:\/\//i.test(s)){
-      const u = new URL(s);
-      const id = (u.searchParams && u.searchParams.get("id")) ? u.searchParams.get("id") : "";
-      if(id) s = String(id).trim();
-    }
-  }catch(_){}
-
-  // If still contains a UUID, pick it
-  const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  if(mm && mm[0]) return mm[0];
-
-  // Some scanners return "1,<content>"
-  if(s.includes(",")){
-    const parts = s.split(",").map(p=>p.trim()).filter(Boolean);
-    for(const p of parts){
-      const u = p.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-      if(u && u[0]) return u[0];
-      if(isValidClientId(p)) return p;
-    }
-  }
-
-  return s;
-}
--[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
   // ULID
   if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
   // Prefixed id
@@ -276,9 +233,9 @@ async function closeRestore(){
 }
 
 async function restoreFromId(raw){
-  const cid = extractClientIdFromAny(raw);
+  const cid = String(raw||"").trim();
   if(!isValidClientId(cid)) return alert("ID invalide.");
-localStorage.setItem(LS_KEY, cid);
+  localStorage.setItem(LS_KEY, cid);
   await closeRestore();
   await loadCard();
   alert("Carte restaurée ✅");
@@ -311,9 +268,8 @@ async function startRestoreScan(){
       const codes = await detector.detect(video);
       if(codes && codes.length){
         const val = String(codes[0].rawValue || "").trim();
-        const cid = extractClientIdFromAny(val);
-        if(isValidClientId(cid)){
-          await restoreFromId(cid);
+        if(isValidClientId(val)){
+          await restoreFromId(val);
           return;
         }
       }
@@ -369,38 +325,3 @@ if(document.readyState === "loading"){
 }else{
   bind();
 }
-
-
-/* ---------- Global helpers (compat + auto-clean) ---------- */
-window.setManualCid = function(){
-  try{
-    const input = document.getElementById("manualCid");
-    if(!input) return;
-    const cleaned = extractClientIdFromAny(input.value);
-    input.value = cleaned;
-  }catch(_){}
-};
-
-// Auto-clean manual field on paste/blur
-document.addEventListener("paste", (e)=>{
-  try{
-    const t = e.target;
-    if(!t || !t.id || t.id !== "manualCid") return;
-    const txt = (e.clipboardData && e.clipboardData.getData("text")) || "";
-    if(!txt) return;
-    const cleaned = extractClientIdFromAny(txt);
-    if(cleaned && cleaned !== txt.trim()){
-      e.preventDefault();
-      t.value = cleaned;
-    }
-  }catch(_){}
-}, true);
-
-document.addEventListener("blur", (e)=>{
-  try{
-    const t = e.target;
-    if(!t || !t.id || t.id !== "manualCid") return;
-    const cleaned = extractClientIdFromAny(t.value);
-    if(cleaned && cleaned !== t.value) t.value = cleaned;
-  }catch(_){}
-}, true);
