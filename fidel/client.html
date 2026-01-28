@@ -89,16 +89,12 @@
     .stamp.filled{opacity:1;}
     .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
 
+    /* positions 8 tampons (2 rangées de 4) */
     .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
     .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
 
     .qrbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-    .qr{
-      width:min(340px,100%);
-      background:#fff;border-radius:14px;padding:14px;border:1px solid rgba(0,0,0,.08)
-    }
-    #qrCanvas{display:block;max-width:100%;height:auto;margin:0 auto}
-    canvas{display:block;width:100%;height:auto}
+    .qr{width:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)}
     .qr-actions{display:flex;gap:10px;width:100%}
     .qr-actions button{min-width:auto;flex:1}
 
@@ -112,6 +108,7 @@
     .hint{margin-top:10px;font-size:12px;color:var(--t2)}
     .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
   </style>
+<script>window.__ADN66=window.__ADN66||{};window.__ADN66.QR_SCAN_BASE="https://aperos.net/fidel/scan?cid=";window.__ADN66.BUILD="20260128c";</script>
 </head>
 <body>
   <div class="wrap">
@@ -173,16 +170,14 @@
             </div>
 
             <div class="qrbox" style="width:100%;margin-top:12px">
-              <div class="note" style="margin:0">Mon QR (à montrer)</div>
-              <div class="qr">
-                <canvas id="qrCanvas" width="240" height="240" aria-label="QR code"></canvas>
-              </div>
+              <div class="note" style="margin:0">Mon QR (à montrer)<div id="qrStatus" style="margin-top:6px;font-size:12px;color:rgba(255,255,255,.6)"></div></div>
+              <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
               <div class="mono" id="cidText">—</div>
               <div class="qr-actions">
                 <button class="secondary" id="btnRefresh">Rafraîchir</button>
                 <button class="secondary" id="btnCopy">Copier ID</button>
               </div>
-              <div class="hint">QR Canvas ultra fiable (sans librairie externe).</div>
+              <div class="hint">Cloudflare : mets l’URL du Worker dans <span class="mono">API_BASE</span> (client.js).</div>
             </div>
           </div>
         </div>
@@ -203,14 +198,16 @@
           <button class="secondary" id="btnClose">Fermer</button>
         </div>
         <label>Ou coller l’ID</label>
-        <input id="manualCid" class="mono" placeholder="c_... / UUID / ULID" />
+        <input id="manualCid" class="mono" placeholder="c_..." />
         <div class="row"><button class="secondary" id="btnUseManual">Utiliser cet ID</button></div>
         <div class="hint" id="scanHint"></div>
       </div>
     </div>
   </div>
 
-  <script src="/fidel/qr.js?v=20260128" defer></script>
-  <script src="/fidel/client.js?v=20260128" defer></script>
+  <script src="/fidel/qr.min.js"></script>
+  <script src="/fidel/client.js"></script>
+<script src="./qr.min.js?v=20260128c"></script>
+<script src="./client.js?v=20260128c"></script>
 </body>
 </html>

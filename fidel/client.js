@@ -1,14 +1,11 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 canvas-qr
+// Version: 2026-01-28 restore-fix
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
-
-// QR payload (URL encapsulation) — lisible par tous les scanners
-const QR_SCAN_BASE = "https://aperos.net/fidel/scan?cid=";
 
 /* ---------- Utils ---------- */
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -18,9 +15,12 @@ function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
-  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true; // UUID
-  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true; // ULID
-  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true; // prefixed
+  // UUID
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
+  // ULID
+  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
+  // Prefixed id
+  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
   return false;
 }
 
@@ -43,7 +43,7 @@ function setMeta(cid){
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender(QR_SCAN_BASE + encodeURIComponent(cid));
+  if(cid) qrRender(cid);
 }
 
 function setApiState(ok, msg){
@@ -84,50 +84,28 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR Canvas (Ultra fiable) ---------- */
-async function qrRender(text){
-  const canvas = document.getElementById("qrCanvas");
-  if(!canvas) return;
-
-  const cid = String(text||"").trim();
-  if(!cid){
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    return;
-  }
-
-  // Wait for library to be present (qr.js)
-  const start = Date.now();
-  while(!(window.ADN66QR && typeof window.ADN66QR.renderToCanvas === "function")){
-    if(Date.now() - start > 1500) break;
-    await sleep(25);
-  }
-
+/* ---------- QR ---------- */
+function qrRender(text){
+  const box = document.getElementById("qrSvg");
+  if(!box) return;
   try{
-    if(!(window.ADN66QR && typeof window.ADN66QR.renderToCanvas === "function")){
-      throw new Error("QR engine manquant (qr.js)");
-    }
-    // Render stable QR
-    const qrValue = `${QR_SCAN_BASE}${encodeURIComponent(cid)}`;
-    window.ADN66QR.renderToCanvas(canvas, qrValue, {scale:7, margin:6, dark:"#111", light:"#fff", ecc:"M"});
+    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
+    const q = new window.QRCodeGenerator(0);
+    q.addData(String(text));
+    q.make();
+    // qr.min.js: createSvgTag(cellSize, fillColor)
+    box.innerHTML = q.createSvgTag(4, "#111");
   }catch(_){
-    // Fallback: write text in canvas
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = "#111";
-    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.fillText("QR indisponible", 20, 40);
+    box.innerHTML = "QR indisponible";
   }
 }
 
 /* ---------- API ---------- */
 async function api(path, opts={}){
-  const hasBody = !!opts.body;
-  const headers = Object.assign({}, opts.headers || {});
-  if(hasBody && !headers["content-type"]) headers["content-type"] = "application/json";
-
-  const res = await fetch(API_BASE + path, { ...opts, headers });
+  const res = await fetch(API_BASE + path, {
+    headers: {"content-type":"application/json"},
+    ...opts
+  });
   const data = await res.json().catch(()=> ({}));
   if(!res.ok) throw new Error(data.error || ("HTTP " + res.status));
   return data;
@@ -181,7 +159,7 @@ async function createCard(){
   const phone = normalizePhone(phoneEl ? phoneEl.value : "");
 
   if(!name) return alert("Entre ton prénom.");
-  if(!phone || phone.replace(/\D/g,"").length < 10) return alert("Numéro invalide.");
+  if(!phone || phone.length < 10) return alert("Numéro invalide.");
 
   try{
     const r = await api("/loyalty/register", {
@@ -199,7 +177,9 @@ async function createCard(){
 async function copyId(){
   const cid = localStorage.getItem(LS_KEY);
   if(!cid) return;
-  try{ await navigator.clipboard.writeText(cid); }catch(_){}
+  try{
+    await navigator.clipboard.writeText(cid);
+  }catch(_){}
 }
 
 /* ---------- Restore (Modal + Scan + Manual) ---------- */
@@ -308,6 +288,7 @@ function bind(){
     await restoreFromId(input ? input.value : "");
   };
 
+  // Close modal if click on backdrop
   const modal = document.getElementById("restoreModal");
   if(modal){
     modal.addEventListener("click", (e)=>{
@@ -322,4 +303,27 @@ if(document.readyState === "loading"){
   document.addEventListener("DOMContentLoaded", bind);
 }else{
   bind();
+}
+
+
+function drawQr(cid){
+  const box = $("#qrBox");
+  if(!box) return;
+  try{
+    const base = (window.__ADN66 && window.__ADN66.QR_SCAN_BASE) ? String(window.__ADN66.QR_SCAN_BASE) : "https://aperos.net/fidel/scan?cid=";
+    const qrValue = base + encodeURIComponent(String(cid||""));
+    if(typeof window.QRCodeGenerator !== "function") throw new Error("qr.min.js non chargé (QRCodeGenerator manquant)");
+    const q = new window.QRCodeGenerator(0); // auto type
+    q.addData(qrValue);
+    q.make();
+    // SVG noir sur fond blanc (scan universel)
+    box.innerHTML = q.createSvgTag(6, "#111");
+    // petite info debug (invisible si tout ok)
+    const st = $("#qrStatus");
+    if(st) st.textContent = "";
+  }catch(e){
+    box.innerHTML = '<div style="padding:14px;color:#111;font-weight:700">QR indisponible</div>';
+    const st = $("#qrStatus");
+    if(st) st.textContent = (e && e.message) ? e.message : String(e);
+  }
 }
