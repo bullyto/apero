@@ -39,7 +39,70 @@ function setCardVisible(v){
 }
 
 function setMeta(cid){
-  const meta = document.getElementById("meta");
+  const meta = document.getElement
+function extractClientIdFromAny(raw){
+  // Nettoyage agressif (espaces, retours, caractères invisibles)
+  let s = String(raw || "");
+  s = s.replace(/[\u200B-\u200D\uFEFF]/g, ""); // zero-width
+  s = s.trim();
+  if(!s) return "";
+
+  // 0) Si on voit "id=" quelque part, on extrait direct (le plus robuste)
+  //    Ex: https://.../client.html?restore=1&id=UUID
+  try{
+    const mId = s.match(/[?&#]id=([^&#\s]+)/i) || s.match(/\bid=([^&#\s]+)/i);
+    if(mId && mId[1]){
+      const v = decodeURIComponent(mId[1]);
+      if(v) return String(v).trim();
+    }
+  }catch(_){}
+
+  // 1) URL -> ?id=...
+  try{
+    if(/^https?:\/\//i.test(s)){
+      const u = new URL(s);
+      const id = (u.searchParams && u.searchParams.get("id")) ? u.searchParams.get("id") : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 2) JSON -> {cid:"..."} ou {id:"..."}
+  try{
+    if(s[0] === "{"){
+      const o = JSON.parse(s);
+      const id = (o && (o.id || o.cid || o.client_id || o.clientId)) ? (o.id || o.cid || o.client_id || o.clientId) : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 3) Fallback : extraire un UUID dans le texte (même si c'est une URL complète)
+  const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(mm && mm[0]) return mm[0];
+
+  // 4) Sinon, renvoie le texte brut
+  return s;
+}
+
+function normalizeScannedClientId(raw){
+  const cid = extractClientIdFromAny(raw);
+  return (cid && isValidClientId(cid)) ? cid : "";
+}
+
+function setManualCid(raw, {select=true} = {}){
+  const input = document.getElementById("manualCid");
+  if(!input) return;
+  const cid = extractClientIdFromAny(raw);
+  if(cid) input.value = cid;
+  if(select){
+    try{
+      input.focus();
+      input.setSelectionRange(0, input.value.length);
+    }catch(_){
+      try{ input.focus(); input.select(); }catch(__){}
+    }
+  }
+}
+ById("meta");
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
@@ -233,13 +296,16 @@ async function closeRestore(){
 }
 
 async function restoreFromId(raw){
-  const cid = String(raw||"").trim();
+  const cid = normalizeScannedClientId(raw) || String(raw||"").trim();
+  // Remplir le champ avec uniquement l'ID (si on a scanné une URL complète)
+  setManualCid(cid, {select:true});
   if(!isValidClientId(cid)) return alert("ID invalide.");
   localStorage.setItem(LS_KEY, cid);
   await closeRestore();
   await loadCard();
   alert("Carte restaurée ✅");
 }
+
 
 async function startRestoreScan(){
   const hint = document.getElementById("scanHint");
@@ -268,8 +334,10 @@ async function startRestoreScan(){
       const codes = await detector.detect(video);
       if(codes && codes.length){
         const val = String(codes[0].rawValue || "").trim();
-        if(isValidClientId(val)){
-          await restoreFromId(val);
+        setManualCid(val, {select:true});
+        const cid = normalizeScannedClientId(val);
+        if(cid){
+          await restoreFromId(cid);
           return;
         }
       }
@@ -308,6 +376,21 @@ function bind(){
     const input = document.getElementById("manualCid");
     await restoreFromId(input ? input.value : "");
   };
+
+  const manualInput = document.getElementById("manualCid");
+  if(manualInput){
+    manualInput.addEventListener("paste", ()=>{
+      // Laisser le collage se faire, puis nettoyer en gardant uniquement l'ID
+      setTimeout(()=> setManualCid(manualInput.value, {select:true}), 0);
+    });
+    manualInput.addEventListener("blur", ()=>{
+      // Nettoyage discret si l'utilisateur colle une URL complète
+      const cid = extractClientIdFromAny(manualInput.value);
+      if(cid && cid !== manualInput.value){
+        manualInput.value = cid;
+      }
+    });
+  }
 
   // Close modal if click on backdrop
   const modal = document.getElementById("restoreModal");

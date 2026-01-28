@@ -42,6 +42,19 @@ function extractClientIdFromAny(raw){
 }
 
 
+function setClientIdField(value){
+  const input = document.getElementById("clientId");
+  if(!input) return;
+  input.value = value || "";
+  try{
+    input.focus();
+    input.setSelectionRange(0, input.value.length);
+  }catch(_){
+    try{ input.focus(); input.select(); }catch(__){}
+  }
+}
+
+
 // PATH: /fidel/admin.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
@@ -197,7 +210,7 @@ async function startScan(){
           const val = barcodes[0].rawValue || "";
           const cid = pickCid(val);
           if(cid){
-            document.getElementById("clientId").value = cid;
+            setClientIdField(cid);
             scanHint.textContent = "QR détecté ✅";
             await stopScan();
             return;
@@ -229,7 +242,7 @@ async function startScan(){
         const txt = result.getText();
         const cid = pickCid(txt);
         if(cid){
-          document.getElementById("clientId").value = cid;
+          setClientIdField(cid);
           scanHint.textContent = "QR détecté ✅";
           stopScan();
         }
