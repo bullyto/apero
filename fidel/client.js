@@ -111,6 +111,30 @@ async function qrRender(text){
   // Reset placeholder
   box.innerHTML = "";
 
+
+  // If lib isn't present, try to (re)load it dynamically (covers cache/SW/ordering issues)
+  if(typeof window.QRCodeGenerator !== "function"){
+    try{
+      const libUrl = new URL("./qr.min.js", location.href).toString();
+      // Avoid re-inject if already injected
+      if(!document.querySelector('script[data-qr-lib="1"]')){
+        const s = document.createElement("script");
+        s.src = libUrl + (libUrl.includes("?") ? "&" : "?") + "v=20260128-4";
+        s.async = true;
+        s.defer = true;
+        s.dataset.qrLib = "1";
+        const p = new Promise((resolve,reject)=>{
+          s.onload = ()=>resolve(true);
+          s.onerror = ()=>reject(new Error("Chargement lib QR impossible: " + libUrl));
+        });
+        document.head.appendChild(s);
+        await Promise.race([p, sleep(1500)]);
+      }
+    }catch(e){
+      // ignore, handled below
+    }
+  }
+
   // Wait for QRCodeGenerator (up to 1s)
   const start = Date.now();
   while(typeof window.QRCodeGenerator !== "function"){
@@ -120,10 +144,10 @@ async function qrRender(text){
 
   try{
     if(typeof window.QRCodeGenerator !== "function"){
-      throw new Error("Lib QR absente (qr.min.js non chargé / 404)");
+      throw new Error("Lib QR absente. Vérifie que ce fichier existe : " + new URL("./qr.min.js", location.href).toString());
     }
 
-    // typeNumber = null => auto (important: 0 casse cette lib)
+    // typeNumber = 0 => auto
     const q = new window.QRCodeGenerator(null);
     q.addData(cid);
     q.make();
