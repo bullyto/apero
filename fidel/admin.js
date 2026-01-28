@@ -85,15 +85,38 @@ async function api(path, opts={}){
   return data;
 }
 
-function qrRender(obj){
-  const text = typeof obj === "string" ? obj : JSON.stringify(obj);
+function qrRender(payload){
+  const host = document.getElementById("qrSvg");
+  if(!host) return;
+
+  // payload = string (URL) ou objet -> JSON
+  const text = (typeof payload === "string") ? payload : JSON.stringify(payload);
+
+  host.innerHTML = "";
+
+  // Wrapper = vraie bordure blanche (quiet zone visuelle)
+  const wrap = document.createElement("div");
+  wrap.style.background = "#fff";
+  wrap.style.padding = "18px";
+  wrap.style.borderRadius = "18px";
+  wrap.style.display = "inline-block";
+  wrap.style.boxShadow = "0 12px 30px rgba(0,0,0,.25)";
+  host.appendChild(wrap);
+
   try{
-    const q = window.QRCodeGenerator(0, 'M');
-    q.addData(text);
-    q.make();
-    document.getElementById("qrSvg").innerHTML = q.createSvgTag(7, 2);
+    if(typeof window.QRCode !== "function"){
+      wrap.textContent = "QR indisponible";
+      return;
+    }
+    // qrcodejs génère canvas/img dans wrap
+    new QRCode(wrap, {
+      text: String(text || ""),
+      width: 260,
+      height: 260,
+      correctLevel: QRCode.CorrectLevel.M
+    });
   }catch(e){
-    document.getElementById("qrSvg").textContent = "QR indisponible";
+    wrap.textContent = "QR indisponible";
   }
 }
 
@@ -192,72 +215,18 @@ function renderResults(items){
   });
 }
 
-function showRecoveryQr(clientId){
-  // QR de récupération = URL http(s) cliquable + scannable
-  // Le client scanne → ouvre la page client qui restaure automatiquement.
-  const id = String(clientId || "").trim();
-  if(!id){
-    toast("ID manquant", "warn");
-    return;
-  }
+function showRecoveryQr(cid){
+  // QR de récupération : URL http(s) que le client scanne
+  const id = String(cid || "").trim();
 
-  // URL de restauration (client)
-  // ⚠️ adapte si tu changes la route : /fidel/client.html
-  const base = (location.origin || "") + "/fidel/client.html";
-  const restoreUrl = base + "?restore=1&id=" + encodeURIComponent(id);
+  // page client (adapter si tu changes la route)
+  const restoreUrl = (location.origin || "") + "/fidel/client.html?restore=1&id=" + encodeURIComponent(id);
 
-  // UI popup existante
-  openModal(`
-    <div class="modalHead">
-      <div class="modalTitle">QR de récupération</div>
-      <button class="btn btnGhost" id="btnCloseModal">Fermer</button>
-    </div>
-    <div class="modalBody">
-      <div class="muted">Le client doit scanner ce QR pour restaurer sa carte.</div>
-      <div class="qrBox" style="margin-top:12px; display:flex; justify-content:center;">
-        <img id="recoveryQrImg" alt="QR récupération" style="width:260px;height:260px;border-radius:18px;background:#fff;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);" />
-      </div>
-      <div class="muted" style="margin-top:10px;word-break:break-all;">
-        <strong>URL :</strong> <span id="recoveryUrlText"></span>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:12px;">
-        <button class="btn" id="btnCopyRecoveryUrl">Copier URL</button>
-        <a class="btn btnGhost" id="btnOpenRecoveryUrl" target="_blank" rel="noopener">Ouvrir</a>
-      </div>
-      <div class="muted" style="margin-top:10px;">
-        ID : ${escapeHtml(id)}
-      </div>
-    </div>
-  `);
+  document.getElementById("qrSub").textContent =
+    "URL (scan) : " + restoreUrl;
 
-  const closeBtn = document.getElementById("btnCloseModal");
-  if(closeBtn) closeBtn.addEventListener("click", closeModal);
-
-  const urlText = document.getElementById("recoveryUrlText");
-  if(urlText) urlText.textContent = restoreUrl;
-
-  const openA = document.getElementById("btnOpenRecoveryUrl");
-  if(openA) openA.href = restoreUrl;
-
-  const img = document.getElementById("recoveryQrImg");
-  if(img){
-    // Service QR externe fiable (pas de librairie JS, pas de qr.min.js)
-    // margin large -> bordure blanche
-    const qrApi = "https://api.qrserver.com/v1/create-qr-code/";
-    img.src = qrApi + "?size=260x260&margin=18&data=" + encodeURIComponent(restoreUrl);
-  }
-
-  const copyBtn = document.getElementById("btnCopyRecoveryUrl");
-  if(copyBtn){
-    copyBtn.addEventListener("click", async () => {
-      try{
-        await navigator.clipboard.writeText(restoreUrl);
-        toast("URL copiée", "ok");
-      }catch(e){
-        toast("Copie impossible", "warn");
-      }
-    });
-  }
+  qrRender(restoreUrl);
+  document.getElementById("qrFull").classList.add("open");
 }
 
 async function stamp(){
