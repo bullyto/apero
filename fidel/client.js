@@ -1,7 +1,6 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Refonte fiabilité QR + chemins relatifs + diagnostics
-// Version: 2026-01-28 qr-hardfix
+// Version: 2026-01-28 canvas-qr
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -16,20 +15,10 @@ function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
-  // UUID
-  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true;
-  // ULID
-  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true;
-  // Prefixed id
-  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true;
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return true; // UUID
+  if(/^[0-9A-HJKMNP-TV-Z]{26}$/.test(s)) return true; // ULID
+  if(/^c_[a-zA-Z0-9_-]{10,}$/.test(s)) return true; // prefixed
   return false;
-}
-
-function setDebug(text){
-  const a = document.getElementById("dbg");
-  const b = document.getElementById("dbg2");
-  if(a) a.textContent = text || "—";
-  if(b) b.textContent = text || "—";
 }
 
 /* ---------- UI ---------- */
@@ -92,49 +81,39 @@ function renderVisualStamps(points){
   });
 }
 
-/* ---------- QR (HARD FIX) ---------- */
-/**
- * 1) On attend que la lib soit réellement dispo (PWA/WebView = timing variable)
- * 2) Si ça plante, on affiche un diagnostic clair (sans casser l'UI)
- * 3) On garantit un QR rendu dès qu'un ID est présent
- */
+/* ---------- QR Canvas (Ultra fiable) ---------- */
 async function qrRender(text){
-  const box = document.getElementById("qrSvg");
-  if(!box) return;
+  const canvas = document.getElementById("qrCanvas");
+  if(!canvas) return;
 
-  const cid = String(text || "").trim();
+  const cid = String(text||"").trim();
   if(!cid){
-    box.innerHTML = "";
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     return;
   }
 
-  // Reset placeholder
-  box.innerHTML = "";
-
-  // Wait for QRCodeGenerator (up to 1s)
+  // Wait for library to be present (qr.js)
   const start = Date.now();
-  while(typeof window.QRCodeGenerator !== "function"){
-    if(Date.now() - start > 1000) break;
-    await sleep(50);
+  while(!(window.ADN66QR && typeof window.ADN66QR.renderToCanvas === "function")){
+    if(Date.now() - start > 1500) break;
+    await sleep(25);
   }
 
   try{
-    if(typeof window.QRCodeGenerator !== "function"){
-      throw new Error("Lib QR absente. Ouvre: " + new URL("/fidel/qr.min.js", location.origin).toString());
+    if(!(window.ADN66QR && typeof window.ADN66QR.renderToCanvas === "function")){
+      throw new Error("QR engine manquant (qr.js)");
     }
-
-    // typeNumber = null => auto (compatible)
-    const q = new window.QRCodeGenerator(null);
-    q.addData(cid);
-    q.make();
-
-    // createSvgTag(cellSize, fillColor) – la lib met un fond blanc
-    box.innerHTML = q.createSvgTag(4, "#111");
-
-    setDebug(`QR OK • lib=OK • base=${new URL(".", location.href).href}`);
-  }catch(e){
-    box.innerHTML = `<div style="font-size:12px;color:#111;background:#fff;border-radius:10px;padding:10px;border:1px solid rgba(0,0,0,.12)">QR indisponible<br><span style="opacity:.75">${(e && e.message)? String(e.message).replace(/[<>]/g,"") : "erreur inconnue"}</span></div>`;
-    setDebug(`QR KO • ${e && e.message ? e.message : "erreur inconnue"} • base=${new URL(".", location.href).href}`);
+    // Render stable QR
+    window.ADN66QR.renderToCanvas(canvas, cid, {scale:6, margin:3, dark:"#111", light:"#fff"});
+  }catch(_){
+    // Fallback: write text in canvas
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = "#111";
+    ctx.font = "14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText("QR indisponible", 20, 40);
   }
 }
 
@@ -144,11 +123,7 @@ async function api(path, opts={}){
   const headers = Object.assign({}, opts.headers || {});
   if(hasBody && !headers["content-type"]) headers["content-type"] = "application/json";
 
-  const res = await fetch(API_BASE + path, {
-    ...opts,
-    headers
-  });
-
+  const res = await fetch(API_BASE + path, { ...opts, headers });
   const data = await res.json().catch(()=> ({}));
   if(!res.ok) throw new Error(data.error || ("HTTP " + res.status));
   return data;
@@ -168,7 +143,6 @@ async function loadCard(){
     setStateText(0, null);
     setApiState(true, "Synchronisé");
     setMeta(null);
-    setDebug(`Init • base=${new URL(".", location.href).href}`);
     return;
   }
 
@@ -190,10 +164,8 @@ async function loadCard(){
     renderVisualStamps(points);
     setStateText(points, card.completed_at || null);
     setApiState(true, "Synchronisé");
-    setDebug(`API OK • points=${points}/${goal}`);
-  }catch(e){
+  }catch(_){
     setApiState(false, "Hors ligne");
-    setDebug(`API KO • ${e && e.message ? e.message : "erreur inconnue"}`);
   }
 }
 
@@ -223,9 +195,7 @@ async function createCard(){
 async function copyId(){
   const cid = localStorage.getItem(LS_KEY);
   if(!cid) return;
-  try{
-    await navigator.clipboard.writeText(cid);
-  }catch(_){}
+  try{ await navigator.clipboard.writeText(cid); }catch(_){}
 }
 
 /* ---------- Restore (Modal + Scan + Manual) ---------- */
@@ -334,7 +304,6 @@ function bind(){
     await restoreFromId(input ? input.value : "");
   };
 
-  // Close modal if click on backdrop
   const modal = document.getElementById("restoreModal");
   if(modal){
     modal.addEventListener("click", (e)=>{
@@ -342,11 +311,9 @@ function bind(){
     });
   }
 
-  // First load
   loadCard();
 }
 
-// With defer scripts, DOM is ready before execution, but keep safe:
 if(document.readyState === "loading"){
   document.addEventListener("DOMContentLoaded", bind);
 }else{
