@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ADN66 • Carte de fidélité</title>
+  <meta name="theme-color" content="#050b12" />
+  
+  <style>
+    :root{
+      /* ✅ Style marketing (aligné zone_livraison.html) */
+      --blue:#0b1c2d;               /* header / titres */
+      --sky:#5db7ee;                /* CTA */
+      --text:#0b1c2d;               /* texte principal */
+      --muted:rgba(11,28,45,.65);   /* texte secondaire */
+      --line:rgba(11,28,45,.15);    /* bordures */
+      --bg:#f7fbff;                 /* fond page */
+      --shadow:0 12px 30px rgba(0,0,0,.08);
+      --shadowBtn:0 10px 18px rgba(93,183,238,.32);
+      --radiusCard:18px;
+      --radiusBtn:14px;
+    }
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:radial-gradient(1200px 800px at 50% -10%, rgba(93,183,238,.16), transparent 55%), #050b12;
+      color:#ffffff;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+    }
+
+    .wrap{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;}
+
+    /* En-tête "bar" comme livraison */
+    .brand{
+      background:var(--blue);
+      color:#fff;
+      border-radius:var(--radiusCard);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .brand .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .brand b{font-size:16px;font-weight:900;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand span{font-size:12px;opacity:.85}
+    .brand .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .card{width:min(560px,100%);margin:0 auto;color:var(--text);color:var(--text);
+      border:1px solid var(--line);
+      border-radius:var(--radiusCard);
+      background:#fff;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-h{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .card-h h1{margin:0;font-size:16px;font-weight:900;color:var(--text)}
+    .sub{font-size:12px;color:var(--muted);font-weight:800}
+
+    .panel{padding:14px}
+
+    .note{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+    .noteSub{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+
+    button{
+      flex:1;
+      min-width:160px;
+      padding:10px 14px;
+      border-radius:var(--radiusBtn);
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      border:none;
+      background:var(--sky);
+      color:#fff;
+      box-shadow:var(--shadowBtn);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: translateY(1px); }
+
+    button.secondary{
+      background:#fff;
+      color:var(--blue);
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+
+    /* Carte visuelle (on garde la structure, mais style "propre") */
+    .cardVisualWrap{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;}
+    .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
+    .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
+    .loyTop .sub{font-size:12px;color:var(--muted);font-weight:900}
+
+    .visual{
+      width:min(520px,100%);
+      position:relative;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.07);
+    }
+    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
+
+    .stamp{
+      position:absolute;width:11%;aspect-ratio:1/1;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;font-weight:1000;
+      transform:rotate(-10deg);opacity:0;pointer-events:none;
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      border:2px solid rgba(11,28,45,.22);
+      background:rgba(93,183,238,.18);
+      color:rgba(11,28,45,.92);
+    }
+    .stamp.filled{opacity:1;}
+    .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
+    .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
+    .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
+
+    /* Modal (pop-up) */
+    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+    .modal.open{display:flex}
+    .modal .box{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);}
+    .modal .box .head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg, rgba(93,183,238,.10), rgba(93,183,238,0));
+    }
+    .modal .box .head b{font-size:14px;font-weight:900;color:var(--text)}
+    .tabs{display:none !important;}
+
+    .tabBtn{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--muted);
+      font-weight:900;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .tabBtn.active{
+      background:rgba(93,183,238,.22);
+      color:var(--text);
+      border-color:rgba(93,183,238,.55);
+    }
+
+    .modal .box .content{padding:14px}
+
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900}
+
+    input{
+      width:100%;
+      border-radius:14px;
+      border:2px solid rgba(93,183,238,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      box-shadow: 0 6px 14px rgba(93,183,238,.14);
+      color:var(--text);
+    }
+    input::placeholder{ color:rgba(11,28,45,.45); }
+    input:focus{
+      border-color: rgba(93,183,238,1);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.22);
+    }
+
+    .hint{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.35;font-weight:800}
+
+    .scan{
+      width:100%;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#0b1c2d;
+      aspect-ratio:3/4;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 10px 22px rgba(0,0,0,.12);
+    }
+    video{width:100%;height:100%;object-fit:cover}
+
+    .qr{
+      width:240px;max-width:100%;
+      background:#fff;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid var(--line);
+      box-shadow:0 12px 30px rgba(0,0,0,.10);
+    }
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:900}
+
+    .footer{
+      text-align:center;
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+    }
+  </style>
+
+</head>
+<body>
+  <div class="wrap">
+<div class="badge"></div></div>
+
+    <div class="card">
+      <div class="card-h">
+        <h1>Ma carte virtuelle</h1>
+        <div class="sub" id="stateText" style="font-size:12px;color:var(--t2)">—</div>
+      </div>
+
+      <!-- Écran départ : uniquement le nécessaire -->
+      <div class="panel" id="startBlock">
+        <div class="note">Crée ta carte en 10 secondes.</div>
+        <div class="noteSub">Cumule des points à chaque commande et débloque des avantages.</div>
+        <div class="row">
+          <button id="btnOpenCreate">Créer ma carte</button>
+          <button class="secondary" id="btnOpenRestore">Restaurer</button>
+        </div>
+      </div>
+
+      <!-- Écran carte : carte + bouton QR (pas d’ID visible) -->
+      <div class="panel" id="cardBlock" style="display:none">
+        <div class="cardVisualWrap">
+          <div class="loyTop">
+            <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
+            <div class="sub" id="syncText">Synchronisé</div>
+          </div>
+
+          <div class="visual" id="visual">
+            <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
+            <div class="stamp s1" data-slot="1"><span>✓</span></div>
+            <div class="stamp s2" data-slot="2"><span>✓</span></div>
+            <div class="stamp s3" data-slot="3"><span>✓</span></div>
+            <div class="stamp s4" data-slot="4"><span>✓</span></div>
+            <div class="stamp s5" data-slot="5"><span>✓</span></div>
+            <div class="stamp s6" data-slot="6"><span>✓</span></div>
+            <div class="stamp s7" data-slot="7"><span>✓</span></div>
+            <div class="stamp s8" data-slot="8"><span>✓</span></div>
+          </div>
+
+          <div class="row" style="width:100%">
+            <button id="btnShowQr">Afficher mon QR</button>
+            <button class="secondary" id="btnRefresh">Rafraîchir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+  <!-- Modal actions (Créer / Restaurer) -->
+  <div class="modal" id="actionModal" aria-hidden="true">
+    <div class="box">
+      <div class="head">
+        <b id="modalTitle">Action</b>
+        
+      </div>
+      <div class="content">
+        <!-- Create -->
+        <div id="createView" style="display:none">
+          <div class="hint">Crée ta carte, puis affiche ton QR.</div>
+          <label>Prénom</label>
+          <input id="name" autocomplete="given-name" placeholder="Ex: Kevin" />
+          <label>Téléphone</label>
+          <input id="phone" inputmode="tel" autocomplete="tel" placeholder="06..." />
+          <div class="row">
+            <button id="btnCreate">Créer</button>
+            <button class="secondary" id="btnCloseModal1">Fermer</button>
+          </div>
+        </div>
+
+        <!-- Restore -->
+        <div id="restoreView" style="display:none">
+          <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’URL / l’ID).</div>
+          <div class="scan"><video id="video" playsinline></video></div>
+          <div class="row">
+            <button id="btnStartScan">Scanner</button>
+            <button class="secondary" id="btnCloseModal2">Fermer</button>
+          </div>
+          <label>Ou coller</label>
+          <input id="manualCid" class="mono" placeholder="Colle une URL ou un ID…" />
+          <div class="row"><button class="secondary" id="btnUseManual">Utiliser</button></div>
+          <div class="hint" id="scanHint"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal QR -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="box">
+      <div class="head">
+        <b>Mon QR</b>
+        
+      </div>
+      <div class="content" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+        <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
+        <div class="row" style="width:100%">
+          <button class="secondary" id="btnCopyLink">Copier le lien</button>
+        </div>
+        <div class="hint" style="text-align:center">Le lien copié est exactement celui encodé dans le QR.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="./client.js?v=20260128-8" defer></script>
+</body>
+</html>
