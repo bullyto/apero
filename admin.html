@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ADN66 • Fidélité (Livreur/Admin)</title>
+  <meta name="theme-color" content="#050b12" />
+  <style>
+    :root{
+      --bg:#050b12;--card:#0b1420;--card2:#0e1826;
+      --t:rgba(255,255,255,.92);--t2:rgba(255,255,255,.68);--b:rgba(255,255,255,.10);
+      --ok:#21d07a;--warn:#ffcc33;--danger:#ff4d4d;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:radial-gradient(1200px 800px at 50% -10%, rgba(84,180,255,.18), transparent 55%), var(--bg);
+      color:var(--t);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      min-height:100vh;padding:16px;display:flex;justify-content:center;
+    }
+    .wrap{width:min(980px,100%);}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+    .brand b{font-size:16px}
+    .brand span{display:block;font-size:12px;color:var(--t2);margin-top:2px}
+    .pill{border:1px solid var(--b);padding:8px 10px;border-radius:999px;font-size:12px;color:var(--t2);background:rgba(255,255,255,.03)}
+    .card{
+      background:linear-gradient(180deg,var(--card),var(--card2));
+      border:1px solid var(--b);border-radius:18px;overflow:hidden;
+      box-shadow:0 0 0 1px rgba(255,255,255,.02), 0 20px 60px rgba(0,0,0,.55);
+    }
+    .card-h{padding:14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
+    .card-h h1{margin:0;font-size:14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+    .panel{border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.03);padding:12px;}
+    label{display:block;font-size:12px;color:var(--t2);margin:10px 0 6px}
+    input{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);color:var(--t);outline:none}
+    input:focus{border-color:rgba(84,180,255,.55);box-shadow:0 0 0 4px rgba(84,180,255,.12);}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    button{flex:1;min-width:160px;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(84,180,255,.14);color:var(--t);font-weight:900;cursor:pointer}
+    button.secondary{background:rgba(255,255,255,.06)}
+    .hint{font-size:12px;color:var(--t2);line-height:1.35;margin-top:8px}
+    .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);margin-top:10px}
+    .dot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.18);}
+    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(33,208,122,.15)}
+    .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(255,204,51,.12)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    table{width:100%;border-collapse:collapse;margin-top:10px;overflow:hidden;border-radius:12px}
+    th,td{text-align:left;font-size:12px;padding:10px;border-bottom:1px solid rgba(255,255,255,.06)}
+    th{color:var(--t2);font-weight:800}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .scan{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#000;aspect-ratio:3/4;overflow:hidden;position:relative;margin-top:10px}
+    video{width:100%;height:100%;object-fit:cover}
+
+    .qrfull{display:none;position:fixed;inset:0;background:rgba(0,0,0,.70);align-items:center;justify-content:center;padding:18px;z-index:9999}
+    .qrfull.open{display:flex}
+    .qrbox{width:min(520px,100%);background:#fff;border-radius:18px;padding:14px}
+    .qrbox .title{display:flex;justify-content:space-between;align-items:center;color:#000;font-weight:1000}
+    .qrbox .sub{color:#333;font-size:12px;margin-top:6px}
+    .qrsvg{margin-top:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <b>ADN66 • Fidélité</b>
+        <span>Page Livreur/Admin</span>
+      </div>
+      <div class="pill" id="envPill">Mode : <b>Démo</b></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <h1>Scanner + Valider (+1 point)</h1>
+        <div class="mono" id="who">—</div>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <div class="hint">
+            • Scanne le QR du client puis “Valider”.<br>
+            • Sans SMS : si le client a perdu sa carte → Recherche téléphone → “Afficher QR” → il rescane.
+          </div>
+
+          <label>Clé admin (PIN)</label>
+          <input id="adminKey" class="mono" value="0000" />
+          <label>ID client (auto après scan)</label>
+          <input id="clientId" class="mono" placeholder="c_..." />
+
+          <div class="row">
+            <button id="btnScan">Scanner QR</button>
+            <button id="btnStamp">Valider (+1)</button>
+          </div>
+
+          <div class="status"><span class="dot ok" id="dot"></span><span id="apiState">Démo locale</span></div>
+
+          <div style="margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px">
+            <h1 style="margin:0;font-size:14px">Récupération (client a perdu sa carte)</h1>
+            <label>Recherche par téléphone</label>
+            <input id="searchPhone" inputmode="tel" placeholder="06..." />
+            <div class="row">
+              <button class="secondary" id="btnSearch">Rechercher</button>
+              <button class="secondary" id="btnClear">Effacer</button>
+            </div>
+            <div id="results"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h1 style="margin:0;font-size:14px">Caméra</h1>
+          <div class="scan"><video id="video" playsinline></video></div>
+          <div class="hint" id="scanHint">Prêt.</div>
+          <div class="row">
+            <button class="secondary" id="btnStop">Stop</button>
+            <button class="secondary" id="btnCopy">Copier ID</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="qrfull" id="qrFull">
+    <div class="qrbox">
+      <div class="title">
+        <span>QR de récupération</span>
+        <button class="secondary" id="btnCloseQr" style="border:1px solid #ddd;color:#000;background:#f3f3f3;min-width:auto;padding:8px 10px;border-radius:10px;font-weight:900">Fermer</button>
+      </div>
+      <div class="sub" id="qrSub">—</div>
+      <div class="qrsvg" id="qrSvg"></div>
+    </div>
+  </div>
+
+  <script src="./qr.min.js?v=20260128032719"></script>
+  <script src="./admin.js?v=20260128032719"></script>
+</body>
+</html>
