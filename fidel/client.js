@@ -306,34 +306,29 @@ if(document.readyState === "loading"){
 }
 
 
+
 function drawQr(cid){
-  const box = $("#qrSvg");
-  if(!box) return;
-  try{
+  try {
+    const canvas = document.getElementById("qrCanvas");
+    if(!canvas) throw new Error("qrCanvas introuvable");
     const base = (window.__ADN66 && window.__ADN66.QR_SCAN_BASE) ? String(window.__ADN66.QR_SCAN_BASE) : "https://aperos.net/fidel/scan?cid=";
     const qrValue = base + encodeURIComponent(String(cid||""));
-    if(typeof window.QRCodeGenerator !== "function") throw new Error("qr.min.js non chargé (QRCodeGenerator manquant)");
-    const q = new window.QRCodeGenerator(0); // auto type
-    q.addData(qrValue);
-    q.make();
-    // SVG noir sur fond blanc (scan universel)
-    box.innerHTML = q.createSvgTag(6, "#111");
-    // petite info debug (invisible si tout ok)
-    const st = $("#qrStatus");
+    if(!window.ADN66QR || typeof window.ADN66QR.renderToCanvas !== "function") throw new Error("qr.js non chargé");
+    window.ADN66QR.renderToCanvas(canvas, qrValue, {scale:7, margin:6, dark:"#111", light:"#fff", ecc:"M"});
+    const st = document.getElementById("qrStatus");
     if(st) st.textContent = "";
-  }catch(e){
-    box.innerHTML = '<div style="padding:14px;color:#111;font-weight:700">QR indisponible</div>';
-    const st = $("#qrStatus");
+  } catch(e) {
+    const st = document.getElementById("qrStatus");
     if(st) st.textContent = (e && e.message) ? e.message : String(e);
   }
 }
 
 
+
 // --- ADN66 QR hook (fallback) ---
 (function(){
   try{
-    const cid = (typeof getCid === "function") ? getCid() :
-                (localStorage.getItem("client_id") || localStorage.getItem("adn66_client_id"));
+    const cid = localStorage.getItem("client_id") || localStorage.getItem("adn66_client_id") || localStorage.getItem("loyalty_client_id");
     if(cid) drawQr(cid);
   }catch(e){}
 })();
