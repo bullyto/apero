@@ -42,19 +42,6 @@ function extractClientIdFromAny(raw){
 }
 
 
-function setClientIdField(value){
-  const input = document.getElementById("clientId");
-  if(!input) return;
-  input.value = value || "";
-  try{
-    input.focus();
-    input.setSelectionRange(0, input.value.length);
-  }catch(_){
-    try{ input.focus(); input.select(); }catch(__){}
-  }
-}
-
-
 // PATH: /fidel/admin.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
@@ -210,7 +197,7 @@ async function startScan(){
           const val = barcodes[0].rawValue || "";
           const cid = pickCid(val);
           if(cid){
-            setClientIdField(cid);
+            document.getElementById("clientId").value = cid;
             scanHint.textContent = "QR détecté ✅";
             await stopScan();
             return;
@@ -242,7 +229,7 @@ async function startScan(){
         const txt = result.getText();
         const cid = pickCid(txt);
         if(cid){
-          setClientIdField(cid);
+          document.getElementById("clientId").value = cid;
           scanHint.textContent = "QR détecté ✅";
           stopScan();
         }
@@ -312,16 +299,19 @@ function renderResults(items){
 }
 
 function showRecoveryQr(cid){
-  // QR de récupération : URL http(s) que le client scanne
+  // QR de récupération :
+  // ✅ Le QR DOIT contenir uniquement l'ID (UUID/ULID/etc.)
+  // (l'URL reste affichée à l'écran pour copie si besoin)
   const id = String(cid || "").trim();
 
-  // page client (adapter si tu changes la route)
+  // page client (affichage seulement)
   const restoreUrl = (location.origin || "") + "/fidel/client.html?restore=1&id=" + encodeURIComponent(id);
 
   document.getElementById("qrSub").textContent =
-    "URL (scan) : " + restoreUrl;
+    "ID (QR) : " + id + "  —  URL (copie) : " + restoreUrl;
 
-  qrRender(restoreUrl);
+  // QR = ID uniquement
+  qrRender(id);
   document.getElementById("qrFull").classList.add("open");
 }
 
