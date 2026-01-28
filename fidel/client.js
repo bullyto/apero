@@ -1,6 +1,6 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 restore-fix
+// Version: 2026-01-28 qr-fix
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -24,6 +24,23 @@ function isValidClientId(cid){
   return false;
 }
 
+function extractClientIdFromScanValue(val){
+  const s = String(val||"").trim();
+  if(isValidClientId(s)) return s;
+  // Try URL with ?cid=
+  try{
+    if(/^https?:\/\//i.test(s)){
+      const u = new URL(s);
+      const cid = u.searchParams.get("cid") || u.searchParams.get("client_id");
+      if(isValidClientId(cid)) return String(cid).trim();
+    }
+  }catch(_){/* ignore */}
+  // Try raw pattern inside text
+  const m = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(m && isValidClientId(m[0])) return m[0];
+  return null;
+}
+
 /* ---------- UI ---------- */
 function setEnvPill(){
   const pill = document.getElementById("envPill");
@@ -43,7 +60,7 @@ function setMeta(cid){
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender("https://aperos.net/fidel/scan?cid=" + encodeURIComponent(cid));
+  if(cid) qrRender(cid);
 }
 
 function setApiState(ok, msg){
@@ -100,7 +117,7 @@ function qrRender(text){
     // but also allow admin/scanner to parse it later. For the client QR we prefer ID-only,
     // so callers should pass the ID. Still: we accept any text.
     if(typeof window.QRCodeGenerator === "function"){
-      const q = new window.QRCodeGenerator(0);
+      const q = new window.QRCodeGenerator(null);
       q.addData(payload);
       q.make();
       const svg = q.createSvgTag(4, "#111");
@@ -159,7 +176,7 @@ async function loadCard(){
     if(goal) goal.textContent = String(GOAL);
     renderVisualStamps(0);
     setStateText(0, null);
-    setApiState(true, "Synchronisé");
+    setApiState(false, "Aucune carte");
     setMeta(null);
     return;
   }
@@ -282,9 +299,10 @@ async function startRestoreScan(){
     while(restoreScanning){
       const codes = await detector.detect(video);
       if(codes && codes.length){
-        const val = String(codes[0].rawValue || "").trim();
-        if(isValidClientId(val)){
-          await restoreFromId(val);
+        const raw = String(codes[0].rawValue || "").trim();
+        const cid = extractClientIdFromScanValue(raw);
+        if(cid){
+          await restoreFromId(cid);
           return;
         }
       }
