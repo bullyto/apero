@@ -89,12 +89,15 @@
     .stamp.filled{opacity:1;}
     .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
 
-    /* positions 8 tampons (2 rangées de 4) */
     .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
     .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
 
     .qrbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
-    .qr{width:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)}
+    .qr{
+      width:220px;max-width:100%;
+      background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)
+    }
+    canvas{display:block;width:100%;height:auto}
     .qr-actions{display:flex;gap:10px;width:100%}
     .qr-actions button{min-width:auto;flex:1}
 
@@ -107,9 +110,6 @@
     video{width:100%;height:100%;object-fit:cover}
     .hint{margin-top:10px;font-size:12px;color:var(--t2)}
     .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
-
-    /* mini debug (non intrusif) */
-    .dbg{margin-top:10px;font-size:11px;color:rgba(255,255,255,.55)}
   </style>
 </head>
 <body>
@@ -141,7 +141,6 @@
               <button class="secondary" id="btnRestore">Restaurer</button>
             </div>
             <div class="note">Le QR sert d’identifiant. Les points sont ajoutés uniquement par le livreur (scan + validation).</div>
-            <div class="dbg" id="dbg">—</div>
           </div>
 
           <div id="cardBlock" style="display:none">
@@ -150,7 +149,6 @@
               <span id="apiState">Synchronisé</span>
             </div>
             <div class="note" style="margin-top:10px">Si tu perds la carte : dis “j’ai perdu ma carte” et on la restaure depuis l’admin (sans SMS).</div>
-            <div class="dbg" id="dbg2">—</div>
           </div>
         </div>
 
@@ -175,13 +173,15 @@
 
             <div class="qrbox" style="width:100%;margin-top:12px">
               <div class="note" style="margin:0">Mon QR (à montrer)</div>
-              <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
+              <div class="qr">
+                <canvas id="qrCanvas" width="240" height="240" aria-label="QR code"></canvas>
+              </div>
               <div class="mono" id="cidText">—</div>
               <div class="qr-actions">
                 <button class="secondary" id="btnRefresh">Rafraîchir</button>
                 <button class="secondary" id="btnCopy">Copier ID</button>
               </div>
-              <div class="hint">Astuce : les scripts sont en chemins relatifs (./) pour éviter les 404 sur GitHub Pages.</div>
+              <div class="hint">QR Canvas ultra fiable (sans librairie externe).</div>
             </div>
           </div>
         </div>
@@ -209,8 +209,7 @@
     </div>
   </div>
 
-  <!-- IMPORTANT : chemins relatifs + defer (ordre garanti) -->
-  <script src="/fidel/qr.min.js?v=20260128-5" defer></script>
-  <script src="/fidel/client.js?v=20260128-5" defer></script>
+  <script src="/fidel/qr.js?v=20260128" defer></script>
+  <script src="/fidel/client.js?v=20260128" defer></script>
 </body>
 </html>
