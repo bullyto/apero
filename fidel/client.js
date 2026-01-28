@@ -7,6 +7,51 @@ const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
+/* ---------- Restore: extraction (même logique que Admin) ---------- */
+function extractClientIdFromAny(raw){
+  // Nettoyage agressif (espaces, retours, caractères invisibles)
+  let s = String(raw || "");
+  s = s.replace(/[\u200B-\u200D\uFEFF]/g, ""); // zero-width
+  s = s.trim();
+  if(!s) return "";
+
+  // 0) Si on voit "id=" quelque part, on extrait direct (le plus robuste)
+  //    Ex: https://.../client.html?restore=1&id=UUID
+  try{
+    const mId = s.match(/[?&#]id=([^&#\s]+)/i) || s.match(/\bid=([^&#\s]+)/i);
+    if(mId && mId[1]){
+      const v = decodeURIComponent(mId[1]);
+      if(v) return String(v).trim();
+    }
+  }catch(_){}
+
+  // 1) URL -> ?id=...
+  try{
+    if(/^https?:\/\//i.test(s)){
+      const u = new URL(s);
+      const id = (u.searchParams && u.searchParams.get("id")) ? u.searchParams.get("id") : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 2) JSON -> {cid:"..."} ou {id:"..."}
+  try{
+    if(s[0] === "{"){
+      const o = JSON.parse(s);
+      const id = (o && (o.id || o.cid || o.client_id || o.clientId)) ? (o.id || o.cid || o.client_id || o.clientId) : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 3) Fallback : extraire un UUID dans le texte (même si c'est une URL complète)
+  const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(mm && mm[0]) return mm[0];
+
+  // 4) Sinon, renvoie le texte brut
+  return s;
+}
+
+
 /* ---------- Utils ---------- */
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
@@ -233,9 +278,10 @@ async function closeRestore(){
 }
 
 async function restoreFromId(raw){
-  const cid = String(raw||"").trim();
+  const cid = extractClientIdFromAny(raw);
   if(!isValidClientId(cid)) return alert("ID invalide.");
   localStorage.setItem(LS_KEY, cid);
+
   await closeRestore();
   await loadCard();
   alert("Carte restaurée ✅");
@@ -249,39 +295,85 @@ async function startRestoreScan(){
   if(restoreScanning) return;
   restoreScanning = true;
 
+  // Toujours viser la caméra arrière
+  const constraints = { video: { facingMode: { ideal: "environment" } }, audio: false };
+
+  // Helper: extraire un clientId depuis n'importe quel contenu (URL, JSON, texte)
+  const pickCid = (raw) => {
+    const cid = extractClientIdFromAny(raw);
+    return cid || "";
+  };
+
   try{
-    if(!("BarcodeDetector" in window)){
+    hint.textContent = "Ouverture caméra…";
+
+    // 1) Option rapide si supporté : BarcodeDetector (Chrome récent)
+    if("BarcodeDetector" in window){
+      const detector = new BarcodeDetector({formats:["qr_code"]});
+      restoreStream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = restoreStream;
+      await video.play();
+
+      hint.textContent = "Scan en cours…";
+
+      while(restoreScanning){
+        const codes = await detector.detect(video);
+        if(codes && codes.length){
+          const raw = String(codes[0].rawValue || "").trim();
+          const cid = pickCid(raw);
+          if(cid && isValidClientId(cid)){
+            await restoreFromId(cid);
+            return;
+          }
+        }
+        await sleep(200);
+      }
+      return;
+    }
+
+    // 2) Fallback robuste : ZXing (@zxing/browser) via script UMD
+    //    (on le charge à la volée si absent)
+    if(!(window.ZXing && window.ZXing.BrowserQRCodeReader)){
+      hint.textContent = "Chargement scanner…";
+      await new Promise((resolve, reject)=>{
+        const s = document.createElement("script");
+        s.src = "https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js";
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = ()=>reject(new Error("ZXing introuvable"));
+        document.head.appendChild(s);
+      });
+    }
+
+    if(!(window.ZXing && window.ZXing.BrowserQRCodeReader)){
       hint.textContent = "Scanner non supporté ici. Colle l’ID.";
       restoreScanning = false;
       return;
     }
 
-    hint.textContent = "Ouverture caméra…";
-    const detector = new BarcodeDetector({formats:["qr_code"]});
-
-    restoreStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    restoreStream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = restoreStream;
     await video.play();
     hint.textContent = "Scan en cours…";
 
-    while(restoreScanning){
-      const codes = await detector.detect(video);
-      if(codes && codes.length){
-        const val = String(codes[0].rawValue || "").trim();
-        if(isValidClientId(val)){
-          await restoreFromId(val);
+    const codeReader = new window.ZXing.BrowserQRCodeReader();
+    await codeReader.decodeFromVideoElementContinuously(video, async (result, err) => {
+      if(!restoreScanning) return;
+      if(result && result.getText){
+        const raw = result.getText();
+        const cid = pickCid(raw);
+        if(cid && isValidClientId(cid)){
+          await restoreFromId(cid);
           return;
         }
       }
-      await sleep(250);
-    }
+    });
   }catch(e){
-    hint.textContent = "Erreur caméra : " + e.message;
+    hint.textContent = "Erreur caméra : " + (e && e.message ? e.message : String(e));
     await stopRestoreScan();
-  }finally{
-    restoreScanning = false;
   }
 }
+
 
 /* ---------- Bind events ---------- */
 function bind(){
@@ -303,6 +395,16 @@ function bind(){
   if(btnRestore) btnRestore.onclick = openRestore;
   if(btnClose) btnClose.onclick = closeRestore;
   if(btnStartScan) btnStartScan.onclick = startRestoreScan;
+  // Auto-tri (invisible) : si on colle une URL dans le champ, on garde uniquement l'ID
+  const manual = document.getElementById("manualCid");
+  if(manual){
+    const clean = ()=>{ manual.value = extractClientIdFromAny(manual.value); };
+    manual.addEventListener("input", clean, true);
+    manual.addEventListener("change", clean, true);
+    manual.addEventListener("blur", clean, true);
+    manual.addEventListener("paste", ()=>setTimeout(clean, 0), true);
+  }
+
 
   if(btnUseManual) btnUseManual.onclick = async ()=>{
     const input = document.getElementById("manualCid");
