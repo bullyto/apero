@@ -307,7 +307,7 @@ if(document.readyState === "loading"){
 
 
 function drawQr(cid){
-  const box = $("#qrBox");
+  const box = $("#qrSvg");
   if(!box) return;
   try{
     const base = (window.__ADN66 && window.__ADN66.QR_SCAN_BASE) ? String(window.__ADN66.QR_SCAN_BASE) : "https://aperos.net/fidel/scan?cid=";
