@@ -1,644 +1,263 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-  <title>Carte de fidélité — ADN66</title>
-  <meta name="theme-color" content="#050b12"/>
-  <meta name="robots" content="noindex,nofollow"/>
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ADN66 • Carte de fidélité (Client)</title>
+  <meta name="theme-color" content="#050b12" />
   <style>
     :root{
-      --night:#050b12;
-      --night2:#070f19;
-      --glow:rgba(93,183,238,.16);
-
-      --card:#ffffff;
-      --text:#0b1c2d;
-      --muted:rgba(11,28,45,.62);
-      --line:rgba(11,28,45,.15);
-
-      --sky:#5db7ee; /* CTA */
-      --shadow:0 18px 44px rgba(0,0,0,.28);
-      --shadowCard:0 14px 34px rgba(0,0,0,.18);
-      --shadowBtn:0 10px 18px rgba(93,183,238,.32);
-
-      --rCard:24px;
-      --rBtn:16px;
+      --bg:#050b12;--card:#0b1420;--card2:#0e1826;
+      --t:rgba(255,255,255,.92);--t2:rgba(255,255,255,.68);--b:rgba(255,255,255,.10);
+      --ok:#21d07a;--warn:#ffcc33;--danger:#ff4d4d;
     }
-
     *{box-sizing:border-box}
-    html,body{height:auto}
     body{
       margin:0;
+      background:radial-gradient(1200px 800px at 50% -10%, rgba(84,180,255,.18), transparent 55%), var(--bg);
+      color:var(--t);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 800px at 50% -10%, var(--glow), transparent 55%),
-        radial-gradient(900px 600px at 10% 110%, rgba(93,183,238,.08), transparent 55%),
-        var(--night);
-      color:#fff;
-      -webkit-text-size-adjust:100%;
+      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
     }
-
-    /* ✅ Layout stable (anti WebView FB) */
-    .wrap{
-      width:min(560px, 100%);
-      margin:0 auto;
-      padding:22px 14px 28px;
-    }
-
-    .hero{
-      display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .hero .title{
-      font-weight:1000;
-      letter-spacing:.2px;
-      line-height:1.05;
-      font-size:18px;
-      opacity:.95;
-    }
-    .hero .sub{
-      font-size:12px;
-      opacity:.72;
-      font-weight:800;
-      margin-top:6px;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:10px 12px;
-      border-radius:999px;
-      background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.12);
-      font-weight:900;
-      font-size:12px;
-      white-space:nowrap;
-    }
-
+    .wrap{width:min(980px,100%);}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;}
+    .brand{display:flex;flex-direction:column;gap:2px}
+    .brand b{font-size:16px;letter-spacing:.2px}
+    .brand span{font-size:12px;color:var(--t2)}
+    .pill{border:1px solid var(--b);padding:8px 10px;border-radius:999px;font-size:12px;color:var(--t2);background:rgba(255,255,255,.03)}
     .card{
-      background:var(--card);
-      color:var(--text);
-      border-radius:var(--rCard);
-      box-shadow:var(--shadowCard);
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.06);
-    }
-
-    .cardHeader{
-      padding:16px 16px 12px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-    }
-    .cardHeader h1{
-      margin:0;
-      font-size:20px;
-      font-weight:1000;
-      line-height:1.02;
-    }
-    .cardHeader .status{
-      text-align:right;
-      font-weight:1000;
-      font-size:14px;
-      opacity:.9;
-    }
-
-    .cardBody{ padding:16px; }
-
-    .lead{
-      margin:0;
-      font-size:18px;
-      font-weight:1000;
-      line-height:1.15;
-    }
-    .leadSub{
-      margin-top:8px;
-      font-size:16px;
-      line-height:1.35;
-      color:rgba(11,28,45,.60);
-      font-weight:500;
-    }
-
-    .row{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-top:14px;
-    }
-
-    button{
-      flex:1;
-      min-width:160px;
-      padding:12px 14px;
-      border-radius:var(--rBtn);
-      font-weight:1000;
-      font-size:18px;
-      cursor:pointer;
-      border:none;
-      background:var(--sky);
-      color:#fff;
-      box-shadow:var(--shadowBtn);
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
-    }
-    button:active{ transform: translateY(1px); }
-
-    button.secondary{
-      background:#fff;
-      color:var(--text);
-      border:2px solid rgba(11,28,45,.18);
-      box-shadow:none;
-    }
-
-    /* ===== Carte affichée ===== */
-    .topStats{
-      display:flex;
-      align-items:baseline;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .topStats .big{
-      font-size:40px;
-      font-weight:1100;
-      letter-spacing:.2px;
-    }
-    .syncRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      justify-content:flex-end;
-      font-weight:1000;
-      color:rgba(11,28,45,.70);
-    }
-    .dot{
-      width:10px;height:10px;border-radius:999px;
-      background:#ffcc33;
-      box-shadow:0 0 0 4px rgba(255,204,51,.18);
-    }
-    .dot.ok{
-      background:#21d07a;
-      box-shadow:0 0 0 4px rgba(33,208,122,.18);
-    }
-    .dot.warn{
-      background:#ffcc33;
-      box-shadow:0 0 0 4px rgba(255,204,51,.18);
-    }
-
-    .visual{
-      width:100%;
-      max-width:520px;
-      margin:0 auto 14px;
-      position:relative;
+      background:linear-gradient(180deg,var(--card),var(--card2));
+      border:1px solid var(--b);
       border-radius:18px;
+      box-shadow:0 0 0 1px rgba(255,255,255,.02), 0 20px 60px rgba(0,0,0,.55);
       overflow:hidden;
-      border:1px solid rgba(11,28,45,.12);
-      background:#fff;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
     }
-    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+    .card-h{
+      padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .card-h h1{margin:0;font-size:14px}
+    .card-h .meta{font-size:12px;color:var(--t2)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;}
+    @media (max-width:980px){.grid{grid-template-columns:1fr;}}
+    .panel{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      padding:12px;
+    }
+    label{display:block;font-size:12px;color:var(--t2);margin:10px 0 6px}
+    input{
+      width:100%;padding:12px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);color:var(--t);outline:none
+    }
+    input:focus{border-color:rgba(84,180,255,.55);box-shadow:0 0 0 4px rgba(84,180,255,.12);}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+    button{
+      flex:1;min-width:160px;padding:12px 12px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(84,180,255,.14);
+      color:var(--t);font-weight:800;cursor:pointer
+    }
+    button.secondary{background:rgba(255,255,255,.06)}
+    button:active{transform:translateY(1px)}
+    .note{margin-top:10px;font-size:12px;color:var(--t2);line-height:1.35}
+    .status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);margin-top:10px}
+    .dot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.18);}
+    .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(33,208,122,.15)}
+    .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(255,204,51,.12)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+
+    .cardVisualWrap{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;}
+    .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
+    .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
+    .loyTop .sub{font-size:12px;color:var(--t2)}
+    .visual{width:min(520px,100%);position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.20);}
+    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
 
     .stamp{
-      position:absolute;
-      width:11%;
-      aspect-ratio:1/1;
-      border-radius:999px;
-      display:flex;align-items:center;justify-content:center;
-      font-weight:1100;
-      transform:rotate(-10deg);
-      opacity:0;
-      pointer-events:none;
-      box-shadow:0 10px 18px rgba(0,0,0,.18);
-      border:2px solid rgba(11,28,45,.18);
-      background:rgba(93,183,238,.20);
-      color:rgba(11,28,45,.92);
+      position:absolute;width:11%;aspect-ratio:1/1;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;font-weight:1000;
+      transform:rotate(-10deg);opacity:0;pointer-events:none;
+      box-shadow:0 10px 25px rgba(0,0,0,.35);
+      border:2px solid rgba(33,208,122,.95);
+      background:rgba(33,208,122,.16);
+      color:rgba(33,208,122,.98);
+      text-shadow:0 1px 0 rgba(0,0,0,.25);
     }
-    .stamp.filled{opacity:1}
-    .stamp span{font-size:clamp(12px,2.2vw,18px)}
+    .stamp.filled{opacity:1;}
+    .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
+
+    /* positions 8 tampons (2 rangées de 4) */
     .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
     .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
 
-    /* ===== Modal (scan / restore / qr) ===== */
-    .modal{
-      position:fixed;
-      inset:0;
-      background:rgba(11,28,45,.62);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index:9999;
-    }
+    .qrbox{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+    .qr{width:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)}
+    .qr-actions{display:flex;gap:10px;width:100%}
+    .qr-actions button{min-width:auto;flex:1}
+
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
     .modal.open{display:flex}
-
-    .modal .box{
-      width:min(560px,100%);
-      background:#fff;
-      border:1px solid rgba(11,28,45,.14);
-      border-radius:24px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      color:var(--text);
-    }
-    .modal .head{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      background:linear-gradient(180deg, rgba(93,183,238,.10), rgba(93,183,238,0));
-    }
-    .modal .head b{font-size:18px;font-weight:1100}
-
-    .modal .content{padding:16px}
-
-    label{
-      display:block;
-      font-size:14px;
-      color:rgba(11,28,45,.70);
-      margin:12px 0 8px;
-      font-weight:900;
-    }
-
-    input{
-      width:100%;
-      border-radius:16px;
-      border:2px solid rgba(93,183,238,.95);
-      background:#fff;
-      padding:12px 14px;
-      font-size:16px;
-      outline:none;
-      box-shadow:0 6px 14px rgba(93,183,238,.14);
-      color:var(--text);
-    }
-    input::placeholder{color:rgba(11,28,45,.45)}
-    input:focus{
-      border-color:rgba(93,183,238,1);
-      box-shadow:0 0 0 4px rgba(93,183,238,.22);
-    }
-
-    .hint{
-      margin-top:10px;
-      font-size:15px;
-      color:rgba(11,28,45,.60);
-      line-height:1.35;
-      font-weight:700;
-    }
-
-    .scan{
-      width:100%;
-      border-radius:18px;
-      border:1px solid rgba(11,28,45,.14);
-      background:var(--blue);
-      aspect-ratio:3/4;
-      overflow:hidden;
-      position:relative;
-      box-shadow:0 10px 22px rgba(0,0,0,.12);
-    }
+    .modal .box{width:min(520px,100%);background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(255,255,255,.12);border-radius:18px;overflow:hidden}
+    .modal .box h2{margin:0;font-size:14px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .modal .box .content{padding:14px}
+    .scan{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#000;aspect-ratio:3/4;overflow:hidden;position:relative}
     video{width:100%;height:100%;object-fit:cover}
+    .hint{margin-top:10px;font-size:12px;color:var(--t2)}
+    .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
+  
+    /* --- QR ultra fiable --- */
+    #qrWrap{background:#fff;border-radius:16px;padding:14px;border:1px solid rgba(0,0,0,.08)}
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:700}
+    #qrSvg svg{display:block;width:100%;height:auto}
+    #qrMsg{margin-top:8px;font-size:12px;color:rgba(255,255,255,.62);text-align:center}
 
-    .qrBox{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:6px 0 10px;
-    }
-    .qr{
-      width:260px;
-      max-width:100%;
-      background:#fff;
-      border-radius:18px;
-      padding:12px;
-      border:1px solid rgba(11,28,45,.14);
-      box-shadow:0 12px 30px rgba(0,0,0,.10);
-    }
-    #qrSvg{
-      min-height:220px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:#111;
-      font-weight:900;
-    }
-
-    /* petites sécurités anti-décalage */
-    img,video,canvas,svg{max-width:100%}
   </style>
 </head>
-
 <body>
+
+  <!-- START MODAL : Première page plein écran -->
+  <div class="modal open" id="startModal" aria-hidden="false">
+    <div class="box" style="width:100%;max-width:100%;border-radius:0;min-height:100vh">
+      <h2 style="font-size:18px">Ma carte virtuelle</h2>
+      <div class="content">
+        <div class="note" style="font-size:16px;margin-top:0">
+          Crée ta carte en 10 secondes.<br/>
+          Cumule des points à chaque commande et débloque des avantages.
+        </div>
+        <div class="row" style="margin-top:16px">
+          <button id="startCreate">Créer ma carte</button>
+          <button class="secondary" id="startRestore">Restaurer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="wrap">
-    <!-- Entête (simple, pas de bandeau noir) -->
-    <div class="hero">
-      <div>
-        <div class="title">ADN66 • Carte de fidélité</div>
-        <div class="sub">Simple • Rapide • Sans afficher d’ID</div>
+    <div class="top">
+      <div class="brand">
+        <b>ADN66 • Carte de fidélité</b>
+        <span>Client</span>
       </div>
-      <div class="pill" id="envPill">Mode : <b>Serveur</b></div>
+      <div class="pill" id="envPill">Mode : <b>Démo</b></div>
     </div>
 
-    <!-- Bloc 1: écran de départ -->
-    <section class="card" id="formBlock">
-      <div class="cardHeader">
-        <h1>Ma carte<br/>virtuelle</h1>
-        <div class="status" id="stateText">En cours</div>
+    <div class="card">
+      <div class="card-h">
+        <h1>Ma carte virtuelle</h1>
+        <div class="meta" id="meta">—</div>
       </div>
 
-      <div class="cardBody">
-        <p class="lead">Crée ta carte en 10 secondes.</p>
-        <div class="leadSub">Cumule des points à chaque commande et débloque des avantages.</div>
+      <div class="grid">
+        <div class="panel">
+          <div id="formBlock">
+            <div class="note">Crée ta carte en 10 secondes</div>
+            <label>Prénom</label>
+            <input id="name" autocomplete="given-name" placeholder="Ex: Kevin" />
+            <label>Téléphone</label>
+            <input id="phone" inputmode="tel" autocomplete="tel" placeholder="06..." />
+            <div class="row">
+              <button id="btnCreate">Créer ma carte</button>
+              <button class="secondary" id="btnRestore">Restaurer</button>
+            </div>
+            <div class="note">Le QR sert d’identifiant. Les points sont ajoutés uniquement par le livreur (scan + validation).</div>
+          </div>
 
-        <div class="row">
-          <button id="btnCreate" type="button">Créer ma carte</button>
-          <button id="btnRestore" class="secondary" type="button">Restaurer</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bloc 2: carte existante -->
-    <section class="card" id="cardBlock" style="display:none">
-      <div class="cardHeader">
-        <h1>Ma carte<br/>virtuelle</h1>
-        <div class="status" id="stateText">En cours</div>
-      </div>
-
-      <div class="cardBody">
-        <div class="topStats">
-          <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
-          <div class="syncRow">
-            <span class="dot warn" id="dot"></span>
-            <span id="apiState">Synchronisé</span>
+          <div id="cardBlock" style="display:none">
+            <div class="status" style="margin-top:0">
+              <span class="dot ok" id="dot"></span>
+              <span id="apiState">Synchronisé</span>
+            </div>
+            <div class="note" style="margin-top:10px">Si tu perds la carte : dis “j’ai perdu ma carte” et on la restaure depuis l’admin (sans SMS).</div>
           </div>
         </div>
 
-        <div class="visual" aria-label="Carte de fidélité">
-          <!-- Si tu as une image, garde le même nom que ton ancien fichier -->
-          <img src="./assets/carte-fidelite.png" alt="Carte de fidélité ADN66" onerror="this.style.display='none'"/>
-          <div class="stamp s1" data-slot="1"><span>✓</span></div>
-          <div class="stamp s2" data-slot="2"><span>✓</span></div>
-          <div class="stamp s3" data-slot="3"><span>✓</span></div>
-          <div class="stamp s4" data-slot="4"><span>✓</span></div>
-          <div class="stamp s5" data-slot="5"><span>✓</span></div>
-          <div class="stamp s6" data-slot="6"><span>✓</span></div>
-          <div class="stamp s7" data-slot="7"><span>✓</span></div>
-          <div class="stamp s8" data-slot="8"><span>✓</span></div>
-        </div>
+        <div class="panel">
+          <div class="cardVisualWrap">
+            <div class="loyTop">
+              <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
+              <div class="sub" id="stateText">En cours</div>
+            </div>
 
-        <div class="row">
-          <button id="btnCopy" type="button">Afficher mon QR</button>
-          <button id="btnRefresh" class="secondary" type="button">Rafraîchir</button>
-        </div>
+            <div class="visual" id="visual">
+              <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
+              <div class="stamp s1" data-slot="1"><span>✓</span></div>
+              <div class="stamp s2" data-slot="2"><span>✓</span></div>
+              <div class="stamp s3" data-slot="3"><span>✓</span></div>
+              <div class="stamp s4" data-slot="4"><span>✓</span></div>
+              <div class="stamp s5" data-slot="5"><span>✓</span></div>
+              <div class="stamp s6" data-slot="6"><span>✓</span></div>
+              <div class="stamp s7" data-slot="7"><span>✓</span></div>
+              <div class="stamp s8" data-slot="8"><span>✓</span></div>
+            </div>
 
-        <!-- éléments techniques invisibles / requis -->
-        <div style="display:none">
-          <span id="meta">—</span>
-          <span id="cidText">—</span>
+            <div class="qrbox" style="width:100%;margin-top:12px">
+              <div class="note" style="margin:0">Mon QR (à montrer)</div>
+              <div class="qr"><div id="qrWrap"><div id="qrSvg" aria-label="QR code"></div></div></div>
+              <div class="mono" id="cidText">—</div>
+              <div class="qr-actions">
+                <button class="secondary" id="btnRefresh">Rafraîchir</button>
+                <button class="secondary" id="btnCopy">Copier ID</button>
+              </div>
+              <div class="hint">Cloudflare : mets l’URL du Worker dans <span class="mono">API_BASE</span> (client.js).</div>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
+
+    <div class="footer">Outils internes. L’entreprise Apéro de Nuit 66®</div>
   </div>
 
-  <!-- Modal unique (utilisée pour restaurer + afficher QR + scan) -->
-  <div class="modal" id="restoreModal" aria-hidden="true">
-    <div class="box" role="dialog" aria-modal="true">
-      <div class="head">
-        <b id="scanHint">Restaurer ma carte</b>
-        <button id="btnClose" class="secondary" type="button" style="flex:0;min-width:auto;font-size:14px;padding:10px 12px;box-shadow:none">Fermer</button>
-      </div>
-
+  <div class="modal" id="restoreModal">
+    <div class="box">
+      <h2>Restaurer ma carte</h2>
       <div class="content">
-        <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’URL / l’ID).</div>
-
-        <div style="margin-top:12px">
-          <div class="scan">
-            <video id="video" playsinline muted></video>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <button id="btnStartScan" type="button">Scanner</button>
-        </div>
-
-        <label for="manualCid">Ou coller</label>
-        <input id="manualCid" type="text" placeholder="Colle une URL ou un ID…" autocomplete="off"/>
-
+        <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’ID).</div>
+        <div class="scan"><video id="video" playsinline></video></div>
         <div class="row">
-          <button id="btnUseManual" class="secondary" type="button">Utiliser</button>
+          <button id="btnStartScan">Scanner</button>
+          <button class="secondary" id="btnClose">Fermer</button>
         </div>
-
-        
+        <label>Ou coller l’ID</label>
+        <input id="manualCid" class="mono" placeholder="c_..." />
+        <div class="row"><button class="secondary" id="btnUseManual">Utiliser cet ID</button></div>
+        <div class="hint" id="scanHint"></div>
       </div>
     </div>
   </div>
 
-  <!-- QRCode.js (qrcodejs) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="./client.js?v=20260128-7" defer></script>
 
-  <!-- Ton code (logique intacte) -->
-  <script src="./client.js"></script>
+<script>
+(function(){
+  const start = document.getElementById('startModal');
+  const create = document.getElementById('startCreate');
+  const restore = document.getElementById('startRestore');
 
-  <!-- Modal : Créer ma carte -->
-  <div class="modal" id="createModal" aria-hidden="true">
-    <div class="box" role="dialog" aria-modal="true">
-      <div class="head">
-        <b>Créer ma carte</b>
-        <button id="btnCreateClose" class="secondary" type="button" style="flex:0;min-width:auto;font-size:14px;padding:10px 12px;box-shadow:none">Fermer</button>
-      </div>
-      <div class="content">
-        <div class="hint">Crée ta carte, puis affiche ton QR.</div>
+  function closeStart(){
+    if(start){ start.classList.remove('open'); start.setAttribute('aria-hidden','true'); }
+  }
 
-        <label for="name">Prénom</label>
-        <input id="name" type="text" placeholder="Ex: Kevin" autocomplete="given-name"/>
-
-        <label for="phone">Téléphone</label>
-        <input id="phone" type="tel" placeholder="06…" autocomplete="tel"/>
-
-        <div class="row" style="margin-top:14px">
-          <button id="btnCreateSubmit" type="button">Créer</button>
-          <button id="btnCreateClose2" class="secondary" type="button">Fermer</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal : QR + Copier le lien -->
-  <div class="modal" id="qrModal" aria-hidden="true">
-    <div class="box" role="dialog" aria-modal="true">
-      <div class="head">
-        <b>Mon QR</b>
-        <button id="btnQrClose" class="secondary" type="button" style="flex:0;min-width:auto;font-size:14px;padding:10px 12px;box-shadow:none">Fermer</button>
-      </div>
-      <div class="content">
-        <div class="hint">Présente ce QR à l’admin. Tu peux aussi copier le lien.</div>
-
-        <div class="qrBox">
-          <div class="qr">
-            <div id="qrSvg"></div>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:14px">
-          <button id="btnCopyUrl" type="button">Copier le lien</button>
-          <button id="btnQrClose2" class="secondary" type="button">Fermer</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-
-  <script>
-    // Add-on UI (refonte ZERO) — ne casse pas client.js
-    (function(){
-      function $(id){ return document.getElementById(id); }
-
-      function openModal(id){
-        const m = $(id);
-        if(!m) return;
-        m.classList.add("open");
-      }
-      function closeModal(id){
-        const m = $(id);
-        if(!m) return;
-        m.classList.remove("open");
-      }
-
-      function basePageUrl(){
-        // URL de la page sans query/hash
-        try{
-          const u = new URL(location.href);
-          u.search = "";
-          u.hash = "";
-          return u.toString();
-        }catch(_){
-          return location.origin + location.pathname;
-        }
-      }
-
-      function buildRestoreUrl(cid){
-        const url = basePageUrl();
-        const sep = url.includes("?") ? "&" : "?";
-        return url + sep + "restore=1&id=" + encodeURIComponent(cid);
-      }
-
-      function setQr(url){
-        const box = $("qrSvg");
-        if(!box) return;
-        box.innerHTML = "";
-        // qrcodejs uses QRCode constructor
-        try{
-          new QRCode(box, { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
-        }catch(e){
-          // fallback text if QR lib blocked
-          box.textContent = "QR indisponible";
-        }
-      }
-
-      async function copyText(text){
-        try{
-          await navigator.clipboard.writeText(text);
-          return true;
-        }catch(_){
-          // fallback
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.position="fixed";
-          ta.style.left="-9999px";
-          document.body.appendChild(ta);
-          ta.select();
-          try{ document.execCommand("copy"); }catch(__){}
-          document.body.removeChild(ta);
-          return false;
-        }
-      }
-
-      // --- Create modal wiring ---
-      const btnCreate = $("btnCreate");
-      const btnCreateClose = $("btnCreateClose");
-      const btnCreateClose2 = $("btnCreateClose2");
-      const btnCreateSubmit = $("btnCreateSubmit");
-
-      if(btnCreate){
-        btnCreate.onclick = ()=> openModal("createModal");
-      }
-      if(btnCreateClose) btnCreateClose.onclick = ()=> closeModal("createModal");
-      if(btnCreateClose2) btnCreateClose2.onclick = ()=> closeModal("createModal");
-
-      // Wrap original createCard from client.js (global)
-      const origCreate = window.createCard;
-      if(btnCreateSubmit){
-        btnCreateSubmit.onclick = async ()=>{
-          if(typeof origCreate !== "function"){
-            alert("createCard manquant.");
-            return;
-          }
-          await origCreate();
-          // si création OK => on ferme
-          const cid = localStorage.getItem("adn66_loyalty_client_id");
-          if(cid) closeModal("createModal");
-        };
-      }
-
-      // --- Restore modal title fix + open ---
-      const btnRestore = $("btnRestore");
-      if(btnRestore){
-        btnRestore.onclick = ()=>{
-          const h = $("scanHint");
-          if(h) h.textContent = "Restaurer ma carte";
-          openModal("restoreModal");
-        };
-      }
-      const btnClose = $("btnClose");
-      if(btnClose) btnClose.onclick = ()=> closeModal("restoreModal");
-
-      // Click outside to close (both modals)
-      ["createModal","restoreModal","qrModal"].forEach(id=>{
-        const m = $(id);
-        if(m){
-          m.addEventListener("click", (e)=>{
-            if(e.target === m) closeModal(id);
-          });
-        }
-      });
-
-      // --- QR modal ---
-      const btnCopy = $("btnCopy"); // "Afficher mon QR"
-      const btnQrClose = $("btnQrClose");
-      const btnQrClose2 = $("btnQrClose2");
-      const btnCopyUrl = $("btnCopyUrl");
-
-      function openQr(){
-        const cid = localStorage.getItem("adn66_loyalty_client_id");
-        if(!cid) return;
-        const url = buildRestoreUrl(cid);
-        setQr(url);
-        openModal("qrModal");
-      }
-
-      if(btnCopy){
-        btnCopy.onclick = ()=> openQr();
-      }
-      if(btnQrClose) btnQrClose.onclick = ()=> closeModal("qrModal");
-      if(btnQrClose2) btnQrClose2.onclick = ()=> closeModal("qrModal");
-      if(btnCopyUrl){
-        btnCopyUrl.onclick = async ()=>{
-          const cid = localStorage.getItem("adn66_loyalty_client_id");
-          if(!cid) return;
-          const url = buildRestoreUrl(cid);
-          await copyText(url);
-        };
-      }
-
-      // IMPORTANT: laisser client.js gérer loadCard/scan etc.
-    })();
-  </script>
+  if(create){
+    create.addEventListener('click', ()=>{
+      closeStart();
+      const btn = document.getElementById('btnCreate');
+      if(btn) btn.click();
+    });
+  }
+  if(restore){
+    restore.addEventListener('click', ()=>{
+      closeStart();
+      const btn = document.getElementById('btnRestore');
+      if(btn) btn.click();
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
