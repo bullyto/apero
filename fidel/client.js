@@ -111,30 +111,6 @@ async function qrRender(text){
   // Reset placeholder
   box.innerHTML = "";
 
-
-  // If lib isn't present, try to (re)load it dynamically (covers cache/SW/ordering issues)
-  if(typeof window.QRCodeGenerator !== "function"){
-    try{
-      const libUrl = new URL("./qr.min.js", location.href).toString();
-      // Avoid re-inject if already injected
-      if(!document.querySelector('script[data-qr-lib="1"]')){
-        const s = document.createElement("script");
-        s.src = libUrl + (libUrl.includes("?") ? "&" : "?") + "v=20260128-4";
-        s.async = true;
-        s.defer = true;
-        s.dataset.qrLib = "1";
-        const p = new Promise((resolve,reject)=>{
-          s.onload = ()=>resolve(true);
-          s.onerror = ()=>reject(new Error("Chargement lib QR impossible: " + libUrl));
-        });
-        document.head.appendChild(s);
-        await Promise.race([p, sleep(1500)]);
-      }
-    }catch(e){
-      // ignore, handled below
-    }
-  }
-
   // Wait for QRCodeGenerator (up to 1s)
   const start = Date.now();
   while(typeof window.QRCodeGenerator !== "function"){
@@ -144,10 +120,10 @@ async function qrRender(text){
 
   try{
     if(typeof window.QRCodeGenerator !== "function"){
-      throw new Error("Lib QR absente. Vérifie que ce fichier existe : " + new URL("./qr.min.js", location.href).toString());
+      throw new Error("Lib QR absente. Ouvre: " + new URL("/fidel/qr.min.js", location.origin).toString());
     }
 
-    // typeNumber = 0 => auto
+    // typeNumber = null => auto (compatible)
     const q = new window.QRCodeGenerator(null);
     q.addData(cid);
     q.make();
@@ -157,7 +133,7 @@ async function qrRender(text){
 
     setDebug(`QR OK • lib=OK • base=${new URL(".", location.href).href}`);
   }catch(e){
-    box.innerHTML = `<div style="font-size:12px;color:#111;background:#fff;border-radius:10px;padding:10px;border:1px solid rgba(0,0,0,.12)">QR indisponible</div>`;
+    box.innerHTML = `<div style="font-size:12px;color:#111;background:#fff;border-radius:10px;padding:10px;border:1px solid rgba(0,0,0,.12)">QR indisponible<br><span style="opacity:.75">${(e && e.message)? String(e.message).replace(/[<>]/g,"") : "erreur inconnue"}</span></div>`;
     setDebug(`QR KO • ${e && e.message ? e.message : "erreur inconnue"} • base=${new URL(".", location.href).href}`);
   }
 }
