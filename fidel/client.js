@@ -1,6 +1,6 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 qr-fix
+// Version: 2026-01-28 qrfix-v2
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -24,23 +24,6 @@ function isValidClientId(cid){
   return false;
 }
 
-function extractClientIdFromScanValue(val){
-  const s = String(val||"").trim();
-  if(isValidClientId(s)) return s;
-  // Try URL with ?cid=
-  try{
-    if(/^https?:\/\//i.test(s)){
-      const u = new URL(s);
-      const cid = u.searchParams.get("cid") || u.searchParams.get("client_id");
-      if(isValidClientId(cid)) return String(cid).trim();
-    }
-  }catch(_){/* ignore */}
-  // Try raw pattern inside text
-  const m = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  if(m && isValidClientId(m[0])) return m[0];
-  return null;
-}
-
 /* ---------- UI ---------- */
 function setEnvPill(){
   const pill = document.getElementById("envPill");
@@ -60,7 +43,7 @@ function setMeta(cid){
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender(cid);
+  if(cid) qrRender("https://aperos.net/fidel/scan?cid=" + encodeURIComponent(cid));
 }
 
 function setApiState(ok, msg){
@@ -107,49 +90,39 @@ function qrRender(text){
   if(!box) return;
   const payload = String(text || "").trim();
 
-  // Always make fallback visible (avoid white-on-white)
+  // Clean
+  box.innerHTML = "";
   box.style.color = "#111";
   box.style.background = "transparent";
 
-  // Try: 1) QRCodeGenerator (Kazuhiko Arase) 2) window.qrcode 3) window.QRCode
   try{
-    // If the payload is a URL containing ?cid=..., keep the URL for scanners,
-    // but also allow admin/scanner to parse it later. For the client QR we prefer ID-only,
-    // so callers should pass the ID. Still: we accept any text.
-    if(typeof window.QRCodeGenerator === "function"){
-      const q = new window.QRCodeGenerator(null);
-      q.addData(payload);
-      q.make();
-      const svg = q.createSvgTag(4, "#111");
-      if(svg && svg.trim()){
-        box.innerHTML = svg;
-        return;
-      }
+    // Accept either window.qrcode (official) or window.QRCodeGenerator (your current build exposes this name)
+    const gen = (typeof window.qrcode === "function")
+      ? window.qrcode
+      : (typeof window.QRCodeGenerator === "function" ? window.QRCodeGenerator : null);
+
+    if(!gen) throw new Error("QR generator missing");
+
+    // qrcode-generator API: gen(typeNumber, errorCorrectionLevel)
+    // typeNumber=0 => auto
+    const q = gen(0, "M");
+    q.addData(payload);
+    q.make();
+
+    if(typeof q.createSvgTag === "function"){
+      // createSvgTag(cellSize, margin)
+      box.innerHTML = q.createSvgTag(4, 2);
+      return;
     }
 
-    if(typeof window.qrcode === "function"){
-      // Some builds expose a function returning an object with createSvgTag / createImgTag
-      const q = window.qrcode(0, "L");
-      q.addData(payload);
-      q.make();
-      if(typeof q.createSvgTag === "function"){
-        box.innerHTML = q.createSvgTag(4);
-        return;
-      }
+    if(typeof q.createImgTag === "function"){
+      box.innerHTML = q.createImgTag(4, 2);
+      return;
     }
 
-    if(typeof window.QRCode === "function"){
-      // Some libs render into an element
-      box.innerHTML = "";
-      // eslint-disable-next-line no-new
-      new window.QRCode(box, { text: payload, width: 220, height: 220 });
-      // If it rendered, leave; if not, fallback below.
-      if(box.querySelector("canvas, img, svg")) return;
-    }
-
-    throw new Error("No compatible QR generator");
-  }catch(_){
-    box.textContent = "QR indisponible";
+    throw new Error("Unsupported QR generator API");
+  }catch(e){
+    box.innerHTML = '<div style="font-weight:900;font-size:22px;color:#111;display:flex;align-items:center;justify-content:center;height:100%;">QR indisponible</div>';
   }
 }
 
@@ -176,7 +149,7 @@ async function loadCard(){
     if(goal) goal.textContent = String(GOAL);
     renderVisualStamps(0);
     setStateText(0, null);
-    setApiState(false, "Aucune carte");
+    setApiState(true, "Synchronisé");
     setMeta(null);
     return;
   }
@@ -299,10 +272,9 @@ async function startRestoreScan(){
     while(restoreScanning){
       const codes = await detector.detect(video);
       if(codes && codes.length){
-        const raw = String(codes[0].rawValue || "").trim();
-        const cid = extractClientIdFromScanValue(raw);
-        if(cid){
-          await restoreFromId(cid);
+        const val = String(codes[0].rawValue || "").trim();
+        if(isValidClientId(val)){
+          await restoreFromId(val);
           return;
         }
       }
