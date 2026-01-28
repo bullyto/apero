@@ -1,3 +1,23 @@
+
+// ================= ADN66 FIX — QR Admin = ID SEUL =================
+const RESTORE_PREFIX = "https://www.aperos.net/fidel/client.html?restore=1&id=";
+function makeRestoreUrl(id) {
+  return RESTORE_PREFIX + String(id || "").trim();
+}
+function extractRestoreId(input) {
+  const s = String(input || "").trim();
+  if (s.startsWith(RESTORE_PREFIX)) return s.slice(RESTORE_PREFIX.length).trim();
+  try {
+    const u = new URL(s);
+    const id = u.searchParams.get("id");
+    if (id) return String(id).trim();
+  } catch (_) {}
+  const m = s.match(/(?:\bid=)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+  if (m && m[1]) return m[1];
+  return s;
+}
+// ==================================================================
+
 function extractClientIdFromAny(raw){
   // Nettoyage agressif (espaces, retours, caractères invisibles)
   let s = String(raw || "");
@@ -154,7 +174,7 @@ function qrRender(payload){
     }
     // qrcodejs génère canvas/img dans wrap
     new QRCode(wrap, {
-      text: String(text || ""),
+      text: extractRestoreId(String(text || "")),
       width: 260,
       height: 260,
       correctLevel: QRCode.CorrectLevel.M
@@ -299,19 +319,16 @@ function renderResults(items){
 }
 
 function showRecoveryQr(cid){
-  // QR de récupération :
-  // ✅ Le QR DOIT contenir uniquement l'ID (UUID/ULID/etc.)
-  // (l'URL reste affichée à l'écran pour copie si besoin)
+  // QR de récupération : URL http(s) que le client scanne
   const id = String(cid || "").trim();
 
-  // page client (affichage seulement)
+  // page client (adapter si tu changes la route)
   const restoreUrl = (location.origin || "") + "/fidel/client.html?restore=1&id=" + encodeURIComponent(id);
 
   document.getElementById("qrSub").textContent =
-    "ID (QR) : " + id + "  —  URL (copie) : " + restoreUrl;
+    "URL (scan) : " + restoreUrl;
 
-  // QR = ID uniquement
-  qrRender(id);
+  qrRender(restoreUrl);
   document.getElementById("qrFull").classList.add("open");
 }
 
