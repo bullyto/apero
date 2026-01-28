@@ -84,12 +84,9 @@
 
           <label>Clé admin (PIN)</label>
           <input id="adminKey" class="mono" value="0000" />
-          <label>ID client (utilisé par le serveur)</label>
+          <label>ID client (auto après scan)</label>
           <input id="clientId" class="mono" placeholder="UUID..." />
-          <label>QR scanné (visuel)</label>
-          <input id="scannedRaw" class="mono" placeholder="https://..." readonly />
-
-          <div class="row">
+<div class="row">
             <button id="btnScan">Scanner QR</button>
             <button id="btnStamp">Valider (+1)</button>
           </div>
@@ -132,6 +129,6 @@
     </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="/fidel/admin.js?v=20260128-4"></script>
+  <script src="/fidel/admin.js?v=20260128-5"></script>
 </body>
 </html>

@@ -61,8 +61,7 @@ function extractIdByPrefix(raw){
 }
 
 function setScanned(raw){
-  const rawEl = document.getElementById("scannedRaw");
-  if(rawEl) rawEl.value = String(raw || "").trim();
+  window.__adn66_last_scan_raw = String(raw || "").trim();
   const id = extractIdByPrefix(raw);
   const idEl = document.getElementById("clientId");
   if(idEl) idEl.value = id;
