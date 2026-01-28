@@ -1,3 +1,34 @@
+function extractClientIdFromAny(raw){
+  const s = String(raw || "").trim();
+  if(!s) return "";
+
+  // 1) URL -> ?id=...
+  try{
+    if(/^https?:\/\//i.test(s)){
+      const u = new URL(s);
+      const id = (u.searchParams && u.searchParams.get("id")) ? u.searchParams.get("id") : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 2) JSON -> {cid:"..."} ou {id:"..."}
+  try{
+    if(s[0] === "{"){
+      const o = JSON.parse(s);
+      const id = (o && (o.id || o.cid || o.client_id || o.clientId)) ? (o.id || o.cid || o.client_id || o.clientId) : "";
+      if(id) return String(id).trim();
+    }
+  }catch(_){}
+
+  // 3) Fallback : extraire un UUID dans le texte
+  const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if(mm && mm[0]) return mm[0];
+
+  // 4) Sinon, renvoie le texte brut
+  return s;
+}
+
+
 // PATH: /fidel/admin.js
 // CONFIG : URL Worker Cloudflare (ex: https://xxxx.workers.dev). Laisse vide = mode démo local.
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
@@ -129,44 +160,83 @@ async function startScan(){
   if(scanning) return;
   scanning = true;
   scanHint.textContent = "Ouverture caméra…";
+
+  // Toujours viser la caméra arrière
+  const constraints = { video: { facingMode: { ideal: "environment" } }, audio: false };
+
+  // Helper: extraire un clientId depuis n'importe quel contenu (URL, JSON, texte)
+  const pickCid = (raw) => {
+    const cid = extractClientIdFromAny(raw);
+    return cid || "";
+  };
+
   try{
-    if(!("BarcodeDetector" in window)){
-      scanHint.textContent = "BarcodeDetector non supporté. Tape l’ID manuellement.";
-      scanning = false; return;
+    // 1) Option rapide si supporté : BarcodeDetector (Chrome récent)
+    if("BarcodeDetector" in window){
+      const detector = new BarcodeDetector({formats:["qr_code"]});
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+      scanHint.textContent = "Scan en cours…";
+      while(scanning){
+        const barcodes = await detector.detect(video);
+        if(barcodes && barcodes.length){
+          const val = barcodes[0].rawValue || "";
+          const cid = pickCid(val);
+          if(cid){
+            document.getElementById("clientId").value = cid;
+            scanHint.textContent = "QR détecté ✅";
+            await stopScan();
+            return;
+          }
+        }
+        await new Promise(r=>setTimeout(r,200));
+      }
+      return;
     }
-    const detector = new BarcodeDetector({formats:["qr_code"]});
-    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+
+    // 2) Fallback robuste : ZXing (@zxing/browser) via script UMD
+    if(!(window.ZXing && window.ZXing.BrowserQRCodeReader)){
+      scanHint.textContent = "Scan non supporté (ZXing manquant).";
+      scanning = false;
+      return;
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = stream;
     await video.play();
+
     scanHint.textContent = "Scan en cours…";
-    while(scanning){
-      const barcodes = await detector.detect(video);
-      if(barcodes && barcodes.length){
-        const val = barcodes[0].rawValue || "";
-        let cid = null;
-        try{ const obj = JSON.parse(val); cid = obj.cid || obj.client_id || null; }
-        catch(_){
-          const v = (val||"").trim();
-          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(v);
-          cid = isUuid ? v : null;
-        }
+
+    const codeReader = new window.ZXing.BrowserQRCodeReader();
+    // decodeFromVideoElementContinuously appelle un callback à chaque lecture
+    await codeReader.decodeFromVideoElementContinuously(video, (result, err) => {
+      if(!scanning) return;
+      if(result && result.getText){
+        const txt = result.getText();
+        const cid = pickCid(txt);
         if(cid){
           document.getElementById("clientId").value = cid;
           scanHint.textContent = "QR détecté ✅";
-          return;
+          stopScan();
         }
       }
-      await new Promise(r=>setTimeout(r,250));
-    }
+    });
+
   }catch(e){
-    scanHint.textContent = "Erreur caméra: " + e.message;
+    scanHint.textContent = "Erreur caméra: " + (e && e.message ? e.message : String(e));
+    scanning = false;
+    try{ await stopScan(); }catch(_){}
   }
 }
 
 async function stopScan(){
   scanning = false;
   try{ video.pause(); }catch(_){}
-  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+  if(stream){
+    try{ stream.getTracks().forEach(t=>t.stop()); }catch(_){}
+    stream = null;
+  }
   video.srcObject = null;
   scanHint.textContent = "Arrêt.";
 }
