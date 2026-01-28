@@ -107,14 +107,13 @@
     video{width:100%;height:100%;object-fit:cover}
     .hint{margin-top:10px;font-size:12px;color:var(--t2)}
     .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
+  
+    /* --- QR ultra fiable --- */
+    #qrWrap{background:#fff;border-radius:16px;padding:14px;border:1px solid rgba(0,0,0,.08)}
+    #qrSvg svg{display:block;width:100%;height:auto}
+    #qrMsg{margin-top:8px;font-size:12px;color:rgba(255,255,255,.62);text-align:center}
+
   </style>
-<script>window.__ADN66=window.__ADN66||{};window.__ADN66.QR_SCAN_BASE="https://aperos.net/fidel/scan?cid=";window.__ADN66.BUILD="20260128_noext";</script>
-
-<style>
-  #qrSvg{background:#fff;border-radius:14px;padding:14px;border:1px solid rgba(0,0,0,.08)}
-  #qrCanvas{display:block;max-width:100%;height:auto;margin:0 auto}
-</style>
-
 </head>
 <body>
   <div class="wrap">
@@ -176,10 +175,8 @@
             </div>
 
             <div class="qrbox" style="width:100%;margin-top:12px">
-              <div class="note" style="margin:0">Mon QR (à montrer)<div id="qrStatus" style="margin-top:6px;font-size:12px;color:rgba(255,255,255,.6)"></div></div>
-              <div class="qr"><div id="qrSvg" aria-label="QR code">
-<canvas id="qrCanvas" aria-label="QR Code"></canvas>
-</div></div>
+              <div class="note" style="margin:0">Mon QR (à montrer)</div>
+              <div class="qr"><div id="qrWrap"><div id="qrSvg" aria-label="QR code"></div></div>
               <div class="mono" id="cidText">—</div>
               <div class="qr-actions">
                 <button class="secondary" id="btnRefresh">Rafraîchir</button>
@@ -213,9 +210,7 @@
     </div>
   </div>
 
-  <script src="/fidel/qr.min.js"></script>
-  <script src="/fidel/client.js"></script>
-<script src="./qr.js?v=20260128_noext"></script>
-<script src="./client.js?v=20260128_noext"></script>
+  <script src="/fidel/qr.min.js?v=1769565222"></script>
+  <script src="/fidel/client.js?v=1769565222"></script>
 </body>
 </html>

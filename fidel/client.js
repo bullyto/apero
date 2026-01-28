@@ -43,7 +43,7 @@ function setMeta(cid){
   const cidText = document.getElementById("cidText");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(cid) qrRender(cid);
+  if(cid) qrRender("https://aperos.net/fidel/scan?cid=" + encodeURIComponent(cid));
 }
 
 function setApiState(ok, msg){
@@ -304,31 +304,3 @@ if(document.readyState === "loading"){
 }else{
   bind();
 }
-
-
-
-function drawQr(cid){
-  try {
-    const canvas = document.getElementById("qrCanvas");
-    if(!canvas) throw new Error("qrCanvas introuvable");
-    const base = (window.__ADN66 && window.__ADN66.QR_SCAN_BASE) ? String(window.__ADN66.QR_SCAN_BASE) : "https://aperos.net/fidel/scan?cid=";
-    const qrValue = base + encodeURIComponent(String(cid||""));
-    if(!window.ADN66QR || typeof window.ADN66QR.renderToCanvas !== "function") throw new Error("qr.js non chargé");
-    window.ADN66QR.renderToCanvas(canvas, qrValue, {scale:7, margin:6, dark:"#111", light:"#fff", ecc:"M"});
-    const st = document.getElementById("qrStatus");
-    if(st) st.textContent = "";
-  } catch(e) {
-    const st = document.getElementById("qrStatus");
-    if(st) st.textContent = (e && e.message) ? e.message : String(e);
-  }
-}
-
-
-
-// --- ADN66 QR hook (fallback) ---
-(function(){
-  try{
-    const cid = localStorage.getItem("client_id") || localStorage.getItem("adn66_client_id") || localStorage.getItem("loyalty_client_id");
-    if(cid) drawQr(cid);
-  }catch(e){}
-})();
