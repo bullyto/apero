@@ -1,23 +1,3 @@
-
-// ================= ADN66 FIX — QR Admin = ID SEUL =================
-const RESTORE_PREFIX = "https://www.aperos.net/fidel/client.html?restore=1&id=";
-function makeRestoreUrl(id) {
-  return RESTORE_PREFIX + String(id || "").trim();
-}
-function extractRestoreId(input) {
-  const s = String(input || "").trim();
-  if (s.startsWith(RESTORE_PREFIX)) return s.slice(RESTORE_PREFIX.length).trim();
-  try {
-    const u = new URL(s);
-    const id = u.searchParams.get("id");
-    if (id) return String(id).trim();
-  } catch (_) {}
-  const m = s.match(/(?:\bid=)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
-  if (m && m[1]) return m[1];
-  return s;
-}
-// ==================================================================
-
 function extractClientIdFromAny(raw){
   // Nettoyage agressif (espaces, retours, caractères invisibles)
   let s = String(raw || "");
@@ -60,6 +40,47 @@ function extractClientIdFromAny(raw){
   // 4) Sinon, renvoie le texte brut
   return s;
 }
+
+
+// === ADN66 AUTO-TRI (visuel URL + ID interne) ===
+const RESTORE_PREFIX = "https://www.aperos.net/fidel/client.html?restore=1&id=";
+
+function extractIdByPrefix(raw){
+  const s = String(raw || "").trim();
+  if(!s) return "";
+  if(s.startsWith(RESTORE_PREFIX)) return s.slice(RESTORE_PREFIX.length).trim();
+  // fallback: try URL param
+  try{
+    const u = new URL(s);
+    const id = u.searchParams.get("id");
+    if(id) return String(id).trim();
+  }catch(_){}
+  // fallback uuid
+  const m = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  return m ? m[0] : s;
+}
+
+function setScanned(raw){
+  const rawEl = document.getElementById("scannedRaw");
+  if(rawEl) rawEl.value = String(raw || "").trim();
+  const id = extractIdByPrefix(raw);
+  const idEl = document.getElementById("clientId");
+  if(idEl) idEl.value = id;
+  return id;
+}
+
+// auto-tri si on colle dans le champ ID
+document.addEventListener("input", (e)=>{
+  const t = e.target;
+  if(t && t.id === "clientId"){
+    const v = t.value || "";
+    const id = extractIdByPrefix(v);
+    if(id && id !== v){
+      t.value = id;
+    }
+  }
+}, true);
+// ===============================================
 
 
 // PATH: /fidel/admin.js
@@ -174,7 +195,7 @@ function qrRender(payload){
     }
     // qrcodejs génère canvas/img dans wrap
     new QRCode(wrap, {
-      text: extractRestoreId(String(text || "")),
+      text: String(text || ""),
       width: 260,
       height: 260,
       correctLevel: QRCode.CorrectLevel.M
@@ -217,7 +238,7 @@ async function startScan(){
           const val = barcodes[0].rawValue || "";
           const cid = pickCid(val);
           if(cid){
-            document.getElementById("clientId").value = cid;
+            setScanned(val || txt || cid);
             scanHint.textContent = "QR détecté ✅";
             await stopScan();
             return;
@@ -249,7 +270,7 @@ async function startScan(){
         const txt = result.getText();
         const cid = pickCid(txt);
         if(cid){
-          document.getElementById("clientId").value = cid;
+          setScanned(val || txt || cid);
           scanHint.textContent = "QR détecté ✅";
           stopScan();
         }
