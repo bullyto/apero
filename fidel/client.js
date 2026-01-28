@@ -108,7 +108,8 @@ async function qrRender(text){
       throw new Error("QR engine manquant (qr.js)");
     }
     // Render stable QR
-    window.ADN66QR.renderToCanvas(canvas, cid, {scale:6, margin:3, dark:"#111", light:"#fff"});
+    const qrValue = `${QR_SCAN_BASE}${encodeURIComponent(cid)}`;
+    window.ADN66QR.renderToCanvas(canvas, qrValue, {scale:7, margin:6, dark:"#111", light:"#fff", ecc:"M"});
   }catch(_){
     // Fallback: write text in canvas
     const ctx = canvas.getContext("2d");
