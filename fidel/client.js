@@ -41,23 +41,16 @@ function setCardVisible(v){
 function setMeta(cid){
   const meta = document.getElementById("meta");
   const cidText = document.getElementById("cidText");
-  const qrMsg = document.getElementById("qrMsg");
   if(meta) meta.textContent = cid ? ("ID: " + cid) : "—";
   if(cidText) cidText.textContent = cid || "—";
-  if(qrMsg){
-    qrMsg.textContent = cid
-      ? "À montrer au livreur : ce QR contient uniquement ton ID."
-      : "Crée ta carte pour afficher ton QR.";
-  }
-  if(cid) qrRender(String(cid));
+  if(cid) qrRender("https://aperos.net/fidel/scan?cid=" + encodeURIComponent(cid));
 }
 
 function setApiState(ok, msg){
   const dot = document.getElementById("dot");
   const txt = document.getElementById("apiState");
-  const state = (ok === true) ? "ok" : (ok === false ? "warn" : "neutral");
-  if(dot) dot.className = "dot " + state;
-  if(txt) txt.textContent = msg || (ok === true ? "Synchronisé" : (ok === false ? "Hors ligne" : "—"));
+  if(dot) dot.className = "dot " + (ok ? "ok" : "warn");
+  if(txt) txt.textContent = msg || (ok ? "Synchronisé" : "Hors ligne");
 }
 
 function setStateText(points, completedAt){
@@ -95,15 +88,51 @@ function renderVisualStamps(points){
 function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
+  const payload = String(text || "").trim();
+
+  // Always make fallback visible (avoid white-on-white)
+  box.style.color = "#111";
+  box.style.background = "transparent";
+
+  // Try: 1) QRCodeGenerator (Kazuhiko Arase) 2) window.qrcode 3) window.QRCode
   try{
-    if(typeof window.QRCodeGenerator !== "function") throw new Error("QRCodeGenerator missing");
-    const q = new window.QRCodeGenerator(0);
-    q.addData(String(text));
-    q.make();
-    // qr.min.js: createSvgTag(cellSize, fillColor)
-    box.innerHTML = q.createSvgTag(4, "#111");
+    // If the payload is a URL containing ?cid=..., keep the URL for scanners,
+    // but also allow admin/scanner to parse it later. For the client QR we prefer ID-only,
+    // so callers should pass the ID. Still: we accept any text.
+    if(typeof window.QRCodeGenerator === "function"){
+      const q = new window.QRCodeGenerator(0);
+      q.addData(payload);
+      q.make();
+      const svg = q.createSvgTag(4, "#111");
+      if(svg && svg.trim()){
+        box.innerHTML = svg;
+        return;
+      }
+    }
+
+    if(typeof window.qrcode === "function"){
+      // Some builds expose a function returning an object with createSvgTag / createImgTag
+      const q = window.qrcode(0, "L");
+      q.addData(payload);
+      q.make();
+      if(typeof q.createSvgTag === "function"){
+        box.innerHTML = q.createSvgTag(4);
+        return;
+      }
+    }
+
+    if(typeof window.QRCode === "function"){
+      // Some libs render into an element
+      box.innerHTML = "";
+      // eslint-disable-next-line no-new
+      new window.QRCode(box, { text: payload, width: 220, height: 220 });
+      // If it rendered, leave; if not, fallback below.
+      if(box.querySelector("canvas, img, svg")) return;
+    }
+
+    throw new Error("No compatible QR generator");
   }catch(_){
-    box.innerHTML = "QR indisponible";
+    box.textContent = "QR indisponible";
   }
 }
 
@@ -130,7 +159,7 @@ async function loadCard(){
     if(goal) goal.textContent = String(GOAL);
     renderVisualStamps(0);
     setStateText(0, null);
-    setApiState(null, "—");
+    setApiState(true, "Synchronisé");
     setMeta(null);
     return;
   }
@@ -227,35 +256,6 @@ async function restoreFromId(raw){
   alert("Carte restaurée ✅");
 }
 
-
-function extractClientIdFromAny(raw){
-  const val = String(raw || "").trim();
-  if(!val) return null;
-  if(isValidClientId(val)) return val;
-
-  // Try URL parsing (QR can contain an URL with cid/client_id)
-  try{
-    if(/^https?:\/\//i.test(val)){
-      const u = new URL(val);
-      const cid = (u.searchParams.get("cid") || u.searchParams.get("client_id") || "").trim();
-      if(isValidClientId(cid)) return cid;
-      // Sometimes the id is the last path segment
-      const last = (u.pathname.split("/").filter(Boolean).pop() || "").trim();
-      if(isValidClientId(last)) return last;
-    }
-  }catch(_){}
-
-  // Fallback: look for cid=... in any string
-  const m = val.match(/(?:\?|&)(?:cid|client_id)=([^&#\s]+)/i);
-  if(m && m[1]){
-    try{
-      const cid = decodeURIComponent(m[1]).trim();
-      if(isValidClientId(cid)) return cid;
-    }catch(_){}
-  }
-  return null;
-}
-
 async function startRestoreScan(){
   const hint = document.getElementById("scanHint");
   const video = document.getElementById("video");
@@ -282,10 +282,9 @@ async function startRestoreScan(){
     while(restoreScanning){
       const codes = await detector.detect(video);
       if(codes && codes.length){
-        const raw = String(codes[0].rawValue || "").trim();
-        const cid = extractClientIdFromAny(raw);
-        if(cid){
-          await restoreFromId(cid);
+        const val = String(codes[0].rawValue || "").trim();
+        if(isValidClientId(val)){
+          await restoreFromId(val);
           return;
         }
       }

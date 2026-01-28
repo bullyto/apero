@@ -6,7 +6,6 @@
   <title>ADN66 • Carte de fidélité (Client)</title>
   <meta name="theme-color" content="#050b12" />
   <style>
-
     :root{
       --bg:#050b12;--card:#0b1420;--card2:#0e1826;
       --t:rgba(255,255,255,.92);--t2:rgba(255,255,255,.68);--b:rgba(255,255,255,.10);
@@ -68,7 +67,6 @@
     .dot{width:10px;height:10px;border-radius:999px;background:rgba(255,255,255,.18);}
     .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(33,208,122,.15)}
     .dot.warn{background:var(--warn);box-shadow:0 0 0 4px rgba(255,204,51,.12)}
-    .dot.neutral{background:rgba(255,255,255,.24);box-shadow:none}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
 
     .cardVisualWrap{display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;}
@@ -110,11 +108,12 @@
     .hint{margin-top:10px;font-size:12px;color:var(--t2)}
     .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
   
-    /* --- QR --- */
-#qrSvg svg{display:block;width:100%;height:auto}
+    /* --- QR ultra fiable --- */
+    #qrWrap{background:#fff;border-radius:16px;padding:14px;border:1px solid rgba(0,0,0,.08)}
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:700}
+    #qrSvg svg{display:block;width:100%;height:auto}
     #qrMsg{margin-top:8px;font-size:12px;color:rgba(255,255,255,.62);text-align:center}
 
-  
   </style>
 </head>
 <body>
@@ -178,16 +177,14 @@
 
             <div class="qrbox" style="width:100%;margin-top:12px">
               <div class="note" style="margin:0">Mon QR (à montrer)</div>
-              <div class="qr">
-                <div id="qrSvg" aria-label="QR code"></div>
-              </div>
+              <div class="qr"><div id="qrWrap"><div id="qrSvg" aria-label="QR code"></div></div></div>
               <div class="mono" id="cidText">—</div>
               <div class="qr-actions">
                 <button class="secondary" id="btnRefresh">Rafraîchir</button>
                 <button class="secondary" id="btnCopy">Copier ID</button>
               </div>
-              <div class="hint" id="qrMsg">Astuce : pour restaurer, scanne un QR qui contient l’ID (pas une URL).</div>
-            </div>            </div>
+              <div class="hint">Cloudflare : mets l’URL du Worker dans <span class="mono">API_BASE</span> (client.js).</div>
+            </div>
           </div>
         </div>
       </div>
@@ -214,7 +211,7 @@
     </div>
   </div>
 
-  <script src="./qr.min.js?v=1769565222"></script>
-  <script src="./client.js?v=1769565222"></script>
+  <script src="./qr.min.js?v=1769565222" defer></script>
+  <script src="./client.js?v=1769565222" defer></script>
 </body>
 </html>
