@@ -434,11 +434,7 @@
           <button id="btnUseManual" class="secondary" type="button">Utiliser</button>
         </div>
 
-        <div class="qrBox">
-          <div class="qr" style="display:none">
-            <div id="qrSvg"></div>
-          </div>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -448,5 +444,201 @@
 
   <!-- Ton code (logique intacte) -->
   <script src="./client.js"></script>
+
+  <!-- Modal : Créer ma carte -->
+  <div class="modal" id="createModal" aria-hidden="true">
+    <div class="box" role="dialog" aria-modal="true">
+      <div class="head">
+        <b>Créer ma carte</b>
+        <button id="btnCreateClose" class="secondary" type="button" style="flex:0;min-width:auto;font-size:14px;padding:10px 12px;box-shadow:none">Fermer</button>
+      </div>
+      <div class="content">
+        <div class="hint">Crée ta carte, puis affiche ton QR.</div>
+
+        <label for="name">Prénom</label>
+        <input id="name" type="text" placeholder="Ex: Kevin" autocomplete="given-name"/>
+
+        <label for="phone">Téléphone</label>
+        <input id="phone" type="tel" placeholder="06…" autocomplete="tel"/>
+
+        <div class="row" style="margin-top:14px">
+          <button id="btnCreateSubmit" type="button">Créer</button>
+          <button id="btnCreateClose2" class="secondary" type="button">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal : QR + Copier le lien -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="box" role="dialog" aria-modal="true">
+      <div class="head">
+        <b>Mon QR</b>
+        <button id="btnQrClose" class="secondary" type="button" style="flex:0;min-width:auto;font-size:14px;padding:10px 12px;box-shadow:none">Fermer</button>
+      </div>
+      <div class="content">
+        <div class="hint">Présente ce QR à l’admin. Tu peux aussi copier le lien.</div>
+
+        <div class="qrBox">
+          <div class="qr">
+            <div id="qrSvg"></div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button id="btnCopyUrl" type="button">Copier le lien</button>
+          <button id="btnQrClose2" class="secondary" type="button">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // Add-on UI (refonte ZERO) — ne casse pas client.js
+    (function(){
+      function $(id){ return document.getElementById(id); }
+
+      function openModal(id){
+        const m = $(id);
+        if(!m) return;
+        m.classList.add("open");
+      }
+      function closeModal(id){
+        const m = $(id);
+        if(!m) return;
+        m.classList.remove("open");
+      }
+
+      function basePageUrl(){
+        // URL de la page sans query/hash
+        try{
+          const u = new URL(location.href);
+          u.search = "";
+          u.hash = "";
+          return u.toString();
+        }catch(_){
+          return location.origin + location.pathname;
+        }
+      }
+
+      function buildRestoreUrl(cid){
+        const url = basePageUrl();
+        const sep = url.includes("?") ? "&" : "?";
+        return url + sep + "restore=1&id=" + encodeURIComponent(cid);
+      }
+
+      function setQr(url){
+        const box = $("qrSvg");
+        if(!box) return;
+        box.innerHTML = "";
+        // qrcodejs uses QRCode constructor
+        try{
+          new QRCode(box, { text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+        }catch(e){
+          // fallback text if QR lib blocked
+          box.textContent = "QR indisponible";
+        }
+      }
+
+      async function copyText(text){
+        try{
+          await navigator.clipboard.writeText(text);
+          return true;
+        }catch(_){
+          // fallback
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position="fixed";
+          ta.style.left="-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          try{ document.execCommand("copy"); }catch(__){}
+          document.body.removeChild(ta);
+          return false;
+        }
+      }
+
+      // --- Create modal wiring ---
+      const btnCreate = $("btnCreate");
+      const btnCreateClose = $("btnCreateClose");
+      const btnCreateClose2 = $("btnCreateClose2");
+      const btnCreateSubmit = $("btnCreateSubmit");
+
+      if(btnCreate){
+        btnCreate.onclick = ()=> openModal("createModal");
+      }
+      if(btnCreateClose) btnCreateClose.onclick = ()=> closeModal("createModal");
+      if(btnCreateClose2) btnCreateClose2.onclick = ()=> closeModal("createModal");
+
+      // Wrap original createCard from client.js (global)
+      const origCreate = window.createCard;
+      if(btnCreateSubmit){
+        btnCreateSubmit.onclick = async ()=>{
+          if(typeof origCreate !== "function"){
+            alert("createCard manquant.");
+            return;
+          }
+          await origCreate();
+          // si création OK => on ferme
+          const cid = localStorage.getItem("adn66_loyalty_client_id");
+          if(cid) closeModal("createModal");
+        };
+      }
+
+      // --- Restore modal title fix + open ---
+      const btnRestore = $("btnRestore");
+      if(btnRestore){
+        btnRestore.onclick = ()=>{
+          const h = $("scanHint");
+          if(h) h.textContent = "Restaurer ma carte";
+          openModal("restoreModal");
+        };
+      }
+      const btnClose = $("btnClose");
+      if(btnClose) btnClose.onclick = ()=> closeModal("restoreModal");
+
+      // Click outside to close (both modals)
+      ["createModal","restoreModal","qrModal"].forEach(id=>{
+        const m = $(id);
+        if(m){
+          m.addEventListener("click", (e)=>{
+            if(e.target === m) closeModal(id);
+          });
+        }
+      });
+
+      // --- QR modal ---
+      const btnCopy = $("btnCopy"); // "Afficher mon QR"
+      const btnQrClose = $("btnQrClose");
+      const btnQrClose2 = $("btnQrClose2");
+      const btnCopyUrl = $("btnCopyUrl");
+
+      function openQr(){
+        const cid = localStorage.getItem("adn66_loyalty_client_id");
+        if(!cid) return;
+        const url = buildRestoreUrl(cid);
+        setQr(url);
+        openModal("qrModal");
+      }
+
+      if(btnCopy){
+        btnCopy.onclick = ()=> openQr();
+      }
+      if(btnQrClose) btnQrClose.onclick = ()=> closeModal("qrModal");
+      if(btnQrClose2) btnQrClose2.onclick = ()=> closeModal("qrModal");
+      if(btnCopyUrl){
+        btnCopyUrl.onclick = async ()=>{
+          const cid = localStorage.getItem("adn66_loyalty_client_id");
+          if(!cid) return;
+          const url = buildRestoreUrl(cid);
+          await copyText(url);
+        };
+      }
+
+      // IMPORTANT: laisser client.js gérer loadCard/scan etc.
+    })();
+  </script>
+
 </body>
 </html>
