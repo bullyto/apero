@@ -327,3 +327,13 @@ function drawQr(cid){
     if(st) st.textContent = (e && e.message) ? e.message : String(e);
   }
 }
+
+
+// --- ADN66 QR hook (fallback) ---
+(function(){
+  try{
+    const cid = (typeof getCid === "function") ? getCid() :
+                (localStorage.getItem("client_id") || localStorage.getItem("adn66_client_id"));
+    if(cid) drawQr(cid);
+  }catch(e){}
+})();
