@@ -1,6 +1,6 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 qrfix-v2
+// Version: 2026-01-28 restore-fix
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -88,41 +88,36 @@ function renderVisualStamps(points){
 function qrRender(text){
   const box = document.getElementById("qrSvg");
   if(!box) return;
+
   const payload = String(text || "").trim();
 
-  // Clean
+  // clear previous
   box.innerHTML = "";
-  box.style.color = "#111";
-  box.style.background = "transparent";
+
+  if(!payload){
+    box.textContent = "QR indisponible";
+    box.style.color = "#111";
+    return;
+  }
+
+  // qrcodejs (QRCode) expects a container element
+  if(typeof window.QRCode !== "function"){
+    box.textContent = "QR indisponible";
+    box.style.color = "#111";
+    return;
+  }
 
   try{
-    // Accept either window.qrcode (official) or window.QRCodeGenerator (your current build exposes this name)
-    const gen = (typeof window.qrcode === "function")
-      ? window.qrcode
-      : (typeof window.QRCodeGenerator === "function" ? window.QRCodeGenerator : null);
-
-    if(!gen) throw new Error("QR generator missing");
-
-    // qrcode-generator API: gen(typeNumber, errorCorrectionLevel)
-    // typeNumber=0 => auto
-    const q = gen(0, "M");
-    q.addData(payload);
-    q.make();
-
-    if(typeof q.createSvgTag === "function"){
-      // createSvgTag(cellSize, margin)
-      box.innerHTML = q.createSvgTag(4, 2);
-      return;
-    }
-
-    if(typeof q.createImgTag === "function"){
-      box.innerHTML = q.createImgTag(4, 2);
-      return;
-    }
-
-    throw new Error("Unsupported QR generator API");
+    // qrcodejs will append a canvas or img inside the container
+    new window.QRCode(box, {
+      text: payload,
+      width: 220,
+      height: 220,
+      correctLevel: window.QRCode.CorrectLevel.M
+    });
   }catch(e){
-    box.innerHTML = '<div style="font-weight:900;font-size:22px;color:#111;display:flex;align-items:center;justify-content:center;height:100%;">QR indisponible</div>';
+    box.textContent = "QR indisponible";
+    box.style.color = "#111";
   }
 }
 
