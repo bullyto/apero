@@ -4,110 +4,251 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ADN66 • Carte de fidélité</title>
-  <meta name="theme-color" content="#050b12" />
+  <meta name="theme-color" content="#0b1c2d" />
+  
   <style>
     :root{
-      --bg:#050b12;--card:#0b1420;--card2:#0e1826;
-      --t:rgba(255,255,255,.92);--t2:rgba(255,255,255,.68);--b:rgba(255,255,255,.10);
-      --ok:#21d07a;--warn:#ffcc33;--danger:#ff4d4d;
+      /* ✅ Style marketing (aligné zone_livraison.html) */
+      --blue:#0b1c2d;               /* header / titres */
+      --sky:#5db7ee;                /* CTA */
+      --text:#0b1c2d;               /* texte principal */
+      --muted:rgba(11,28,45,.65);   /* texte secondaire */
+      --line:rgba(11,28,45,.15);    /* bordures */
+      --bg:#f7fbff;                 /* fond page */
+      --shadow:0 12px 30px rgba(0,0,0,.08);
+      --shadowBtn:0 10px 18px rgba(93,183,238,.32);
+      --radiusCard:18px;
+      --radiusBtn:14px;
     }
     *{box-sizing:border-box}
+
     body{
       margin:0;
-      background:radial-gradient(1200px 800px at 50% -10%, rgba(84,180,255,.18), transparent 55%), var(--bg);
-      color:var(--t);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
     }
-    .wrap{width:min(700px,100%);}
-    .brand{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
-    .brand b{font-size:16px;letter-spacing:.2px}
-    .brand span{font-size:12px;color:var(--t2)}
 
-    .card{
-      background:linear-gradient(180deg,var(--card),var(--card2));
-      border:1px solid var(--b);
-      border-radius:18px;
-      box-shadow:0 0 0 1px rgba(255,255,255,.02), 0 20px 60px rgba(0,0,0,.55);
+    .wrap{width:min(820px,100%);}
+
+    /* En-tête "bar" comme livraison */
+    .brand{
+      background:var(--blue);
+      color:#fff;
+      border-radius:var(--radiusCard);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+      box-shadow:var(--shadow);
       overflow:hidden;
     }
-    .card-h{
-      padding:14px 14px 10px;border-bottom:1px solid rgba(255,255,255,.06);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    .brand .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .brand b{font-size:16px;font-weight:900;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand span{font-size:12px;opacity:.85}
+    .brand .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
     }
-    .card-h h1{margin:0;font-size:14px}
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:var(--radiusCard);
+      background:#fff;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-h{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .card-h h1{margin:0;font-size:16px;font-weight:900;color:var(--text)}
+    .sub{font-size:12px;color:var(--muted);font-weight:800}
+
     .panel{padding:14px}
-    .note{margin-top:6px;font-size:12px;color:var(--t2);line-height:1.35}
+
+    .note{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+    .noteSub{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
-    button{
-      flex:1;min-width:160px;padding:12px 12px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(84,180,255,.14);
-      color:var(--t);font-weight:800;cursor:pointer
-    }
-    button.secondary{background:rgba(255,255,255,.06)}
-    button:active{transform:translateY(1px)}
 
-    /* Carte visuelle */
+    button{
+      flex:1;
+      min-width:160px;
+      padding:10px 14px;
+      border-radius:var(--radiusBtn);
+      font-weight:900;
+      font-size:14px;
+      cursor:pointer;
+      border:none;
+      background:var(--sky);
+      color:#fff;
+      box-shadow:var(--shadowBtn);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: translateY(1px); }
+
+    button.secondary{
+      background:#fff;
+      color:var(--blue);
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+
+    /* Carte visuelle (on garde la structure, mais style "propre") */
     .cardVisualWrap{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;}
     .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
     .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
-    .loyTop .sub{font-size:12px;color:var(--t2)}
-    .visual{width:min(520px,100%);position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.20);}
+    .loyTop .sub{font-size:12px;color:var(--muted);font-weight:900}
+
+    .visual{
+      width:min(520px,100%);
+      position:relative;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.07);
+    }
     .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
+
     .stamp{
       position:absolute;width:11%;aspect-ratio:1/1;border-radius:999px;
       display:flex;align-items:center;justify-content:center;font-weight:1000;
       transform:rotate(-10deg);opacity:0;pointer-events:none;
-      box-shadow:0 10px 25px rgba(0,0,0,.35);
-      border:2px solid rgba(33,208,122,.95);
-      background:rgba(33,208,122,.16);
-      color:rgba(33,208,122,.98);
-      text-shadow:0 1px 0 rgba(0,0,0,.25);
+      box-shadow:0 10px 18px rgba(0,0,0,.18);
+      border:2px solid rgba(11,28,45,.22);
+      background:rgba(93,183,238,.18);
+      color:rgba(11,28,45,.92);
     }
     .stamp.filled{opacity:1;}
     .stamp span{font-size:clamp(12px, 2.2vw, 18px);}
     .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
     .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
 
-    /* Modal */
-    .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+    /* Modal (pop-up) */
+    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
     .modal.open{display:flex}
-    .modal .box{width:min(520px,100%);background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(255,255,255,.12);border-radius:18px;overflow:hidden}
+    .modal .box{
+      width:min(560px,100%);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
     .modal .box .head{
-      padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex;align-items:center;justify-content:space-between;gap:10px
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg, rgba(93,183,238,.10), rgba(93,183,238,0));
     }
-    .modal .box .head b{font-size:13px}
+    .modal .box .head b{font-size:14px;font-weight:900;color:var(--text)}
     .tabs{display:flex;gap:8px}
+
     .tabBtn{
-      padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.05);color:var(--t2);font-weight:800;cursor:pointer;font-size:12px
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--muted);
+      font-weight:900;
+      cursor:pointer;
+      font-size:12px;
     }
-    .tabBtn.active{background:rgba(84,180,255,.18);color:var(--t)}
+    .tabBtn.active{
+      background:rgba(93,183,238,.22);
+      color:var(--text);
+      border-color:rgba(93,183,238,.55);
+    }
+
     .modal .box .content{padding:14px}
-    label{display:block;font-size:12px;color:var(--t2);margin:10px 0 6px}
+
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900}
+
     input{
-      width:100%;padding:12px 12px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.25);color:var(--t);outline:none
+      width:100%;
+      border-radius:14px;
+      border:2px solid rgba(93,183,238,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      box-shadow: 0 6px 14px rgba(93,183,238,.14);
+      color:var(--text);
     }
-    input:focus{border-color:rgba(84,180,255,.55);box-shadow:0 0 0 4px rgba(84,180,255,.12);}
-    .hint{margin-top:10px;font-size:12px;color:var(--t2);line-height:1.35}
-    .scan{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.10);background:#000;aspect-ratio:3/4;overflow:hidden;position:relative}
+    input::placeholder{ color:rgba(11,28,45,.45); }
+    input:focus{
+      border-color: rgba(93,183,238,1);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.22);
+    }
+
+    .hint{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.35;font-weight:800}
+
+    .scan{
+      width:100%;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#0b1c2d;
+      aspect-ratio:3/4;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 10px 22px rgba(0,0,0,.12);
+    }
     video{width:100%;height:100%;object-fit:cover}
-    .qr{width:220px;max-width:100%;background:#fff;border-radius:14px;padding:10px;border:1px solid rgba(0,0,0,.08)}
-    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:700}
-    .footer{text-align:center;margin-top:12px;color:var(--t2);font-size:12px}
+
+    .qr{
+      width:240px;max-width:100%;
+      background:#fff;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid var(--line);
+      box-shadow:0 12px 30px rgba(0,0,0,.10);
+    }
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:900}
+
+    .footer{
+      text-align:center;
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+    }
   </style>
+
 </head>
 <body>
   <div class="wrap">
-    <div class="brand">
-      <b>ADN66 • Carte de fidélité</b>
-      <span>Client</span>
-    </div>
+    <div class="brand"><div class="left"><b>ADN66 • Carte de fidélité</b><span>Client</span></div><div class="badge">Fidélité</div></div>
 
     <div class="card">
       <div class="card-h">
@@ -118,6 +259,7 @@
       <!-- Écran départ : uniquement le nécessaire -->
       <div class="panel" id="startBlock">
         <div class="note">Crée ta carte en 10 secondes.</div>
+        <div class="noteSub">Cumule des points à chaque commande et débloque des avantages.</div>
         <div class="row">
           <button id="btnOpenCreate">Créer ma carte</button>
           <button class="secondary" id="btnOpenRestore">Restaurer</button>
