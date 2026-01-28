@@ -1,6 +1,19 @@
 function extractClientIdFromAny(raw){
-  const s = String(raw || "").trim();
+  // Nettoyage agressif (espaces, retours, caractères invisibles)
+  let s = String(raw || "");
+  s = s.replace(/[\u200B-\u200D\uFEFF]/g, ""); // zero-width
+  s = s.trim();
   if(!s) return "";
+
+  // 0) Si on voit "id=" quelque part, on extrait direct (le plus robuste)
+  //    Ex: https://.../client.html?restore=1&id=UUID
+  try{
+    const mId = s.match(/[?&#]id=([^&#\s]+)/i) || s.match(/\bid=([^&#\s]+)/i);
+    if(mId && mId[1]){
+      const v = decodeURIComponent(mId[1]);
+      if(v) return String(v).trim();
+    }
+  }catch(_){}
 
   // 1) URL -> ?id=...
   try{
@@ -20,7 +33,7 @@ function extractClientIdFromAny(raw){
     }
   }catch(_){}
 
-  // 3) Fallback : extraire un UUID dans le texte
+  // 3) Fallback : extraire un UUID dans le texte (même si c'est une URL complète)
   const mm = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
   if(mm && mm[0]) return mm[0];
 
