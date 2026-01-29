@@ -78,6 +78,7 @@ function $(id){ return document.getElementById(id); }
 
 function ensureInfoPopupStyles(){
   if(document.getElementById("adn66InfoPopupStyles")) return;
+
   const css = `
   .adn66-info-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;}
   .adn66-info-card{width:min(520px,100%);background:#0b1420;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;}
@@ -87,12 +88,12 @@ function ensureInfoPopupStyles(){
   .adn66-info-body{padding:14px 16px 16px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.86);}
   .adn66-info-body a{color:#54b4ff;text-decoration:none;font-weight:700;}
   .adn66-info-body a:hover{text-decoration:underline;}
-  `
   .adn66-info-foot{display:flex;gap:10px;align-items:center;justify-content:flex-end;padding:0 16px 16px;}
   .adn66-info-ok{appearance:none;border:0;background:#54b4ff;color:#06121e;font-weight:900;padding:12px 16px;border-radius:14px;cursor:pointer;min-width:120px;}
   .adn66-info-ok:disabled{opacity:.45;cursor:not-allowed;}
   .adn66-info-sub{margin-top:10px;color:rgba(255,255,255,.68);font-size:12.5px;line-height:1.35;}
-;
+  `;
+
   const style = document.createElement("style");
   style.id = "adn66InfoPopupStyles";
   style.textContent = css;
