@@ -391,6 +391,32 @@
   transform-origin:center center;
 }
 
+
+
+/* ✅ Start screen: plus respirant (sans impacter l’écran carte) */
+#startBlock.panel{
+  padding:14px !important;
+}
+#startBlock .note{
+  font-size:16px;
+  line-height:1.25;
+}
+#startBlock .noteSub{
+  font-size:14px;
+  line-height:1.45;
+  margin-top:8px;
+}
+#startBlock .row{
+  margin-top:16px;
+}
+#startBlock button{
+  padding:12px 14px;
+  font-size:15px;
+}
+#startBlock .reassurance{
+  margin-top:14px;
+}
+
 </style>
 
 </head>
@@ -518,7 +544,7 @@
           
           <button class="secondary" id="btnCopyLink">Copier le lien</button>
         </div>
-        <div class="hint" style="text-align:center">Le lien copié est exactement celui encodé dans le QR.</div>
+        <div class="hint" style="text-align:center">Vous pouvez ajouter cette carte en scannant le QR code depuis un autre téléphone via l'application.</div>
       </div>
     </div>
   </div>
@@ -560,6 +586,34 @@
           window.location.href = '/';
         });
       }
+    })();
+  </script>
+
+
+  <script>
+    // ✅ Override wording for "Carte complétée (reset dans ...)" without touching client.js
+    (function(){
+      function formatNewCardCountdown(t){
+        // t is the captured "22h 24min" or similar
+        return "Une nouvelle carte sera générée dans " + t + ".";
+      }
+      function tick(){
+        var el = document.getElementById('stateText');
+        if(!el) return;
+        var s = (el.textContent || "").trim();
+        // Matches: "🎉 Carte complétée (reset dans 22h 24min)" or variants without emoji
+        var m = s.match(/(?:Carte\s+compl[ée]t[ée]e?)\s*\(\s*reset\s+dans\s*([^\)]+)\)/i);
+        if(m && m[1]){
+          el.textContent = formatNewCardCountdown(m[1].trim());
+        }
+      }
+      // Run a few times to catch async updates from client.js
+      tick();
+      var n=0;
+      var iv = setInterval(function(){
+        tick();
+        if(++n>40) clearInterval(iv);
+      }, 250);
     })();
   </script>
 
