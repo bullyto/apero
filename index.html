@@ -694,6 +694,26 @@
 .lpStamp.s1{left:18.1%; top:44.6%;}.lpStamp.s2{left:34.1%; top:44.6%;}.lpStamp.s3{left:50.1%; top:44.6%;}.lpStamp.s4{left:65.5%; top:44.6%;}.lpStamp.s5{left:81.5%; top:44.6%;}
 .lpStamp.s6{left:25.7%; top:66.4%;}.lpStamp.s7{left:42.5%; top:66.4%;}.lpStamp.s8{left:59.3%; top:66.4%;}
 
+
+/* ✅ Close X (modal) */
+.modalX{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:12px;
+  background:rgba(0,0,0,.06);
+  font-size:18px;
+  font-weight:900;
+  line-height:38px;
+  text-align:center;
+  cursor:pointer;
+}
+.modalX:active{transform:scale(.98)}
+.sheet{position:relative}
+
 </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
@@ -805,6 +825,7 @@
           <p id="helpIntro"></p>
         </div>
       </div>
+        <button class="modalX" id="closeLoyaltyModalX" aria-label="Fermer">✕</button>
 
       <div class="step" id="helpSteps"></div>
       <div class="copied" id="copiedMsg">✅ Lien copié</div>
@@ -911,7 +932,7 @@
     // ✅ Service worker (cache-bust)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=20260101").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js?v=20260129").catch(() => {});
       });
     }
 
@@ -1691,7 +1712,7 @@
         <div class="sheetIcon">🎟️</div>
         <div>
           <h3>Carte de fidélité</h3>
-          <p>Pour accéder à la carte de fidélité, l’application <strong>APÉRO DE NUIT 66®</strong> est recommandée.</p>
+          <p>Débloquer des fonctionnalités exclusives avec l’application <strong>APÉRO DE NUIT 66®</strong> : carte de fidélité, jeux, cadeaux et suivi en direct.</p>
         </div>
       </div>
 
@@ -1722,8 +1743,7 @@
 
       <div class="modalActions">
     
-        <button class="okBtn" id="openPlayStore">Installer l’application APÉRO DE NUIT 66®</button>
-        <button class="copyBtn" id="closeLoyaltyModal">Continuer sur le site</button>
+        <button class="okBtn" id="openPlayStore">Installer l’application<br>APÉRO DE NUIT 66®</button>
       </div>
     </div>
   </div>
@@ -1744,7 +1764,8 @@
 
   const modal = document.getElementById("loyaltyModal");
   const closeBtn = document.getElementById("closeLoyaltyModal");
-  const playBtn = document.getElementById("openPlayStore");
+  const closeX = document.getElementById("closeLoyaltyModalX");
+const playBtn = document.getElementById("openPlayStore");
 
   function openModal(){
     if(!modal) return;
@@ -1799,7 +1820,8 @@
 
   // Close actions
   if(closeBtn) closeBtn.addEventListener("click", closeModal);
-  if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
+  if(closeX) closeX.addEventListener("click", closeModal);
+if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
 
   if(modal){
     modal.addEventListener("click", function(e){
