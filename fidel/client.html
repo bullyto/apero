@@ -18,7 +18,7 @@
       --bg:#f7fbff;                 /* fond page */
       --shadow:0 12px 30px rgba(0,0,0,.08);
       --shadowBtn:0 10px 18px rgba(93,183,238,.32);
-      --radiusCard:18px;
+      --radiusCard:16px;
       --radiusBtn:14px;
     }
     *{box-sizing:border-box}
@@ -32,7 +32,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:16px;
+      padding:10px;
     }
 
     .wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
@@ -45,7 +45,7 @@
       inset:0;
       border-radius:var(--radiusCard);
       background:rgba(255,255,255,.92);
-      border:1px solid var(--line);
+      border:0.75px solid var(--line);
       box-shadow:var(--shadow);
       transform:translateY(14px) scale(.985);
       filter:blur(.2px);
@@ -103,7 +103,7 @@
     .card-h h1{margin:0;font-size:16px;font-weight:900;color:var(--text)}
     .sub{font-size:12px;color:var(--muted);font-weight:800}
 
-    .panel{padding:12px}
+    .panel{padding:10px}
 
     .note{
       margin:0;
@@ -179,7 +179,7 @@
     .s6{left:25.7%; top:66.4%;}.s7{left:42.5%; top:66.4%;}.s8{left:59.3%; top:66.4%;}
 
     /* Modal (pop-up) */
-    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:12px;z-index:9999}
     .modal.open{display:flex}
     .modal .box{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);
       max-height:min(88vh, 720px);
