@@ -84,7 +84,6 @@
 }
   </script>
 
-
   <!-- ✅ PWA -->
   <link rel="manifest" href="./manifest.webmanifest?v=20260101">
   <meta name="theme-color" content="#0b1c2d">
@@ -547,8 +546,6 @@
   text-overflow:ellipsis;
 }
 
-
-
     /* ADN66 — Icônes image menu (remplace les emojis) */
     .adn-menu-item{
       --adn-icon:48px;
@@ -619,7 +616,6 @@
     }
     .adn-legal-footer a:active{ opacity:.8; }
     .adn-legal-footer .dot{ margin:0 6px; opacity:.6; }
-
 
 /* 🎟️ Carte de fidélité — Modal marketing [v7] */
 .sheet{position:relative}
@@ -951,7 +947,6 @@
         run();
       }
     }
-
 
     const TRACK = {
       call: "https://stats.aperos.net/e/apero_nuit.call?to=tel%3A0652336461&src=app",
@@ -1464,7 +1459,6 @@
       </div>
     </div>
 
-
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
@@ -1488,19 +1482,13 @@
       </div>
     </div>
 
-
     <div class="adn-menu-item" id="adnMenuZone">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
       </div>
     </div>
 
-
-    <div class="adn-menu-item" id="adnMenuInstall" style="display:none">
-      <div class="adn-menu-left">
-        <div class="adn-menu-title">⬇️Télécharger l’application mobile </div>
-      </div>
-    </div>
+</div>
 
     <div class="adn-menu-item" id="adnMenuClose">
       <div class="adn-menu-left">
@@ -1562,13 +1550,10 @@
       // Visibility rules
       const track = document.getElementById("adnMenuTrack");
       const game = document.getElementById("adnMenuGame");
-      const install = document.getElementById("adnMenuInstall");
       const standalone = isStandalone();
 
       if(track) track.style.display = standalone ? "flex" : "none";
       if(game) game.style.display = standalone ? "flex" : "none";
-      if(install) install.style.display = standalone ? "none" : "flex"; // site only
-
       // Actions
       const call = document.getElementById("adnMenuCall");
       if(call){
@@ -1600,7 +1585,6 @@
         });
       }
 
-
       if(game){
         game.addEventListener("click", ()=>{
           closeMenu();
@@ -1623,29 +1607,6 @@
           }
         });
       }
-
-      if(install){
-        install.addEventListener("click", ()=>{
-          closeMenu();
-          const run = () => {
-            // tracking "Télécharger l’app"
-            try{
-              if (typeof fireTrack === "function" && typeof TRACK !== "undefined") fireTrack(TRACK.appClick);
-            }catch(e){}
-            // ✅ Désormais: redirection Play Store
-            try{
-              window.location.href = PLAY_STORE_URL;
-            }catch(e){
-              window.open(PLAY_STORE_URL, "_blank", "noopener");
-            }
-          };
-          if(typeof requireMajorThen === "function"){
-            requireMajorThen(()=>{ run(); });
-          }else{
-            run();
-          }
-        });
-      }
 })();
   </script>
 <footer class="legal-footer">
@@ -1655,7 +1616,6 @@
     <span class="sep">•</span>
     <a href="./privacy.html">Confidentialité</a>
   </footer>
-
 
   <!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) [v7] -->
   <div class="modal" id="loyaltyModal" aria-hidden="true">
@@ -1697,7 +1657,6 @@
       </div>
     </div>
   </div>
-
 
 <script>
 (function(){
