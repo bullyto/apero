@@ -611,6 +611,7 @@ function bind(){
   const tabRestore = $("tabRestore");
 
   const btnCreate = $("btnCreate");
+  if(btnCreate) btnCreate.type = "button";
   const btnClose1 = $("btnCloseModal1");
   const btnClose2 = $("btnCloseModal2");
 
@@ -630,7 +631,12 @@ function bind(){
   if(tabCreate) tabCreate.onclick = ()=>setModalMode("create");
   if(tabRestore) tabRestore.onclick = ()=>setModalMode("restore");
 
-  if(btnCreate) btnCreate.onclick = createCard;
+  if(btnCreate){
+  btnCreate.addEventListener("click", (e)=>{
+    try{ e.preventDefault(); e.stopPropagation(); }catch(_){}
+    createCard();
+  }, true);
+}
   if(btnClose1) btnClose1.onclick = closeModal;
   if(btnClose2) btnClose2.onclick = closeModal;
 
