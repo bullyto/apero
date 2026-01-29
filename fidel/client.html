@@ -310,6 +310,15 @@
   cursor:pointer;
 }
 
+
+.backTop{
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:6px 14px;
+  font-size:14px;
+}
+
 </style>
 
 </head>
@@ -318,6 +327,9 @@
     <div class="stack">
       <div class="badge" aria-hidden="true"></div>
       <div class="card">
+
+    <button class="primary backTop" id="btnBackRootTop">← Retour</button>
+
       <div class="card-h">
         <h1>Ma carte virtuelle</h1>
         <div class="sub" id="stateText" style="font-size:12px;color:var(--muted)">—</div>
@@ -328,17 +340,18 @@
         <div class="note">Crée ta carte en 10 secondes.</div>
         <div class="noteSub">Cumule des points à chaque commande et débloque des avantages.</div>
         <div class="row">
-          <button id="btnOpenCreate">Créer ma carte</button>
-          <button class="secondary" id="btnOpenRestore">Restaurer</button>
+          <button id="btnOpenCreate">Activer ma carte</button>
+          <button class="secondary" id="btnOpenRestore">J’ai déjà une carte</button>
         </div>
 
+        
         <div class="reassurance">
           <small>
-            ✔️ Aucune inscription &nbsp;•&nbsp;
-            ✔️ Pas de spam &nbsp;•&nbsp;
-            ✔️ Juste ton prénom et ton numéro
+            Aucun compte à créer.<br>
+            Ta carte est activée instantanément.
           </small>
         </div>
+    
 
       </div>
 
@@ -377,7 +390,7 @@
     </div>
   </div>
 
-  <!-- Modal actions (Créer / Restaurer) -->
+  <!-- Modal actions (Créer / J’ai déjà une carte) -->
   <div class="modal" id="actionModal" aria-hidden="true">
     <div class="box">
       <div class="head">
@@ -465,6 +478,18 @@
   <script>
     (function(){
       var b = document.getElementById('btnBackRoot');
+      if(b){
+        b.addEventListener('click', function(){
+          window.location.href = '/';
+        });
+      }
+    })();
+  </script>
+
+
+  <script>
+    (function(){
+      var b = document.getElementById('btnBackRootTop');
       if(b){
         b.addEventListener('click', function(){
           window.location.href = '/';
