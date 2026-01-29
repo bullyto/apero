@@ -70,6 +70,74 @@ function getRestoreUrl(cid){
 /* ---------- UI ---------- */
 function $(id){ return document.getElementById(id); }
 
+function ensureInfoPopupStyles(){
+  if(document.getElementById("adn66InfoPopupStyles")) return;
+  const css = `
+  .adn66-info-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;}
+  .adn66-info-card{width:min(520px,100%);background:#0b1420;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;}
+  .adn66-info-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;border-bottom:1px solid rgba(255,255,255,.10);background:linear-gradient(180deg, rgba(84,180,255,.10), rgba(0,0,0,0));}
+  .adn66-info-title{font-weight:800;letter-spacing:.2px;font-size:16px;}
+  .adn66-info-x{appearance:none;border:0;background:rgba(255,255,255,.10);color:rgba(255,255,255,.92);width:34px;height:34px;border-radius:12px;cursor:pointer;font-size:18px;line-height:34px;text-align:center;}
+  .adn66-info-body{padding:14px 16px 16px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.86);}
+  .adn66-info-body a{color:#54b4ff;text-decoration:none;font-weight:700;}
+  .adn66-info-body a:hover{text-decoration:underline;}
+  `;
+  const style = document.createElement("style");
+  style.id = "adn66InfoPopupStyles";
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+
+function showInfoPopup(title, html){
+  ensureInfoPopupStyles();
+  const prev = document.getElementById("adn66InfoPopup");
+  if(prev) prev.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "adn66InfoPopup";
+  overlay.className = "adn66-info-overlay";
+  overlay.setAttribute("role","dialog");
+  overlay.setAttribute("aria-modal","true");
+
+  const card = document.createElement("div");
+  card.className = "adn66-info-card";
+
+  const head = document.createElement("div");
+  head.className = "adn66-info-head";
+
+  const h = document.createElement("div");
+  h.className = "adn66-info-title";
+  h.textContent = String(title || "Information");
+
+  const x = document.createElement("button");
+  x.className = "adn66-info-x";
+  x.type = "button";
+  x.setAttribute("aria-label","Fermer");
+  x.textContent = "×";
+
+  const body = document.createElement("div");
+  body.className = "adn66-info-body";
+  body.innerHTML = String(html || "");
+
+  head.appendChild(h);
+  head.appendChild(x);
+  card.appendChild(head);
+  card.appendChild(body);
+  overlay.appendChild(card);
+
+  const close = ()=> overlay.remove();
+
+  x.addEventListener("click", close);
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+
+  const esc = (e)=>{ if(e.key === "Escape"){ document.removeEventListener("keydown", esc); close(); } };
+  document.addEventListener("keydown", esc);
+
+  document.body.appendChild(overlay);
+  try{ x.focus({preventScroll:true}); }catch(_){}
+}
+
+
 function setScreen(hasCard){
   const startBlock = $("startBlock");
   const cardBlock = $("cardBlock");
@@ -264,10 +332,23 @@ async function createCard(){
   if(!phone || phone.length < 10) return alert("Numéro invalide.");
 
   try{
-    const r = await api("/loyalty/register", {
+        const r = await api("/loyalty/register", {
       method:"POST",
       body: JSON.stringify({name, phone})
     });
+
+    // ✅ Solution 2: si une carte existe déjà, on ne récupère pas l'ID ici.
+    if(r && r.exists){
+      showInfoPopup(
+        "Carte déjà existante",
+        `Une carte de fidélité est déjà associée à ce numéro.<br><br>
+         Pour la récupérer en toute sécurité, contactez notre équipe :<br>
+         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+         👉 La récupération se fait uniquement avec vérification, afin de protéger vos avantages.`
+      );
+      return;
+    }
+
     if(!r || !r.client_id) throw new Error("Réponse invalide");
     localStorage.setItem(LS_KEY, r.client_id);
     closeModal();
