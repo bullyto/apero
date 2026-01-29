@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ADN66 • Carte de fidélité</title>
   <meta name="theme-color" content="#050b12" />
-
+  
   <style>
     :root{
       /* ✅ Style marketing (aligné zone_livraison.html) */
@@ -13,7 +13,7 @@
       --sky:#5db7ee;                /* CTA */
       --text:#0b1c2d;               /* texte principal */
       --muted:rgba(11,28,45,.65);   /* texte secondaire */
-      --t2:var(--muted);            /* alias compat */
+      --t2:var(--muted);              /* alias compat */
       --line:rgba(11,28,45,.15);    /* bordures */
       --bg:#f7fbff;                 /* fond page */
       --shadow:0 12px 30px rgba(0,0,0,.08);
@@ -32,12 +32,13 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:12px; /* ✅ carte plus large sans toucher les bords */
+      padding:16px;
     }
 
-    .wrap{width:100%;display:flex;justify-content:center}
-    .stack{position:relative;width:min(720px,100%)} /* ✅ plus large sur mobile */
+    .wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
 
+    /* Empilement (carte dessous) */
+    .stack{position:relative;width:min(560px,100%);}
     .stack::before{
       content:"";
       position:absolute;
@@ -47,48 +48,95 @@
       border:1px solid var(--line);
       box-shadow:var(--shadow);
       transform:translateY(14px) scale(.985);
+      filter:blur(.2px);
       opacity:.55;
       z-index:0;
+      pointer-events:none;
     }
+    .stack > .card{position:relative;z-index:1;width:100%;}
 
-    .card{
-      position:relative;
-      z-index:1;
-      background:#fff;
+
+    /* En-tête "bar" comme livraison */
+    .brand{
+      background:var(--blue);
+      color:#fff;
       border-radius:var(--radiusCard);
-      border:1px solid var(--line);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
       box-shadow:var(--shadow);
       overflow:hidden;
-      color:var(--text);
+    }
+    .brand .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .brand b{font-size:16px;font-weight:900;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand span{font-size:12px;opacity:.85}
+    .brand .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .card{width:100%;margin:0;color:var(--text);
+      border:1px solid var(--line);
+      border-radius:var(--radiusCard);
+      background:#fff;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
     .card-h{
       padding:14px;
       border-bottom:1px solid var(--line);
       display:flex;
-      justify-content:space-between;
       align-items:center;
-      gap:10px;
+      justify-content:space-between;
+      gap:12px;
     }
-    .card-h h1{margin:0;font-size:20px;font-weight:900;letter-spacing:-.2px}
-    .tag{font-size:14px;color:var(--muted);font-weight:800}
+    .card-h h1{margin:0;font-size:16px;font-weight:900;color:var(--text)}
+    .sub{font-size:12px;color:var(--muted);font-weight:800}
 
     .panel{padding:14px}
 
-    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+    .note{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+    .noteSub{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
+
     button{
       flex:1;
-      min-width:140px;
-      padding:14px 16px;
+      min-width:160px;
+      padding:10px 14px;
       border-radius:var(--radiusBtn);
       font-weight:900;
-      font-size:18px;
-      border:none;
+      font-size:14px;
       cursor:pointer;
+      border:none;
       background:var(--sky);
       color:#fff;
       box-shadow:var(--shadowBtn);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
     }
+    button:active{ transform: translateY(1px); }
+
     button.secondary{
       background:#fff;
       color:var(--blue);
@@ -96,197 +144,197 @@
       box-shadow:none;
     }
 
-    .kpis{
-      display:flex;justify-content:space-between;align-items:flex-end;
-      padding:6px 2px 12px 2px;
-    }
-    .kpis .big{font-size:36px;font-weight:1000;letter-spacing:-1px}
-    .kpis .right{color:var(--muted);font-weight:900;font-size:20px}
+    /* Carte visuelle (on garde la structure, mais style "propre") */
+    .cardVisualWrap{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;}
+    .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
+    .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
+    .loyTop .sub{font-size:12px;color:var(--muted);font-weight:900}
 
     .visual{
-      width:100%;
+      width:min(520px,100%);
       position:relative;
       border-radius:16px;
       overflow:hidden;
       border:1px solid var(--line);
       background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.07);
     }
-    .visual img{width:100%;height:auto;display:block} /* ✅ aucune distorsion */
+    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
 
-    /* ===== Tampons (suivent la carte en %) ===== */
     .stamp{
       position:absolute;
       width:15.05%;
       aspect-ratio:1/1;
-      background:url("tampon.png") center center/contain no-repeat;
       opacity:0;
-      transform-origin:center center;
-      transform:translate(-50%,-50%) rotate(var(--rot,0deg));
       pointer-events:none;
-      filter:contrast(1.05);
+      background-image:url("tampon.png");
+      background-size:contain;
+      background-repeat:no-repeat;
+      background-position:center;
+      transform-origin:center center;
+      transform:translate(-50%,-50%) rotate(var(--rot, -10deg));
     }
-    .stamp.filled{opacity:1}
+    .stamp.filled{opacity:1;}
+    .s1{left:18.1%; top:44.6%;}.s2{left:34.1%; top:44.6%;}.s3{left:50.1%; top:44.6%;}.s4{left:65.5%; top:44.6%;}.s5{left:81.5%; top:44.6%;}
+    .s6{left:25.7%; top:66.4%;}.s7{left:42.5%; top:66.4%;}.s8{left:59.3%; top:66.4%;}
 
-    /* positions (5 en haut / 3 en bas) */
-    .s1{left:18.1%; top:44.6%;}
-    .s2{left:34.1%; top:44.6%;}
-    .s3{left:50.1%; top:44.6%;}
-    .s4{left:65.5%; top:44.6%;}
-    .s5{left:81.5%; top:44.6%;}
-    .s6{left:25.7%; top:66.4%;}
-    .s7{left:42.5%; top:66.4%;}
-    .s8{left:59.3%; top:66.4%;}
-
-    /* ===== Modals ===== */
-    .modal{
-      position:fixed;
-      inset:0;
-      background:rgba(11,28,45,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:12px;
-      z-index:9999;
-    }
+    /* Modal (pop-up) */
+    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
     .modal.open{display:flex}
-
-    /* ✅ plus de dépassement écran + aucun scroll externe */
-    .modal .box{
-      width:min(720px,100%);
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:var(--shadow);
-      max-height:92vh;
-      display:flex;
-      flex-direction:column;
+    .modal .box{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);
+      max-height:min(88vh, 720px);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
-    .modal .head{
+    .modal .box .head{
       padding:12px 14px;
       border-bottom:1px solid var(--line);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      font-weight:1000;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg, rgba(93,183,238,.10), rgba(93,183,238,0));
+    }
+    .modal .box .head b{font-size:14px;font-weight:900;color:var(--text)}
+    .tabs{display:none !important;}
+
+    .tabBtn{
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--muted);
+      font-weight:900;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .tabBtn.active{
+      background:rgba(93,183,238,.22);
       color:var(--text);
+      border-color:rgba(93,183,238,.55);
     }
-    .modal .content{
-      padding:14px;
-      flex:1;
-      min-height:0;
-    }
-    label{display:block;margin:10px 0 6px;font-weight:900;color:var(--muted)}
+
+    .modal .box .content{padding:14px}
+
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900}
+
     input{
       width:100%;
-      padding:12px 14px;
       border-radius:14px;
-      border:1px solid var(--line);
+      border:2px solid rgba(93,183,238,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
       outline:none;
-      font-size:18px;
+      box-shadow: 0 6px 14px rgba(93,183,238,.14);
+      color:var(--text);
     }
-    .hint{color:var(--muted);font-weight:700;margin-top:6px}
+    input::placeholder{ color:rgba(11,28,45,.45); }
+    input:focus{
+      border-color: rgba(93,183,238,1);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.22);
+    }
 
-    /* ✅ scan ne dépasse plus : hauteur responsive */
+    .hint{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.35;font-weight:800}
+
     .scan{
       width:100%;
       border-radius:16px;
       border:1px solid var(--line);
       background:#0b1c2d;
-      height:min(52vh, 420px);
-      min-height:220px;
+      aspect-ratio:3/4;
       overflow:hidden;
       position:relative;
       box-shadow:0 10px 22px rgba(0,0,0,.12);
-      margin-top:10px;
     }
     video{width:100%;height:100%;object-fit:cover}
 
-    @media (max-height: 700px){
-      .modal{padding:12px;}
-      .modal .head{padding:10px 12px;}
-      .modal .content{padding:12px;}
-      .scan{height:min(46vh, 360px); min-height:200px;}
-      label{margin:8px 0 5px;}
-      .row{margin-top:10px;}
-      .hint{margin-top:8px;font-size:12px;}
-      input{padding:10px 12px;}
-    }
-    @media (max-width: 420px){
-      button{min-width:0;}
-    }
-
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
-    .qrbox{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding:16px;
-      border:1px solid var(--line);
-      border-radius:16px;
+    .qr{
+      width:240px;max-width:100%;
       background:#fff;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid var(--line);
+      box-shadow:0 12px 30px rgba(0,0,0,.10);
     }
-  </style>
-</head>
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:900}
 
+    .footer{
+      text-align:center;
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+    }
+  
+.qr-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.back-btn{
+  background:var(--primary);
+  color:#fff;
+}
+
+</style>
+
+</head>
 <body>
   <div class="wrap">
     <div class="stack">
+      <div class="badge" aria-hidden="true"></div>
       <div class="card">
-        <div class="card-h">
-          <h1>Ma carte virtuelle</h1>
-          <div class="tag" id="stateText">—</div>
+      <div class="card-h">
+        <h1>Ma carte virtuelle</h1>
+        <div class="sub" id="stateText" style="font-size:12px;color:var(--muted)">—</div>
+      </div>
+
+      <!-- Écran départ : uniquement le nécessaire -->
+      <div class="panel" id="startBlock">
+        <div class="note">Crée ta carte en 10 secondes.</div>
+        <div class="noteSub">Cumule des points à chaque commande et débloque des avantages.</div>
+        <div class="row">
+          <button id="btnOpenCreate">Créer ma carte</button>
+          <button class="secondary" id="btnOpenRestore">Restaurer</button>
         </div>
+      </div>
 
-        <!-- START -->
-        <div class="panel" id="startBlock">
-          <div class="hint" style="font-size:18px;color:var(--muted);font-weight:800">
-            Crée ta carte en 10 secondes.<br>
-            Cumule des points à chaque commande et débloque des avantages.
-          </div>
-          <div class="row">
-            <button id="btnOpenCreate">Créer ma carte</button>
-            <button class="secondary" id="btnOpenRestore">Restaurer</button>
-          </div>
-        </div>
-
-        <!-- CARD -->
-        <div class="panel" id="cardBlock" style="display:none">
-          <div class="kpis">
-            <div class="big"><span id="pointsText">0</span> / 8</div>
-            <div class="right" id="syncText">—</div>
+      <!-- Écran carte : carte + bouton QR (pas d’ID visible) -->
+      <div class="panel" id="cardBlock" style="display:none">
+        <div class="cardVisualWrap">
+          <div class="loyTop">
+            <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
+            <div class="sub" id="syncText">Synchronisé</div>
           </div>
 
-          <div class="visual">
-            <img src="carte.png" alt="Carte de fidélité">
-            <div class="stamp s1" data-slot="1" style="--rot:-18deg"></div>
-            <div class="stamp s2" data-slot="2" style="--rot:-14deg"></div>
-            <div class="stamp s3" data-slot="3" style="--rot:12deg"></div>
-            <div class="stamp s4" data-slot="4" style="--rot:-10deg"></div>
-            <div class="stamp s5" data-slot="5" style="--rot:14deg"></div>
-            <div class="stamp s6" data-slot="6" style="--rot:-12deg"></div>
-            <div class="stamp s7" data-slot="7" style="--rot:10deg"></div>
-            <div class="stamp s8" data-slot="8" style="--rot:16deg"></div>
+          <div class="visual" id="visual">
+            <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
+            <div class="stamp s1" data-slot="1" style="--rot:-12deg"></div>
+            <div class="stamp s2" data-slot="2" style="--rot:7deg"></div>
+            <div class="stamp s3" data-slot="3" style="--rot:-3deg"></div>
+            <div class="stamp s4" data-slot="4" style="--rot:11deg"></div>
+            <div class="stamp s5" data-slot="5" style="--rot:-9deg"></div>
+            <div class="stamp s6" data-slot="6" style="--rot:5deg"></div>
+            <div class="stamp s7" data-slot="7" style="--rot:-14deg"></div>
+            <div class="stamp s8" data-slot="8" style="--rot:8deg"></div>
           </div>
 
-          <div class="row">
+          <div class="row" style="width:100%">
             <button id="btnShowQr">Afficher mon QR</button>
             <button class="secondary" id="btnRefresh">Rafraîchir</button>
           </div>
         </div>
       </div>
     </div>
+    </div>
   </div>
 
-  <!-- Modal Action (Create / Restore + Scan) -->
+  <!-- Modal actions (Créer / Restaurer) -->
   <div class="modal" id="actionModal" aria-hidden="true">
     <div class="box">
       <div class="head">
         <b id="modalTitle">Action</b>
+        
       </div>
       <div class="content">
-
         <!-- Create -->
         <div id="createView" style="display:none">
           <div class="hint">Crée ta carte, puis affiche ton QR.</div>
@@ -313,7 +361,6 @@
           <div class="row"><button class="secondary" id="btnUseManual">Utiliser</button></div>
           <div class="hint" id="scanHint"></div>
         </div>
-
       </div>
     </div>
   </div>
@@ -321,22 +368,21 @@
   <!-- Modal QR -->
   <div class="modal" id="qrModal" aria-hidden="true">
     <div class="box">
-      <div class="head"><b>Mon QR</b></div>
-      <div class="content">
-        <div class="qrbox"><div id="qrSvg"></div></div>
-        <div class="row">
+      <div class="head">
+        <b>Mon QR</b>
+        
+      </div>
+      <div class="content" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+        <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
+        <div class="row" style="width:100%">
           <button class="secondary" id="btnCopyLink">Copier le lien</button>
-          <button class="secondary" id="btnCloseQr">Fermer</button>
         </div>
-        <div class="hint" id="copyHint">Le lien copié est exactement celui encodé dans le QR.</div>
+        <div class="hint" style="text-align:center">Le lien copié est exactement celui encodé dans le QR.</div>
       </div>
     </div>
   </div>
 
-  <!-- QR lib (OFFICIEL) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <!-- App -->
-  <script src="./client.js"></script>
+  <script src="./client.js?v=20260128-8" defer></script>
 </body>
 </html>
