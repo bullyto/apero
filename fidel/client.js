@@ -7,6 +7,11 @@ const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
+// Anti-abus (client-side) — erreurs téléphone (progressif)
+const LS_PHONE_ERR = "adn66_loyalty_phone_err_count_v1";
+const LS_PHONE_BLOCK_UNTIL = "adn66_loyalty_phone_block_until_v1";
+const PHONE_BLOCK_DAYS = 6;
+
 // IMPORTANT: le QR + copie = URL (pas d'ID affiché)
 const PUBLIC_RESTORE_URL_BASE = "https://www.aperos.net/fidel/client.html?restore=1&id=";
 
@@ -69,74 +74,6 @@ function getRestoreUrl(cid){
 
 /* ---------- UI ---------- */
 function $(id){ return document.getElementById(id); }
-
-function ensureInfoPopupStyles(){
-  if(document.getElementById("adn66InfoPopupStyles")) return;
-  const css = `
-  .adn66-info-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;}
-  .adn66-info-card{width:min(520px,100%);background:#0b1420;color:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;}
-  .adn66-info-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;border-bottom:1px solid rgba(255,255,255,.10);background:linear-gradient(180deg, rgba(84,180,255,.10), rgba(0,0,0,0));}
-  .adn66-info-title{font-weight:800;letter-spacing:.2px;font-size:16px;}
-  .adn66-info-x{appearance:none;border:0;background:rgba(255,255,255,.10);color:rgba(255,255,255,.92);width:34px;height:34px;border-radius:12px;cursor:pointer;font-size:18px;line-height:34px;text-align:center;}
-  .adn66-info-body{padding:14px 16px 16px;font-size:14px;line-height:1.45;color:rgba(255,255,255,.86);}
-  .adn66-info-body a{color:#54b4ff;text-decoration:none;font-weight:700;}
-  .adn66-info-body a:hover{text-decoration:underline;}
-  `;
-  const style = document.createElement("style");
-  style.id = "adn66InfoPopupStyles";
-  style.textContent = css;
-  document.head.appendChild(style);
-}
-
-function showInfoPopup(title, html){
-  ensureInfoPopupStyles();
-  const prev = document.getElementById("adn66InfoPopup");
-  if(prev) prev.remove();
-
-  const overlay = document.createElement("div");
-  overlay.id = "adn66InfoPopup";
-  overlay.className = "adn66-info-overlay";
-  overlay.setAttribute("role","dialog");
-  overlay.setAttribute("aria-modal","true");
-
-  const card = document.createElement("div");
-  card.className = "adn66-info-card";
-
-  const head = document.createElement("div");
-  head.className = "adn66-info-head";
-
-  const h = document.createElement("div");
-  h.className = "adn66-info-title";
-  h.textContent = String(title || "Information");
-
-  const x = document.createElement("button");
-  x.className = "adn66-info-x";
-  x.type = "button";
-  x.setAttribute("aria-label","Fermer");
-  x.textContent = "×";
-
-  const body = document.createElement("div");
-  body.className = "adn66-info-body";
-  body.innerHTML = String(html || "");
-
-  head.appendChild(h);
-  head.appendChild(x);
-  card.appendChild(head);
-  card.appendChild(body);
-  overlay.appendChild(card);
-
-  const close = ()=> overlay.remove();
-
-  x.addEventListener("click", close);
-  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
-
-  const esc = (e)=>{ if(e.key === "Escape"){ document.removeEventListener("keydown", esc); close(); } };
-  document.addEventListener("keydown", esc);
-
-  document.body.appendChild(overlay);
-  try{ x.focus({preventScroll:true}); }catch(_){}
-}
-
 
 function setScreen(hasCard){
   const startBlock = $("startBlock");
@@ -323,16 +260,137 @@ async function loadCard(){
   }
 }
 
+function getPhoneErrCount(){
+  const n = Number(localStorage.getItem(LS_PHONE_ERR) || "0");
+  return Number.isFinite(n) ? n : 0;
+}
+function setPhoneErrCount(n){
+  localStorage.setItem(LS_PHONE_ERR, String(Math.max(0, Math.floor(Number(n)||0))));
+}
+function getPhoneBlockUntil(){
+  const t = Number(localStorage.getItem(LS_PHONE_BLOCK_UNTIL) || "0");
+  return Number.isFinite(t) ? t : 0;
+}
+function setPhoneBlockUntil(ts){
+  localStorage.setItem(LS_PHONE_BLOCK_UNTIL, String(Math.max(0, Math.floor(Number(ts)||0))));
+}
+function clearPhoneAbuseState(){
+  setPhoneErrCount(0);
+  setPhoneBlockUntil(0);
+}
+
 /* ---------- Create ---------- */
+
 async function createCard(){
+  // Block check (6 days) with live countdown
+  const blockUntil = getPhoneBlockUntil();
+  if(blockUntil && Date.now() < blockUntil){
+    const ms = blockUntil - Date.now();
+    showInfoPopupAction({
+      title: "Accès temporairement bloqué",
+      html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
+            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(ms)}</b><div class="adn66-info-sub">
+            Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
+            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
+            en indiquant ce que vous essayez de faire et le message affiché.
+            </div>`,
+      okText: "OK",
+      okDelaySeconds: 0,
+      lockClose: false,
+      onTick: null,
+      onClose: null
+    });
+
+    // Live update every second while popup is open
+    const tick = setInterval(()=>{
+      const el = document.getElementById("adn66BlockRemain");
+      if(!el){
+        clearInterval(tick);
+        return;
+      }
+      const left = Math.max(0, blockUntil - Date.now());
+      el.textContent = formatDuration(left);
+      if(left <= 0){
+        clearInterval(tick);
+        clearPhoneAbuseState();
+      }
+    }, 1000);
+
+    return;
+  }
+
   const name = normalizeName(($("name") && $("name").value) ? $("name").value : "");
   const phone = normalizePhone(($("phone") && $("phone").value) ? $("phone").value : "");
 
-  if(!name) return alert("Entre ton prénom.");
-  if(!phone || phone.length < 10) return alert("Numéro invalide.");
+  // Front validation stays light; server is the authority.
+  if(!name){
+    showInfoPopup(
+      "Prénom requis",
+      `Merci d’indiquer un prénom valide pour activer votre carte.<br><br>
+       Si vous rencontrez un problème, contactez-nous à :<br>
+       <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+       en précisant ce que vous essayez de faire et le message affiché.`
+    );
+    return;
+  }
+
+  if(!phone){
+    // Treat as phone error attempt
+    const n = getPhoneErrCount() + 1;
+    setPhoneErrCount(n);
+
+    if(n === 1){
+      showInfoPopup("Numéro invalide", "Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>");
+      return;
+    }
+
+    if(n === 2){
+      showInfoPopupAction({
+        title: "Attention",
+        html: `Le numéro saisi semble incorrect.<br>
+              Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-info-sub">
+              Vous pourrez confirmer dans <b>15 secondes</b>.</div>`,
+        okText: "OK",
+        okDelaySeconds: 15,
+        lockClose: true
+      });
+      return;
+    }
+
+    // 3rd time: block 6 days
+    const until = Date.now() + PHONE_BLOCK_DAYS * 24 * 60 * 60 * 1000;
+    setPhoneBlockUntil(until);
+
+    showInfoPopupAction({
+      title: "Accès temporairement bloqué",
+      html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
+            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-info-sub">
+            Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
+            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
+            en indiquant ce que vous essayez de faire et le message affiché.
+            </div>`,
+      okText: "OK"
+    });
+
+    const tick = setInterval(()=>{
+      const el = document.getElementById("adn66BlockRemain");
+      if(!el){
+        clearInterval(tick);
+        return;
+      }
+      const left = Math.max(0, until - Date.now());
+      el.textContent = formatDuration(left);
+      if(left <= 0){
+        clearInterval(tick);
+        clearPhoneAbuseState();
+      }
+    }, 1000);
+
+    return;
+  }
 
   try{
-        const r = await api("/loyalty/register", {
+    const r = await api("/loyalty/register", {
       method:"POST",
       body: JSON.stringify({name, phone})
     });
@@ -351,10 +409,88 @@ async function createCard(){
 
     if(!r || !r.client_id) throw new Error("Réponse invalide");
     localStorage.setItem(LS_KEY, r.client_id);
+
+    // success => reset phone abuse counters
+    clearPhoneAbuseState();
+
     closeModal();
     await loadCard();
   }catch(e){
-    alert("Erreur création carte : " + e.message);
+    const code = String((e && e.message) ? e.message : "").trim();
+
+    if(code === "name_required"){
+      showInfoPopup(
+        "Prénom requis",
+        `Merci d’indiquer un prénom valide pour activer votre carte.<br><br>
+         Si vous rencontrez un problème, contactez-nous à :<br>
+         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+         en précisant ce que vous essayez de faire et le message affiché.`
+      );
+      return;
+    }
+
+    if(code === "phone_required" || code === "phone_invalid"){
+      const n = getPhoneErrCount() + 1;
+      setPhoneErrCount(n);
+
+      if(n === 1){
+        showInfoPopup(
+          "Numéro invalide",
+          `Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>`
+        );
+        return;
+      }
+
+      if(n === 2){
+        showInfoPopupAction({
+          title: "Attention",
+          html: `Le numéro saisi semble incorrect.<br>
+                Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-info-sub">
+                Vous pourrez confirmer dans <b>15 secondes</b>.</div>`,
+          okText: "OK",
+          okDelaySeconds: 15,
+          lockClose: true
+        });
+        return;
+      }
+
+      const until = Date.now() + PHONE_BLOCK_DAYS * 24 * 60 * 60 * 1000;
+      setPhoneBlockUntil(until);
+
+      showInfoPopupAction({
+        title: "Accès temporairement bloqué",
+        html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
+              ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-info-sub">
+              Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
+              <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
+              en indiquant ce que vous essayez de faire et le message affiché.
+              </div>`,
+        okText: "OK"
+      });
+
+      const tick = setInterval(()=>{
+        const el = document.getElementById("adn66BlockRemain");
+        if(!el){
+          clearInterval(tick);
+          return;
+        }
+        const left = Math.max(0, until - Date.now());
+        el.textContent = formatDuration(left);
+        if(left <= 0){
+          clearInterval(tick);
+          clearPhoneAbuseState();
+        }
+      }, 1000);
+
+      return;
+    }
+
+    // Default fallback (no leak of technical details)
+    showInfoPopup(
+      "Erreur",
+      `Impossible de créer la carte pour le moment.<br><br>
+       Si le problème persiste, contactez-nous : <a href="mailto:Contact@aperos.net">Contact@aperos.net</a>`
+    );
   }
 }
 
