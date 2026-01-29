@@ -1194,6 +1194,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         localStorage.getItem('client_id') ||
         localStorage.getItem('fidel_client_id') ||
         localStorage.getItem('loyalty_client_id') ||
+        localStorage.getItem('adn66_loyalty_client_id') ||
         ""
       ).trim();
     }
@@ -1207,7 +1208,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         reward25Msg.textContent = "Active d’abord ta carte de fidélité pour recevoir ta récompense.";
         // Redirection utile
         setTimeout(() => {
-          window.location.href = "https://www.aperos.net/fidel/";
+          window.location.href = "https://www.aperos.net/fidel/client.html";
         }, 900);
         return;
       }
