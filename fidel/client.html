@@ -382,6 +382,16 @@
   100%{ transform:translateX(230px); opacity:.55; }
 }
 
+
+
+/* ✅ Agrandir la carte dans sa fenêtre (~99%) sans casser l’alignement des tampons */
+.visualInner{
+  width:100%;
+  height:auto;
+  transform:scale(1.08);
+  transform-origin:center center;
+}
+
 </style>
 
 </head>
@@ -428,6 +438,7 @@
           </div>
 
           <div class="visual" id="visual">
+            <div class="visualInner">
             <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
             <div class="stamp s1" data-slot="1" style="--rot:-12deg"></div>
             <div class="stamp s2" data-slot="2" style="--rot:7deg"></div>
@@ -437,6 +448,8 @@
             <div class="stamp s6" data-slot="6" style="--rot:5deg"></div>
             <div class="stamp s7" data-slot="7" style="--rot:-14deg"></div>
             <div class="stamp s8" data-slot="8" style="--rot:8deg"></div>
+          
+            </div>
           </div>
 
           <div class="row" style="width:100%">
