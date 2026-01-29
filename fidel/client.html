@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ADN66 • Carte de fidélité</title>
   <meta name="theme-color" content="#050b12" />
-
+  
   <style>
     :root{
-      --blue:#0b1c2d;
-      --sky:#5db7ee;
-      --text:#0b1c2d;
-      --muted:rgba(11,28,45,.65);
-      --line:rgba(11,28,45,.15);
+      /* ✅ Style marketing (aligné zone_livraison.html) */
+      --blue:#0b1c2d;               /* header / titres */
+      --sky:#5db7ee;                /* CTA */
+      --text:#0b1c2d;               /* texte principal */
+      --muted:rgba(11,28,45,.65);   /* texte secondaire */
+      --t2:var(--muted);              /* alias compat */
+      --line:rgba(11,28,45,.15);    /* bordures */
+      --bg:#f7fbff;                 /* fond page */
       --shadow:0 12px 30px rgba(0,0,0,.08);
       --shadowBtn:0 10px 18px rgba(93,183,238,.32);
       --radiusCard:18px;
@@ -23,8 +26,8 @@
     body{
       margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#050b12;
-      color:#fff;
+      background:radial-gradient(1200px 800px at 50% -10%, rgba(93,183,238,.16), transparent 55%), #050b12;
+      color:#ffffff;
       min-height:100vh;
       display:flex;
       align-items:center;
@@ -32,8 +35,10 @@
       padding:16px;
     }
 
-    .wrap{width:100%;display:flex;justify-content:center}
-    .stack{position:relative;width:min(560px,100%)}
+    .wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;}
+
+    /* Empilement (carte dessous) */
+    .stack{position:relative;width:min(560px,100%);}
     .stack::before{
       content:"";
       position:absolute;
@@ -43,31 +48,77 @@
       border:1px solid var(--line);
       box-shadow:var(--shadow);
       transform:translateY(14px) scale(.985);
+      filter:blur(.2px);
       opacity:.55;
       z-index:0;
+      pointer-events:none;
     }
-    .card{
-      position:relative;
-      z-index:1;
-      background:#fff;
+    .stack > .card{position:relative;z-index:1;width:100%;}
+
+
+    /* En-tête "bar" comme livraison */
+    .brand{
+      background:var(--blue);
+      color:#fff;
       border-radius:var(--radiusCard);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
       box-shadow:var(--shadow);
       overflow:hidden;
-      color:var(--text);
+    }
+    .brand .left{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .brand b{font-size:16px;font-weight:900;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand span{font-size:12px;opacity:.85}
+    .brand .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .card{width:100%;margin:0;color:var(--text);
+      border:1px solid var(--line);
+      border-radius:var(--radiusCard);
+      background:#fff;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
     .card-h{
       padding:14px;
       border-bottom:1px solid var(--line);
       display:flex;
-      justify-content:space-between;
       align-items:center;
+      justify-content:space-between;
+      gap:12px;
     }
-    .card-h h1{margin:0;font-size:16px;font-weight:900}
+    .card-h h1{margin:0;font-size:16px;font-weight:900;color:var(--text)}
     .sub{font-size:12px;color:var(--muted);font-weight:800}
 
     .panel{padding:14px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+
+    .note{
+      margin:0;
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+    .noteSub{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
 
     button{
       flex:1;
@@ -81,7 +132,11 @@
       background:var(--sky);
       color:#fff;
       box-shadow:var(--shadowBtn);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
     }
+    button:active{ transform: translateY(1px); }
+
     button.secondary{
       background:#fff;
       color:var(--blue);
@@ -89,125 +144,369 @@
       box-shadow:none;
     }
 
-    .globalBack{
-      position:fixed;
-      top:12px;
-      left:12px;
-      z-index:9999;
-      padding:10px 16px;
-      border-radius:999px;
-    }
+    /* Carte visuelle (on garde la structure, mais style "propre") */
+    .cardVisualWrap{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;}
+    .loyTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%}
+    .loyTop .big{font-size:22px;font-weight:900;letter-spacing:.2px}
+    .loyTop .sub{font-size:12px;color:var(--muted);font-weight:900}
 
-    .cardVisualWrap{display:flex;flex-direction:column;gap:12px;align-items:center}
     .visual{
-      width:100%;
+      width:min(520px,100%);
+      position:relative;
       border-radius:16px;
       overflow:hidden;
       border:1px solid var(--line);
-    }
-    .visual img{width:100%;display:block}
-
-    .modal{
-      position:fixed;
-      inset:0;
-      background:rgba(11,28,45,.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding:18px;
-      z-index:9999;
-    }
-    .modal.open{display:flex}
-    .modal .box{
-      width:min(560px,100%);
       background:#fff;
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
+      box-shadow:0 10px 22px rgba(0,0,0,.07);
     }
-    .modal .head{
+    .visual img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;}
+
+    .stamp{
+      position:absolute;
+      width:15.05%;
+      aspect-ratio:1/1;
+      opacity:0;
+      pointer-events:none;
+      background-image:url("tampon.png");
+      background-size:contain;
+      background-repeat:no-repeat;
+      background-position:center;
+      transform-origin:center center;
+      transform:translate(-50%,-50%) rotate(var(--rot, -10deg));
+    }
+    .stamp.filled{opacity:1;}
+    .s1{left:18.1%; top:44.6%;}.s2{left:34.1%; top:44.6%;}.s3{left:50.1%; top:44.6%;}.s4{left:65.5%; top:44.6%;}.s5{left:81.5%; top:44.6%;}
+    .s6{left:25.7%; top:66.4%;}.s7{left:42.5%; top:66.4%;}.s8{left:59.3%; top:66.4%;}
+
+    /* Modal (pop-up) */
+    .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+    .modal.open{display:flex}
+    .modal .box{width:min(560px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow);
+      max-height:min(88vh, 720px);
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .modal .box .head{
       padding:12px 14px;
       border-bottom:1px solid var(--line);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg, rgba(93,183,238,.10), rgba(93,183,238,0));
     }
-    .iconBtn{
-      width:36px;
-      height:36px;
+    .modal .box .head b{font-size:14px;font-weight:900;color:var(--text)}
+    .tabs{display:none !important;}
+
+    .tabBtn{
+      padding:8px 10px;
       border-radius:999px;
       border:1px solid var(--line);
       background:#fff;
+      color:var(--muted);
       font-weight:900;
       cursor:pointer;
+      font-size:12px;
     }
-  </style>
-</head>
+    .tabBtn.active{
+      background:rgba(93,183,238,.22);
+      color:var(--text);
+      border-color:rgba(93,183,238,.55);
+    }
 
+    .modal .box .content{padding:14px}
+
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900}
+
+    input{
+      width:100%;
+      border-radius:14px;
+      border:2px solid rgba(93,183,238,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      box-shadow: 0 6px 14px rgba(93,183,238,.14);
+      color:var(--text);
+    }
+    input::placeholder{ color:rgba(11,28,45,.45); }
+    input:focus{
+      border-color: rgba(93,183,238,1);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.22);
+    }
+
+    .hint{margin-top:10px;font-size:13px;color:var(--muted);line-height:1.35;font-weight:800}
+
+    .scan{
+      width:100%;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#0b1c2d;
+      aspect-ratio:3/4;
+      overflow:hidden;
+      position:relative;
+      box-shadow:0 10px 22px rgba(0,0,0,.12);
+    }
+    video{width:100%;height:100%;object-fit:cover}
+
+    .qr{
+      width:240px;max-width:100%;
+      background:#fff;
+      border-radius:16px;
+      padding:12px;
+      border:1px solid var(--line);
+      box-shadow:0 12px 30px rgba(0,0,0,.10);
+    }
+    #qrSvg{min-height:200px;display:flex;align-items:center;justify-content:center;color:#111;font-weight:900}
+
+    .footer{
+      text-align:center;
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:900;
+    }
+  
+.qr-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.back-btn{
+  background:var(--primary);
+  color:#fff;
+}
+
+
+/* ✅ Boutons QR (retour / fermer) — ajout sans casser l'existant */
+.iconBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:none;
+  padding:0;
+}
+.iconBtn:active{ transform: translateY(1px); }
+.iconBtn span{ line-height:1; font-size:18px; transform: translateY(-1px); }
+
+
+/* ✅ Leviers marketing + bouton retour racine */
+.reassurance{
+  margin-top:10px;
+  text-align:center;
+  color:#6b7280;
+}
+.backRoot{
+  margin-top:16px;
+  background:transparent;
+  border:none;
+  color:#3b82f6;
+  font-weight:600;
+  cursor:pointer;
+}
+
+
+.backTop{
+  margin-top:-28px;
+
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:6px 14px;
+  font-size:14px;
+}
+
+
+.qr-instruction{
+  color:#000;
+
+  text-align:center;
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:10px;
+}
+
+
+.globalBack{
+  position:fixed;
+  top:12px;
+  left:12px;
+  z-index:9999;
+}
+
+</style>
+
+</head>
 <body>
 
-<!-- ✅ SEUL bouton retour conservé -->
-<button class="globalBack" id="btnBackRootGlobal">← Retour</button>
+<button class="primary globalBack" id="btnBackRootGlobal">← Retour</button>
 
-<div class="wrap">
-  <div class="stack">
-    <div class="card">
+  <div class="wrap">
+    <div class="stack">
+      <div class="badge" aria-hidden="true"></div>
+      <div class="card">
 
-      <div class="card-h">
+          <div class="card-h">
         <h1>Ma carte virtuelle</h1>
-        <div class="sub" id="stateText">—</div>
+        <div class="sub" id="stateText" style="font-size:12px;color:var(--muted)">—</div>
       </div>
 
+      <!-- Écran départ : uniquement le nécessaire -->
       <div class="panel" id="startBlock">
-        <p><strong>Crée ta carte en 10 secondes.</strong></p>
-        <p style="color:var(--muted)">Cumule des points à chaque commande.</p>
+        <div class="note">Crée ta carte en 10 secondes.</div>
+        <div class="noteSub">Cumule des points à chaque commande et débloque des avantages.</div>
         <div class="row">
           <button id="btnOpenCreate">Activer ma carte</button>
           <button class="secondary" id="btnOpenRestore">J’ai déjà une carte</button>
         </div>
+
+        
+        <div class="reassurance">
+          <small>
+            Aucun compte à créer.<br>
+            Ta carte est activée instantanément.
+          </small>
+        </div>
+    
+
       </div>
 
+      <!-- Écran carte : carte + bouton QR (pas d’ID visible) -->
       <div class="panel" id="cardBlock" style="display:none">
         <div class="cardVisualWrap">
-          <div class="visual">
-            <img src="img/carte.png" alt="Carte fidélité">
+          <div class="loyTop">
+            <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
+            <div class="sub" id="syncText">Synchronisé</div>
           </div>
+
+          <div class="visual" id="visual">
+            <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
+            <div class="stamp s1" data-slot="1" style="--rot:-12deg"></div>
+            <div class="stamp s2" data-slot="2" style="--rot:7deg"></div>
+            <div class="stamp s3" data-slot="3" style="--rot:-3deg"></div>
+            <div class="stamp s4" data-slot="4" style="--rot:11deg"></div>
+            <div class="stamp s5" data-slot="5" style="--rot:-9deg"></div>
+            <div class="stamp s6" data-slot="6" style="--rot:5deg"></div>
+            <div class="stamp s7" data-slot="7" style="--rot:-14deg"></div>
+            <div class="stamp s8" data-slot="8" style="--rot:8deg"></div>
+          </div>
+
           <div class="row" style="width:100%">
             <button id="btnShowQr">Afficher mon QR</button>
             <button class="secondary" id="btnRefresh">Rafraîchir</button>
-          </div>
+          
+        
+
+</div>
         </div>
       </div>
-
+    </div>
     </div>
   </div>
-</div>
 
-<!-- Modal QR -->
-<div class="modal" id="qrModal">
-  <div class="box">
-    <div class="head">
-      <b>Mon QR</b>
-      <button class="iconBtn" id="btnCloseQr">✕</button>
-    </div>
-    <div class="panel">
-      <div id="qrSvg"></div>
+  <!-- Modal actions (Créer / J’ai déjà une carte) -->
+  <div class="modal" id="actionModal" aria-hidden="true">
+    <div class="box">
+      <div class="head">
+        <b id="modalTitle">Action</b>
+        
+      </div>
+      <div class="content">
+        <!-- Create -->
+        <div id="createView" style="display:none">
+          <div class="hint">Crée ta carte, puis affiche ton QR.</div>
+          <label>Prénom</label>
+          <input id="name" autocomplete="given-name" placeholder="Ex: Kevin" />
+          <label>Téléphone</label>
+          <input id="phone" inputmode="tel" autocomplete="tel" placeholder="06..." />
+          <div class="row">
+            <button id="btnCreate">Créer</button>
+            <button class="secondary" id="btnCloseModal1">Fermer</button>
+          </div>
+        </div>
+
+        <!-- Restore -->
+        <div id="restoreView" style="display:none">
+          <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’URL / l’ID).</div>
+          <div class="scan"><video id="video" playsinline></video></div>
+          <div class="row">
+            <button id="btnStartScan">Scanner</button>
+            <button class="secondary" id="btnCloseModal2">Fermer</button>
+          </div>
+          <label>Ou coller</label>
+          <input id="manualCid" class="mono" placeholder="Colle une URL ou un ID…" />
+          <div class="row"><button class="secondary" id="btnUseManual">Utiliser</button></div>
+          <div class="hint" id="scanHint"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="./client.js" defer></script>
+  <!-- Modal QR -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="box">
+      <div class="head">
+        <b>Mon QR</b>
+        
+      
+        <button class="iconBtn" id="btnCloseQr" aria-label="Fermer"><span>✕</span></button>
+        </div>
+      <div class="content" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+        <div class="qr-instruction"><strong>Présente ce QR au livreur</strong></div>
+<div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
+        <div class="row" style="width:100%">
+          
+          <button class="secondary" id="btnCopyLink">Copier le lien</button>
+        </div>
+        <div class="hint" style="text-align:center">Le lien copié est exactement celui encodé dans le QR.</div>
+      </div>
+    </div>
+  </div>
 
-<script>
-  document.getElementById('btnBackRootGlobal')
-    .addEventListener('click',()=>location.href='/');
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/fidel/client.js?v=20260128-8" defer></script>
 
-  document.getElementById('btnCloseQr')
-    ?.addEventListener('click',()=>{
-      document.getElementById('qrModal').classList.remove('open');
-    });
-</script>
+  <script>
+    (function(){
+      function closeQrModal(){
+        var m = document.getElementById('qrModal');
+        if(!m) return;
+        m.classList.remove('open');
+        m.setAttribute('aria-hidden','true');
+      }
+      var btnX = document.getElementById('btnCloseQr');
+      var btnBack = document.getElementById('btnBackQr');
+      if(btnX) btnX.addEventListener('click', closeQrModal);
+      if(btnBack) btnBack.addEventListener('click', closeQrModal);
+
+      // Option bonus: tap sur l'overlay pour fermer (sans casser l'existant)
+      var overlay = document.getElementById('qrModal');
+      if(overlay){
+        overlay.addEventListener('click', function(e){
+          if(e.target === overlay) closeQrModal();
+        });
+      }
+    })();
+  </script>
+
+
+
+
+  <script>
+    (function(){
+      var b = document.getElementById('btnBackRootGlobal');
+      if(b){
+        b.addEventListener('click', function(){
+          window.location.href = '/';
+        });
+      }
+    })();
+  </script>
 
 </body>
 </html>
