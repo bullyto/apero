@@ -6,37 +6,104 @@ const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
+
 // Anti-abus (client-side) — erreurs téléphone (progressif)
 const LS_PHONE_ERR = "adn66_loyalty_phone_err_count_v1";
 const LS_PHONE_BLOCK_UNTIL = "adn66_loyalty_phone_block_until_v1";
 const PHONE_BLOCK_DAYS = 6;
 
-/* -------------------- Popup premium (remplace alert) -------------------- */
-function ensurePopupStyles(){
-  if(document.getElementById("adn66PopupStyle")) return;
-  const style = document.createElement("style");
-  style.id = "adn66PopupStyle";
-  style.textContent = `
-    .adn66-pop-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter: blur(4px);display:flex;align-items:center;justify-content:center;z-index:99999;padding:18px;}
-    .adn66-pop-card{width:min(520px,100%);background:rgba(16,26,40,.96);border:1px solid rgba(255,255,255,.10);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.55);color:rgba(255,255,255,.92);overflow:hidden;}
-    .adn66-pop-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,.08);}
-    .adn66-pop-title{font-weight:900;font-size:18px;letter-spacing:.2px}
-    .adn66-pop-x{appearance:none;border:0;background:transparent;color:rgba(255,255,255,.8);font-size:26px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:12px;}
-    .adn66-pop-x:disabled{opacity:.45;cursor:not-allowed;}
-    .adn66-pop-body{padding:14px 16px 6px;color:rgba(255,255,255,.86);font-size:15px;line-height:1.45;}
-    .adn66-pop-body a{color:#54b4ff;text-decoration:none;font-weight:800}
-    .adn66-pop-foot{display:flex;justify-content:flex-end;gap:10px;padding:0 16px 16px;}
-    .adn66-pop-ok{appearance:none;border:0;background:#54b4ff;color:#06121e;font-weight:900;padding:12px 16px;border-radius:14px;cursor:pointer;min-width:120px;}
-    .adn66-pop-ok:disabled{opacity:.45;cursor:not-allowed;}
-    .adn66-pop-sub{margin-top:10px;color:rgba(255,255,255,.68);font-size:12.5px;line-height:1.35;}
+// IMPORTANT: le QR + copie = URL (pas d'ID affiché)
+const PUBLIC_RESTORE_URL_BASE = "https://www.aperos.net/fidel/client.html?restore=1&id=";
+
+/* ---------- Premium Popups (no browser alert) ---------- */
+let __adn66_popup_styles_done = false;
+
+function ensureInfoPopupStyles(){
+  if(__adn66_popup_styles_done) return;
+  __adn66_popup_styles_done = true;
+
+  const css = `
+  .adn66-info-overlay{
+    position:fixed; inset:0; z-index:99999;
+    display:flex; align-items:center; justify-content:center;
+    padding:16px;
+    background:rgba(0,0,0,.55);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .adn66-info-card{
+    width:min(520px, 100%);
+    background:#0b1420;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:18px;
+    box-shadow:0 18px 60px rgba(0,0,0,.55);
+    overflow:hidden;
+  }
+  .adn66-info-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+  }
+  .adn66-info-title{
+    font-weight:900;
+    color:rgba(255,255,255,.92);
+    font-size:18px;
+    letter-spacing:.2px;
+  }
+  .adn66-info-x{
+    appearance:none; border:0; background:transparent;
+    color:rgba(255,255,255,.75);
+    font-size:26px; line-height:1;
+    cursor:pointer;
+    width:40px; height:40px;
+    border-radius:12px;
+  }
+  .adn66-info-x:disabled{opacity:.45; cursor:not-allowed;}
+  .adn66-info-body{
+    padding:14px 16px;
+    color:rgba(255,255,255,.82);
+    font-size:14.5px;
+    line-height:1.45;
+  }
+  .adn66-info-body a{ color:#54b4ff; font-weight:800; text-decoration:none; }
+  .adn66-info-body b{ color:rgba(255,255,255,.95); }
+  .adn66-info-sub{
+    margin-top:10px;
+    color:rgba(255,255,255,.68);
+    font-size:12.5px;
+    line-height:1.35;
+  }
+  .adn66-info-foot{
+    display:flex; justify-content:flex-end; gap:10px;
+    padding:0 16px 16px;
+  }
+  .adn66-info-ok{
+    appearance:none; border:0;
+    background:#54b4ff; color:#06121e;
+    font-weight:900;
+    padding:12px 16px;
+    border-radius:14px;
+    cursor:pointer;
+    min-width:120px;
+  }
+  .adn66-info-ok:disabled{opacity:.45; cursor:not-allowed;}
   `;
+  const style = document.createElement("style");
+  style.textContent = css;
   document.head.appendChild(style);
 }
 
 function escapeHtml(s){
   return String(s||"")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function showInfoPopup(title, html){
+  return showInfoPopupAction({ title, html, okText:"OK" });
 }
 
 function formatDuration(ms){
@@ -52,9 +119,9 @@ function formatDuration(ms){
   return `${secs}s`;
 }
 
-function showPopup(opts){
-  ensurePopupStyles();
-  const prev = document.getElementById("adn66Popup");
+function showInfoPopupAction(opts){
+  ensureInfoPopupStyles();
+  const prev = document.getElementById("adn66InfoPopup");
   if(prev) prev.remove();
 
   const title = (opts && opts.title) ? opts.title : "Information";
@@ -63,43 +130,43 @@ function showPopup(opts){
   const okDelay = Number(opts && opts.okDelaySeconds ? opts.okDelaySeconds : 0);
   const lockClose = !!(opts && opts.lockClose);
   const onOk = (opts && typeof opts.onOk === "function") ? opts.onOk : null;
-  const onClose = (opts && typeof opts.onClose === "function") ? opts.onClose : null;
 
   const overlay = document.createElement("div");
-  overlay.id = "adn66Popup";
-  overlay.className = "adn66-pop-overlay";
+  overlay.id = "adn66InfoPopup";
+  overlay.className = "adn66-info-overlay";
   overlay.setAttribute("role","dialog");
   overlay.setAttribute("aria-modal","true");
 
   const card = document.createElement("div");
-  card.className = "adn66-pop-card";
+  card.className = "adn66-info-card";
 
   const head = document.createElement("div");
-  head.className = "adn66-pop-head";
+  head.className = "adn66-info-head";
 
   const h = document.createElement("div");
-  h.className = "adn66-pop-title";
+  h.className = "adn66-info-title";
   h.textContent = String(title);
 
   const x = document.createElement("button");
-  x.className = "adn66-pop-x";
+  x.className = "adn66-info-x";
   x.type = "button";
   x.setAttribute("aria-label","Fermer");
   x.textContent = "×";
 
   const body = document.createElement("div");
-  body.className = "adn66-pop-body";
+  body.className = "adn66-info-body";
   body.innerHTML = String(html);
 
   const foot = document.createElement("div");
-  foot.className = "adn66-pop-foot";
+  foot.className = "adn66-info-foot";
 
   const ok = document.createElement("button");
-  ok.className = "adn66-pop-ok";
+  ok.className = "adn66-info-ok";
   ok.type = "button";
   ok.textContent = okTextBase;
 
   foot.appendChild(ok);
+
   head.appendChild(h);
   head.appendChild(x);
   card.appendChild(head);
@@ -113,7 +180,6 @@ function showPopup(opts){
   const close = ()=>{
     if(timer) clearInterval(timer);
     overlay.remove();
-    if(onClose) try{ onClose(body, ok); }catch(_){}
   };
 
   const setLocked = (locked)=>{
@@ -121,7 +187,9 @@ function showPopup(opts){
     x.disabled = !!locked;
   };
 
-  if(lockClose && okDelay > 0) setLocked(true);
+  if(lockClose && okDelay > 0){
+    setLocked(true);
+  }
 
   overlay.addEventListener("click", (e)=>{
     if(e.target === overlay){
@@ -129,13 +197,24 @@ function showPopup(opts){
       close();
     }
   });
+
   x.addEventListener("click", ()=>{
     if(lockClose && okDelay > 0) return;
     close();
   });
+
+  const esc = (e)=>{
+    if(e.key === "Escape"){
+      if(lockClose && okDelay > 0) return;
+      document.removeEventListener("keydown", esc);
+      close();
+    }
+  };
+  document.addEventListener("keydown", esc);
+
   ok.addEventListener("click", ()=>{
     if(ok.disabled) return;
-    if(onOk) try{ onOk(body, ok); }catch(_){}
+    if(onOk) try{ onOk(); }catch(_){}
     close();
   });
 
@@ -145,7 +224,7 @@ function showPopup(opts){
     timer = setInterval(()=>{
       remain -= 1;
       if(remain <= 0){
-        clearInterval(timer);
+        if(timer) clearInterval(timer);
         ok.disabled = false;
         ok.textContent = okTextBase;
         if(lockClose) setLocked(false);
@@ -156,43 +235,14 @@ function showPopup(opts){
   }
 
   document.body.appendChild(overlay);
+  try{ ok.focus({preventScroll:true}); }catch(_){}
+  return { overlay, body, ok, close };
 }
 
-function showInfoPopup(title, html){
-  showPopup({ title, html, okText:"OK", okDelaySeconds:0, lockClose:false });
-}
-
-// Remplace les alert() legacy par la popup premium
-const __adn66_nativeAlert = window.alert ? window.alert.bind(window) : null;
+// Replace native alert with premium popup (keeps compatibility)
 window.alert = function(msg){
-  try{
-    showInfoPopup("Information", escapeHtml(msg).replace(/\n/g,"<br>"));
-  }catch(e){
-    if(__adn66_nativeAlert) __adn66_nativeAlert(String(msg));
-  }
+  showInfoPopup("Information", escapeHtml(String(msg)).replace(/\n/g,"<br>"));
 };
-
-/* -------------------- Anti-abus helpers -------------------- */
-function getPhoneErrCount(){
-  const n = Number(localStorage.getItem(LS_PHONE_ERR) || "0");
-  return Number.isFinite(n) ? n : 0;
-}
-function setPhoneErrCount(n){
-  localStorage.setItem(LS_PHONE_ERR, String(Math.max(0, Math.floor(Number(n)||0))));
-}
-function getPhoneBlockUntil(){
-  const t = Number(localStorage.getItem(LS_PHONE_BLOCK_UNTIL) || "0");
-  return Number.isFinite(t) ? t : 0;
-}
-function setPhoneBlockUntil(ts){
-  localStorage.setItem(LS_PHONE_BLOCK_UNTIL, String(Math.max(0, Math.floor(Number(ts)||0))));
-}
-function clearPhoneAbuseState(){
-  setPhoneErrCount(0);
-  setPhoneBlockUntil(0);
-}
-// IMPORTANT: le QR + copie = URL (pas d'ID affiché)
-const PUBLIC_RESTORE_URL_BASE = "https://www.aperos.net/fidel/client.html?restore=1&id=";
 
 /* ---------- Restore: extraction (même logique que Admin) ---------- */
 function extractClientIdFromAny(raw){
@@ -439,27 +489,50 @@ async function loadCard(){
   }
 }
 
+function getPhoneErrCount(){
+  const n = Number(localStorage.getItem(LS_PHONE_ERR) || "0");
+  return Number.isFinite(n) ? n : 0;
+}
+function setPhoneErrCount(n){
+  localStorage.setItem(LS_PHONE_ERR, String(Math.max(0, Math.floor(Number(n)||0))));
+}
+function getPhoneBlockUntil(){
+  const t = Number(localStorage.getItem(LS_PHONE_BLOCK_UNTIL) || "0");
+  return Number.isFinite(t) ? t : 0;
+}
+function setPhoneBlockUntil(ts){
+  localStorage.setItem(LS_PHONE_BLOCK_UNTIL, String(Math.max(0, Math.floor(Number(ts)||0))));
+}
+function clearPhoneAbuseState(){
+  setPhoneErrCount(0);
+  setPhoneBlockUntil(0);
+}
+
 /* ---------- Create ---------- */
+
 async function createCard(){
   // Block check (6 days) with live countdown
   const blockUntil = getPhoneBlockUntil();
   if(blockUntil && Date.now() < blockUntil){
-    showPopup({
+    showInfoPopupAction({
       title: "Accès temporairement bloqué",
       html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
-            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(blockUntil - Date.now())}</b><div class="adn66-pop-sub">
-            Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
-            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
-            en indiquant ce que vous essayez de faire et le message affiché.
-            </div>`,
-      okText: "OK"
+            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(blockUntil - Date.now())}</b><div class="adn66-info-sub">
+            Si vous pensez qu’il s’agit d’une erreur, contactez-nous à :<br>
+            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+            en précisant ce que vous essayez de faire et le message affiché.
+            </div>`
     });
+
     const tick = setInterval(()=>{
       const el = document.getElementById("adn66BlockRemain");
       if(!el){ clearInterval(tick); return; }
       const left = Math.max(0, blockUntil - Date.now());
       el.textContent = formatDuration(left);
-      if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
+      if(left <= 0){
+        clearInterval(tick);
+        clearPhoneAbuseState();
+      }
     }, 1000);
     return;
   }
@@ -467,14 +540,13 @@ async function createCard(){
   const name = normalizeName(($("name") && $("name").value) ? $("name").value : "");
   const phone = normalizePhone(($("phone") && $("phone").value) ? $("phone").value : "");
 
-  // Client-side validation (then server is authority)
   if(!name){
     showInfoPopup(
       "Prénom requis",
       `Merci d’indiquer un prénom valide pour activer votre carte.<br><br>
-       Si vous rencontrez un problème, contactez-nous à :<br>
-       <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
-       en précisant ce que vous essayez de faire et le message affiché.`
+      Si vous rencontrez un problème, contactez-nous à :<br>
+      <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+      en précisant ce que vous essayez de faire et le message affiché.`
     );
     return;
   }
@@ -486,16 +558,16 @@ async function createCard(){
     if(n === 1){
       showInfoPopup(
         "Numéro invalide",
-        `Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>`
+        `Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>.`
       );
       return;
     }
 
     if(n === 2){
-      showPopup({
+      showInfoPopupAction({
         title: "Attention",
         html: `Le numéro saisi semble incorrect.<br>
-              Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-pop-sub">
+              Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-info-sub">
               Vous pourrez confirmer dans <b>15 secondes</b>.</div>`,
         okText: "OK",
         okDelaySeconds: 15,
@@ -507,15 +579,14 @@ async function createCard(){
     const until = Date.now() + PHONE_BLOCK_DAYS * 24 * 60 * 60 * 1000;
     setPhoneBlockUntil(until);
 
-    showPopup({
+    showInfoPopupAction({
       title: "Accès temporairement bloqué",
       html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
-            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-pop-sub">
-            Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
-            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
-            en indiquant ce que vous essayez de faire et le message affiché.
-            </div>`,
-      okText: "OK"
+            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-info-sub">
+            Si vous pensez qu’il s’agit d’une erreur, contactez-nous à :<br>
+            <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+            en précisant ce que vous essayez de faire et le message affiché.
+            </div>`
     });
 
     const tick = setInterval(()=>{
@@ -523,16 +594,18 @@ async function createCard(){
       if(!el){ clearInterval(tick); return; }
       const left = Math.max(0, until - Date.now());
       el.textContent = formatDuration(left);
-      if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
+      if(left <= 0){
+        clearInterval(tick);
+        clearPhoneAbuseState();
+      }
     }, 1000);
-
     return;
   }
 
   try{
     const r = await api("/loyalty/register", {
       method:"POST",
-      body: JSON.stringify({name, phone})
+      body: JSON.stringify({ name, phone })
     });
 
     if(r && r.exists){
@@ -540,8 +613,7 @@ async function createCard(){
         "Carte déjà existante",
         `Une carte de fidélité est déjà associée à ce numéro.<br><br>
          Pour la récupérer en toute sécurité, contactez notre équipe :<br>
-         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
-         👉 La récupération se fait uniquement avec vérification, afin de protéger vos avantages.`
+         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a>`
       );
       return;
     }
@@ -559,9 +631,9 @@ async function createCard(){
       showInfoPopup(
         "Prénom requis",
         `Merci d’indiquer un prénom valide pour activer votre carte.<br><br>
-         Si vous rencontrez un problème, contactez-nous à :<br>
-         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
-         en précisant ce que vous essayez de faire et le message affiché.`
+        Si vous rencontrez un problème, contactez-nous à :<br>
+        <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+        en précisant ce que vous essayez de faire et le message affiché.`
       );
       return;
     }
@@ -573,16 +645,16 @@ async function createCard(){
       if(n === 1){
         showInfoPopup(
           "Numéro invalide",
-          `Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>`
+          `Merci d’entrer un numéro de téléphone <b>valide</b> (mobile 06/07, 10 chiffres).<br>Exemple : <b>06 12 34 56 78</b>.`
         );
         return;
       }
 
       if(n === 2){
-        showPopup({
+        showInfoPopupAction({
           title: "Attention",
           html: `Le numéro saisi semble incorrect.<br>
-                Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-pop-sub">
+                Vérifiez bien votre saisie (mobile <b>06/07</b>, 10 chiffres).<div class="adn66-info-sub">
                 Vous pourrez confirmer dans <b>15 secondes</b>.</div>`,
           okText: "OK",
           okDelaySeconds: 15,
@@ -594,15 +666,14 @@ async function createCard(){
       const until = Date.now() + PHONE_BLOCK_DAYS * 24 * 60 * 60 * 1000;
       setPhoneBlockUntil(until);
 
-      showPopup({
+      showInfoPopupAction({
         title: "Accès temporairement bloqué",
         html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
-              ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-pop-sub">
-              Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
-              <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
-              en indiquant ce que vous essayez de faire et le message affiché.
-              </div>`,
-        okText: "OK"
+              ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(until - Date.now())}</b><div class="adn66-info-sub">
+              Si vous pensez qu’il s’agit d’une erreur, contactez-nous à :<br>
+              <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+              en précisant ce que vous essayez de faire et le message affiché.
+              </div>`
       });
 
       const tick = setInterval(()=>{
@@ -610,16 +681,19 @@ async function createCard(){
         if(!el){ clearInterval(tick); return; }
         const left = Math.max(0, until - Date.now());
         el.textContent = formatDuration(left);
-        if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
+        if(left <= 0){
+          clearInterval(tick);
+          clearPhoneAbuseState();
+        }
       }, 1000);
-
       return;
     }
 
+    // fallback
     showInfoPopup(
       "Erreur",
       `Impossible de créer la carte pour le moment.<br><br>
-       Si le problème persiste, contactez-nous : <a href="mailto:Contact@aperos.net">Contact@aperos.net</a>`
+      Si le problème persiste, contactez-nous : <a href="mailto:Contact@aperos.net">Contact@aperos.net</a>`
     );
   }
 }
@@ -648,7 +722,7 @@ async function stopRestoreScan(){
 
 async function restoreFromAny(raw){
   const cid = extractClientIdFromAny(raw);
-  if(!isValidClientId(cid)) return alert("ID invalide.");
+  if(!isValidClientId(cid)) return showInfoPopup("QR invalide", "QR code invalide. Merci de réessayer.");
   localStorage.setItem(LS_KEY, cid);
   closeModal();
   await loadCard();
@@ -781,7 +855,7 @@ function bind(){
   if(tabRestore) tabRestore.onclick = ()=>setModalMode("restore");
 
   if(btnCreate){
-  try{ btnCreate.type = "button"; }catch(_){}
+  btnCreate.type = "button";
   btnCreate.addEventListener("click", (e)=>{
     try{ e.preventDefault(); e.stopPropagation(); }catch(_){}
     createCard();
