@@ -274,6 +274,26 @@
   color:#fff;
 }
 
+
+/* ✅ Boutons QR (retour / fermer) — ajout sans casser l'existant */
+.iconBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:none;
+  padding:0;
+}
+.iconBtn:active{ transform: translateY(1px); }
+.iconBtn span{ line-height:1; font-size:18px; transform: translateY(-1px); }
+
 </style>
 
 </head>
@@ -371,10 +391,13 @@
       <div class="head">
         <b>Mon QR</b>
         
-      </div>
+      
+        <button class="iconBtn" id="btnCloseQr" aria-label="Fermer"><span>✕</span></button>
+        </div>
       <div class="content" style="display:flex;flex-direction:column;align-items:center;gap:12px">
         <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
         <div class="row" style="width:100%">
+          <button class="secondary" id="btnBackQr">Retour</button>
           <button class="secondary" id="btnCopyLink">Copier le lien</button>
         </div>
         <div class="hint" style="text-align:center">Le lien copié est exactement celui encodé dans le QR.</div>
@@ -384,5 +407,29 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="./client.js?v=20260128-8" defer></script>
+
+  <script>
+    (function(){
+      function closeQrModal(){
+        var m = document.getElementById('qrModal');
+        if(!m) return;
+        m.classList.remove('open');
+        m.setAttribute('aria-hidden','true');
+      }
+      var btnX = document.getElementById('btnCloseQr');
+      var btnBack = document.getElementById('btnBackQr');
+      if(btnX) btnX.addEventListener('click', closeQrModal);
+      if(btnBack) btnBack.addEventListener('click', closeQrModal);
+
+      // Option bonus: tap sur l'overlay pour fermer (sans casser l'existant)
+      var overlay = document.getElementById('qrModal');
+      if(overlay){
+        overlay.addEventListener('click', function(e){
+          if(e.target === overlay) closeQrModal();
+        });
+      }
+    })();
+  </script>
+
 </body>
 </html>
