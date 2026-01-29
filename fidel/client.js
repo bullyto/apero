@@ -795,6 +795,14 @@ async function startRestoreScan(){
 }
 
 /* ---------- Auto-restore via URL ?id=... ---------- */
+
+function getRewardTokenFromUrl(){
+  try{
+    const u = new URL(location.href);
+    const t = u.searchParams.get("reward_token") || "";
+    return String(t || "").trim();
+  }catch(_){ return ""; }
+}
 function tryAutoRestoreFromUrl(){
   try{
     const u = new URL(location.href);
@@ -815,6 +823,15 @@ function tryAutoRestoreFromUrl(){
 /* ---------- Bind events ---------- */
 function bind(){
   tryAutoRestoreFromUrl();
+  const rewardToken = getRewardTokenFromUrl();
+  if(rewardToken){
+    consumeRewardToken(rewardToken);
+    try{
+      const u = new URL(location.href);
+      u.searchParams.delete("reward_token");
+      history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+    }catch(_){}
+  }
 
   const btnOpenCreate = $("btnOpenCreate");
   const btnOpenRestore = $("btnOpenRestore");
@@ -887,4 +904,26 @@ if(document.readyState === "loading"){
   document.addEventListener("DOMContentLoaded", bind);
 }else{
   bind();
+}
+
+
+
+async function consumeRewardToken(token){
+  if(!token) return;
+  try{
+    const res = await api("/loyalty/reward/consume", {
+      method: "POST",
+      body: JSON.stringify({ token })
+    });
+    showInfoPopup(
+      "Récompense validée 🎉",
+      "Un tampon a été ajouté à votre carte de fidélité."
+    );
+    await loadCard();
+  }catch(e){
+    showInfoPopup(
+      "Récompense",
+      "Cette récompense a déjà été utilisée ou n’est plus valide."
+    );
+  }
 }
