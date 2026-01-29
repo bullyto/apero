@@ -312,11 +312,21 @@
 
 
 .backTop{
+  margin-top:-28px;
+
   position:absolute;
   top:12px;
   left:12px;
   padding:6px 14px;
   font-size:14px;
+}
+
+
+.qr-instruction{
+  text-align:center;
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:10px;
 }
 
 </style>
@@ -379,9 +389,7 @@
             <button id="btnShowQr">Afficher mon QR</button>
             <button class="secondary" id="btnRefresh">Rafraîchir</button>
           
-        <div class="row" style="justify-content:center">
-          <button class="backRoot" id="btnBackRoot">← Retour à l’accueil</button>
-        </div>
+        
 
 </div>
         </div>
@@ -438,7 +446,8 @@
         <button class="iconBtn" id="btnCloseQr" aria-label="Fermer"><span>✕</span></button>
         </div>
       <div class="content" style="display:flex;flex-direction:column;align-items:center;gap:12px">
-        <div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
+        <div class="qr-instruction"><strong>Présente ce QR au livreur</strong></div>
+<div class="qr"><div id="qrSvg" aria-label="QR code"></div></div>
         <div class="row" style="width:100%">
           <button class="secondary" id="btnBackQr">Retour</button>
           <button class="secondary" id="btnCopyLink">Copier le lien</button>
