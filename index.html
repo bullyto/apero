@@ -1735,7 +1735,11 @@
   const PLAY_URL = "https://play.google.com/store/apps/details?id=fr.aperos.nuit66";
 
   function isStandalone(){
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    try{
+      return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+        || (window.navigator && window.navigator.standalone === true)
+        || document.referrer.startsWith("android-app://");
+    }catch(e){ return false; }
   }
 
   const modal = document.getElementById("loyaltyModal");
@@ -1748,36 +1752,60 @@
     modal.setAttribute("aria-hidden","false");
     startStamps();
   }
+
   function closeModal(){
     if(!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden","true");
   }
 
-  // ✅ Click handler (robuste) — fonctionne même si le menu est injecté plus tard
+  // ✅ Animation tampons — 1 tampon toutes les 0,8s jusqu’à 8 (boucle)
+  function startStamps(){
+    const host = document.getElementById("lpRealCard");
+    if(!host) return;
+    const stamps = host.querySelectorAll(".lpStamp");
+    if(!stamps || !stamps.length) return;
+
+    stamps.forEach(s => s.classList.remove("filled"));
+    let idx = 0;
+
+    if(window.__lpStampTimer) clearInterval(window.__lpStampTimer);
+    window.__lpStampTimer = setInterval(function(){
+      if(!modal || !modal.classList.contains("open")) return;
+
+      if(idx >= stamps.length){
+        idx = 0;
+        stamps.forEach(s => s.classList.remove("filled"));
+        return;
+      }
+      stamps[idx].classList.add("filled");
+      idx++;
+    }, 800);
+  }
+
+  // ✅ Click handler robuste (menu)
   document.addEventListener("click", function(e){
-    var t = e.target;
-    var item = t && t.closest ? t.closest("#adnMenuLoyalty") : null;
+    const item = e.target && e.target.closest ? e.target.closest("#adnMenuLoyalty") : null;
     if(!item) return;
+
     e.preventDefault();
-    // Ferme le menu natif s’il est ouvert (sans casser l’existant)
-    try{
-      var sheet = document.querySelector(".adn-menu-sheet.open");
-      if(sheet) sheet.classList.remove("open");
-    }catch(_){}
 
     if(isStandalone()){
       window.location.href = LOYALTY_URL;
-    }else{
-      openModal();
+      return;
     }
-  });else{
-        openModal();
-      }
+    openModal();
+  }, true);
+
+  // Close actions
+  if(closeBtn) closeBtn.addEventListener("click", closeModal);
+  if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
+
+  if(modal){
+    modal.addEventListener("click", function(e){
+      if(e.target === modal) closeModal();
     });
   }
-  if(closeBtn) closeBtn.addEventListener("click", closeModal);
-  if(playBtn) playBtn.addEventListener("click", ()=>window.location.href=PLAY_URL);
 })();
 </script>
 
