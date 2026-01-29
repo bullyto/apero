@@ -28,6 +28,22 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   const req = event.request;
+  const url = new URL(req.url);
+
+  // ✅ IMPORTANT: never intercept or cache the Cloudflare loyalty Worker calls
+  // (prevents "Erreur réseau" in PWA when calling workers.dev cross-origin).
+  if (url.origin === "https://carte-de-fideliter.apero-nuit-du-66.workers.dev") {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+
+
+  // ✅ Never cache non-GET requests (POST/PUT/DELETE/OPTIONS)
+  if (req.method !== "GET") {
+    event.respondWith(fetch(req));
+    return;
+  }
 
   // 🚨 NEVER cache or intercept cheat image
   if (req.url.includes("cheat.jpeg")) {
