@@ -642,6 +642,27 @@
   height:100%;
 }
 
+
+/* ✅ Carte fidélité réelle intégrée (preview marketing) */
+.loyaltyIframeWrap{
+  width:100%;
+  max-width:520px;
+  margin:0 auto 14px;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid rgba(0,0,0,.12);
+  box-shadow:0 12px 30px rgba(0,0,0,.12);
+}
+.loyaltyIframeWrap iframe{
+  width:100%;
+  height:520px;
+  border:0;
+  pointer-events:none; /* preview only */
+  transform:scale(.96);
+  transform-origin:top center;
+  background:#000;
+}
+
 </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
@@ -1651,17 +1672,15 @@
         • Expérience plus rapide et plus fiable
       </div>
 
+      
       <div class="loyaltyPreview">
-        <div class="lpCard">
-          <div class="lpTop">
-            <div class="lpTitle">Carte de fidélité</div>
-            <div class="lpSub">8 tampons = récompense</div>
-          </div>
-          <div class="lpStamps" id="lpStamps"></div>
+        <div class="loyaltyIframeWrap">
+          <iframe src="./fidel/client.html?preview=1" title="Carte de fidélité" loading="lazy"></iframe>
         </div>
       </div>
 
       <div class="modalActions">
+    
         <button class="okBtn" id="openPlayStore">Installer l’application APÉRO DE NUIT 66®</button>
         <button class="copyBtn" id="closeLoyaltyModal">Continuer sur le site</button>
       </div>
@@ -1708,7 +1727,7 @@
       stamps.forEach(s=>s.classList.remove("on"));
       for(let j=0;j<=i && j<8;j++) stamps[j].classList.add("on");
       i=(i+1)%8;
-    },500);
+    },800);
   }
 
   if(menuBtn){
