@@ -1,3 +1,15 @@
+// Force all legacy alert() to use the premium popup (prevents browser system dialogs)
+const __adn66_alertQueue = [];
+const __adn66_nativeAlert = window.alert ? window.alert.bind(window) : null;
+window.alert = function(msg){
+  try{
+    __adn66_alertQueue.push(String(msg == null ? "" : msg));
+    if (typeof window.__adn66_showAlertQueue === "function") window.__adn66_showAlertQueue();
+  }catch(e){
+    if(__adn66_nativeAlert) __adn66_nativeAlert(String(msg));
+  }
+};
+
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
 // Version: 2026-01-28 minimal-ui + qr-popup + copy-link
@@ -285,44 +297,29 @@ async function createCard(){
   // Block check (6 days) with live countdown
   const blockUntil = getPhoneBlockUntil();
   if(blockUntil && Date.now() < blockUntil){
-    const ms = blockUntil - Date.now();
     showInfoPopupAction({
       title: "Accès temporairement bloqué",
       html: `Pour des raisons de sécurité, l’accès à ce service a été <b>bloqué temporairement</b>.<br><br>
-            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(ms)}</b><div class="adn66-info-sub">
+            ⏳ Temps restant : <b id="adn66BlockRemain">${formatDuration(blockUntil - Date.now())}</b><div class="adn66-info-sub">
             Si vous pensez qu’il s’agit d’une erreur, contactez-nous :<br>
             <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br>
             en indiquant ce que vous essayez de faire et le message affiché.
             </div>`,
-      okText: "OK",
-      okDelaySeconds: 0,
-      lockClose: false,
-      onTick: null,
-      onClose: null
+      okText: "OK"
     });
-
-    // Live update every second while popup is open
     const tick = setInterval(()=>{
       const el = document.getElementById("adn66BlockRemain");
-      if(!el){
-        clearInterval(tick);
-        return;
-      }
+      if(!el){ clearInterval(tick); return; }
       const left = Math.max(0, blockUntil - Date.now());
       el.textContent = formatDuration(left);
-      if(left <= 0){
-        clearInterval(tick);
-        clearPhoneAbuseState();
-      }
+      if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
     }, 1000);
-
     return;
   }
 
   const name = normalizeName(($("name") && $("name").value) ? $("name").value : "");
   const phone = normalizePhone(($("phone") && $("phone").value) ? $("phone").value : "");
 
-  // Front validation stays light; server is the authority.
   if(!name){
     showInfoPopup(
       "Prénom requis",
@@ -335,7 +332,6 @@ async function createCard(){
   }
 
   if(!phone){
-    // Treat as phone error attempt
     const n = getPhoneErrCount() + 1;
     setPhoneErrCount(n);
 
@@ -357,7 +353,6 @@ async function createCard(){
       return;
     }
 
-    // 3rd time: block 6 days
     const until = Date.now() + PHONE_BLOCK_DAYS * 24 * 60 * 60 * 1000;
     setPhoneBlockUntil(until);
 
@@ -374,16 +369,10 @@ async function createCard(){
 
     const tick = setInterval(()=>{
       const el = document.getElementById("adn66BlockRemain");
-      if(!el){
-        clearInterval(tick);
-        return;
-      }
+      if(!el){ clearInterval(tick); return; }
       const left = Math.max(0, until - Date.now());
       el.textContent = formatDuration(left);
-      if(left <= 0){
-        clearInterval(tick);
-        clearPhoneAbuseState();
-      }
+      if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
     }, 1000);
 
     return;
@@ -395,7 +384,6 @@ async function createCard(){
       body: JSON.stringify({name, phone})
     });
 
-    // ✅ Solution 2: si une carte existe déjà, on ne récupère pas l'ID ici.
     if(r && r.exists){
       showInfoPopup(
         "Carte déjà existante",
@@ -410,7 +398,6 @@ async function createCard(){
     if(!r || !r.client_id) throw new Error("Réponse invalide");
     localStorage.setItem(LS_KEY, r.client_id);
 
-    // success => reset phone abuse counters
     clearPhoneAbuseState();
 
     closeModal();
@@ -470,22 +457,15 @@ async function createCard(){
 
       const tick = setInterval(()=>{
         const el = document.getElementById("adn66BlockRemain");
-        if(!el){
-          clearInterval(tick);
-          return;
-        }
+        if(!el){ clearInterval(tick); return; }
         const left = Math.max(0, until - Date.now());
         el.textContent = formatDuration(left);
-        if(left <= 0){
-          clearInterval(tick);
-          clearPhoneAbuseState();
-        }
+        if(left <= 0){ clearInterval(tick); clearPhoneAbuseState(); }
       }, 1000);
 
       return;
     }
 
-    // Default fallback (no leak of technical details)
     showInfoPopup(
       "Erreur",
       `Impossible de créer la carte pour le moment.<br><br>
@@ -518,7 +498,7 @@ async function stopRestoreScan(){
 
 async function restoreFromAny(raw){
   const cid = extractClientIdFromAny(raw);
-  if(!isValidClientId(cid)) return alert("ID invalide.");
+  if(!isValidClientId(cid)) return showInfoPopup("QR invalide", "QR code invalide. Merci de réessayer.");
   localStorage.setItem(LS_KEY, cid);
   closeModal();
   await loadCard();
