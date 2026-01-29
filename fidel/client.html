@@ -294,6 +294,22 @@
 .iconBtn:active{ transform: translateY(1px); }
 .iconBtn span{ line-height:1; font-size:18px; transform: translateY(-1px); }
 
+
+/* ✅ Leviers marketing + bouton retour racine */
+.reassurance{
+  margin-top:10px;
+  text-align:center;
+  color:#6b7280;
+}
+.backRoot{
+  margin-top:16px;
+  background:transparent;
+  border:none;
+  color:#3b82f6;
+  font-weight:600;
+  cursor:pointer;
+}
+
 </style>
 
 </head>
@@ -315,6 +331,15 @@
           <button id="btnOpenCreate">Créer ma carte</button>
           <button class="secondary" id="btnOpenRestore">Restaurer</button>
         </div>
+
+        <div class="reassurance">
+          <small>
+            ✔️ Aucune inscription &nbsp;•&nbsp;
+            ✔️ Pas de spam &nbsp;•&nbsp;
+            ✔️ Juste ton prénom et ton numéro
+          </small>
+        </div>
+
       </div>
 
       <!-- Écran carte : carte + bouton QR (pas d’ID visible) -->
@@ -340,7 +365,12 @@
           <div class="row" style="width:100%">
             <button id="btnShowQr">Afficher mon QR</button>
             <button class="secondary" id="btnRefresh">Rafraîchir</button>
-          </div>
+          
+        <div class="row" style="justify-content:center">
+          <button class="backRoot" id="btnBackRoot">← Retour à l’accueil</button>
+        </div>
+
+</div>
         </div>
       </div>
     </div>
@@ -426,6 +456,18 @@
       if(overlay){
         overlay.addEventListener('click', function(e){
           if(e.target === overlay) closeQrModal();
+        });
+      }
+    })();
+  </script>
+
+
+  <script>
+    (function(){
+      var b = document.getElementById('btnBackRoot');
+      if(b){
+        b.addEventListener('click', function(){
+          window.location.href = '/';
         });
       }
     })();
