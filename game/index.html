@@ -1218,11 +1218,16 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       reward25Msg.textContent = "Vérification de ta récompense…";
 
       try{
+        const controller = new AbortController();
+        const tmr = setTimeout(()=>controller.abort(), 10000);
+
         const res = await fetch(LOYALTY_WORKER_URL + "/game/reward/request", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({ client_id: clientId, milestone: "GAME_25" })
         });
+        clearTimeout(tmr);
         const data = await res.json().catch(()=> ({}));
 
         if (!res.ok) {
@@ -1241,7 +1246,21 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         window.location.href = "https://www.aperos.net/fidel/client.html?reward_token=" + encodeURIComponent(data.token);
 
       } catch(e){
-        reward25Msg.textContent = "Erreur réseau. Réessaie plus tard.";
+        // Debug friendly message (helps diagnose CORS / SW / network)
+        let msg = "Erreur réseau. Réessaie plus tard.";
+        try{
+          msg += " (" + (e && (e.message || e.toString())) + ")";
+        }catch(_){}
+        reward25Msg.textContent = msg;
+
+        // Attempt a quick health probe to display more info
+        try{
+          const probe = await fetch(LOYALTY_WORKER_URL + "/health", { method: "GET", cache: "no-store" });
+          reward25Msg.textContent += probe.ok ? " • /health OK" : (" • /health HTTP " + probe.status);
+        }catch(_){
+          reward25Msg.textContent += " • /health KO";
+        }
+
         reward25Btn.disabled = false;
       }
     }
