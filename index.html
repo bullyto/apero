@@ -663,6 +663,37 @@
   background:#000;
 }
 
+
+/* ✅ Preview carte fidélité (carte seule, identique réglage client.html) */
+.lpRealCard{
+  width:100%;
+  max-width:520px;
+  margin:14px auto 14px;
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(11,28,45,.15);
+  background:#fff;
+  box-shadow:0 10px 22px rgba(0,0,0,.10);
+}
+.lpCardImg{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.lpStamp{
+  position:absolute;
+  width:15.05%;
+  aspect-ratio:1/1;
+  opacity:0;
+  pointer-events:none;
+  background-image:url("./fidel/tampon.png");
+  background-size:contain;
+  background-repeat:no-repeat;
+  background-position:center;
+  transform-origin:center center;
+  transform:translate(-50%,-50%) rotate(var(--rot, -10deg));
+}
+.lpStamp.filled{opacity:1;}
+.lpStamp.s1{left:18.1%; top:44.6%;}.lpStamp.s2{left:34.1%; top:44.6%;}.lpStamp.s3{left:50.1%; top:44.6%;}.lpStamp.s4{left:65.5%; top:44.6%;}.lpStamp.s5{left:81.5%; top:44.6%;}
+.lpStamp.s6{left:25.7%; top:66.4%;}.lpStamp.s7{left:42.5%; top:66.4%;}.lpStamp.s8{left:59.3%; top:66.4%;}
+
 </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
@@ -1673,11 +1704,21 @@
       </div>
 
       
-      <div class="loyaltyPreview">
-        <div class="loyaltyIframeWrap">
-          <iframe src="./fidel/client.html?preview=1" title="Carte de fidélité" loading="lazy"></iframe>
+      
+      <div class="loyaltyPreview" aria-hidden="true">
+        <div class="lpRealCard" id="lpRealCard">
+          <img class="lpCardImg" src="./fidel/img/carte.png" alt="Carte fidélité" />
+          <div class="lpStamp s1" data-slot="1" style="--rot:-12deg"></div>
+          <div class="lpStamp s2" data-slot="2" style="--rot:7deg"></div>
+          <div class="lpStamp s3" data-slot="3" style="--rot:-3deg"></div>
+          <div class="lpStamp s4" data-slot="4" style="--rot:11deg"></div>
+          <div class="lpStamp s5" data-slot="5" style="--rot:-9deg"></div>
+          <div class="lpStamp s6" data-slot="6" style="--rot:5deg"></div>
+          <div class="lpStamp s7" data-slot="7" style="--rot:-14deg"></div>
+          <div class="lpStamp s8" data-slot="8" style="--rot:8deg"></div>
         </div>
       </div>
+
 
       <div class="modalActions">
     
@@ -1712,16 +1753,31 @@
     modal.setAttribute("aria-hidden","true");
   }
 
+  
   function startStamps(){
-    const host = document.getElementById("lpStamps");
+    var host = document.getElementById("lpRealCard");
     if(!host) return;
-    host.innerHTML = "";
-    for(let i=0;i<8;i++){
-      const d=document.createElement("div");
-      d.className="lpStamp";
-      host.appendChild(d);
-    }
-    const stamps=[...host.children];
+    var stamps = host.querySelectorAll(".lpStamp");
+    if(!stamps || !stamps.length) return;
+
+    // reset
+    stamps.forEach(function(s){ s.classList.remove("filled"); });
+
+    var idx = 0;
+    if(window.__lpStampTimer) clearInterval(window.__lpStampTimer);
+    window.__lpStampTimer = setInterval(function(){
+      if(!modal || !modal.classList.contains("open")) return;
+      // reset when complete
+      if(idx >= stamps.length){
+        idx = 0;
+        stamps.forEach(function(s){ s.classList.remove("filled"); });
+        return;
+      }
+      stamps[idx].classList.add("filled");
+      idx++;
+    }, 800);
+  }
+const stamps=[...host.children];
     let i=0;
     setInterval(()=>{
       stamps.forEach(s=>s.classList.remove("on"));
