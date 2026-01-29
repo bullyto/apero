@@ -344,6 +344,43 @@
   z-index:9999;
 }
 
+
+/* ✅ Barre anti-capture (sous "Synchronisé") — discret mais visible */
+.syncWrap{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+.liveBar{
+  width:170px;
+  height:8px;
+  border-radius:999px;
+  background:rgba(93,183,238,.18);
+  border:1px solid rgba(93,183,238,.35);
+  overflow:hidden;
+  position:relative;
+}
+.liveBar i{
+  position:absolute;
+  top:0; bottom:0;
+  width:52px;
+  left:-60px;
+  border-radius:999px;
+  background:linear-gradient(90deg,
+    rgba(93,183,238,0),
+    rgba(93,183,238,.85),
+    rgba(93,183,238,0)
+  );
+  filter:blur(.2px);
+  animation:liveSweep 2.8s ease-in-out infinite;
+}
+@keyframes liveSweep{
+  0%{ transform:translateX(0); opacity:.55; }
+  50%{ opacity:.95; }
+  100%{ transform:translateX(230px); opacity:.55; }
+}
+
 </style>
 
 </head>
@@ -386,7 +423,7 @@
         <div class="cardVisualWrap">
           <div class="loyTop">
             <div class="big"><span id="points">0</span> / <span id="goal">8</span></div>
-            <div class="sub" id="syncText">Synchronisé</div>
+            <div class="syncWrap"><div class="sub" id="syncText">Synchronisé</div><div class="liveBar" aria-hidden="true"><i></i></div></div>
           </div>
 
           <div class="visual" id="visual">
