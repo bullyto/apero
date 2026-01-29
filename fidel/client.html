@@ -163,7 +163,7 @@
 
     .stamp{
       position:absolute;
-      width:17.6%;
+      width:15.84%;
       aspect-ratio:1/1;
       opacity:0;
       pointer-events:none;
@@ -171,11 +171,12 @@
       background-size:contain;
       background-repeat:no-repeat;
       background-position:center;
-      transform:rotate(var(--rot, -10deg));
+      transform-origin:center center;
+      transform:translate(-50%,-50%) rotate(var(--rot, -10deg));
     }
     .stamp.filled{opacity:1;}
-    .s1{left:14%; top:28%;}.s2{left:32%; top:28%;}.s3{left:50%; top:28%;}.s4{left:68%; top:28%;}
-    .s5{left:14%; top:37%;}.s6{left:32%; top:37%;}.s7{left:50%; top:37%;}.s8{left:68%; top:37%;}
+    .s1{left:18%; top:43%;}.s2{left:38%; top:43%;}.s3{left:58%; top:43%;}.s4{left:78%; top:43%;}
+    .s5{left:18%; top:66%;}.s6{left:38%; top:66%;}.s7{left:58%; top:66%;}.s8{left:78%; top:66%;}
 
     /* Modal (pop-up) */
     .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
