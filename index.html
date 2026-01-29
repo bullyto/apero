@@ -239,7 +239,9 @@
     .modal{
       position:fixed;inset:0;display:none;align-items:center;justify-content:center;
       padding:18px;background:rgba(0,0,0,.55);z-index:999;
-    }
+    
+  z-index: 9999;
+}
     .modal.open{display:flex}
     .sheet{
       width:min(520px,94vw);background:#fff;border-radius:22px;
@@ -619,56 +621,26 @@
     .adn-legal-footer .dot{ margin:0 6px; opacity:.6; }
 
 
-/* 🎟️ Loyalty marketing preview */
-.loyaltyPreview{margin:14px 0}
-.lpCard{
-  border-radius:18px;
-  padding:14px;
-  background:linear-gradient(180deg,#1c5b87,#0f2e49);
-  color:#fff;
+/* 🎟️ Carte de fidélité — Modal marketing [v7] */
+.sheet{position:relative}
+.modalX{
+  position:absolute; top:12px; right:12px;
+  width:40px; height:40px;
+  border:none; border-radius:12px;
+  background:rgba(0,0,0,.08);
+  font-size:18px; font-weight:900;
+  line-height:40px; text-align:center;
+  cursor:pointer;
 }
-.lpTop{display:flex;justify-content:space-between;align-items:baseline}
-.lpTitle{font-weight:900}
-.lpSub{font-size:13px;opacity:.9}
-.lpStamps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
-.lpStamp{
-  aspect-ratio:1/1;border-radius:999px;
-  background:rgba(255,255,255,.18);
-  border:1px solid rgba(255,255,255,.35);
-}
-.lpStamp.on::after{
-  content:"🦉";
-  display:flex;align-items:center;justify-content:center;
-  height:100%;
-}
+.modalX:active{transform:scale(.98)}
+.sheetHeadText h3{margin:0}
+.sheetHeadText p{margin:6px 0 0}
 
-
-/* ✅ Carte fidélité réelle intégrée (preview marketing) */
-.loyaltyIframeWrap{
-  width:100%;
-  max-width:520px;
-  margin:0 auto 14px;
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid rgba(0,0,0,.12);
-  box-shadow:0 12px 30px rgba(0,0,0,.12);
-}
-.loyaltyIframeWrap iframe{
-  width:100%;
-  height:520px;
-  border:0;
-  pointer-events:none; /* preview only */
-  transform:scale(.96);
-  transform-origin:top center;
-  background:#000;
-}
-
-
-/* ✅ Preview carte fidélité (carte seule, identique réglage client.html) */
+/* ✅ Preview carte fidélité (carte seule) */
 .lpRealCard{
   width:100%;
   max-width:520px;
-  margin:14px auto 14px;
+  margin:14px auto 10px;
   position:relative;
   border-radius:16px;
   overflow:hidden;
@@ -693,26 +665,6 @@
 .lpStamp.filled{opacity:1;}
 .lpStamp.s1{left:18.1%; top:44.6%;}.lpStamp.s2{left:34.1%; top:44.6%;}.lpStamp.s3{left:50.1%; top:44.6%;}.lpStamp.s4{left:65.5%; top:44.6%;}.lpStamp.s5{left:81.5%; top:44.6%;}
 .lpStamp.s6{left:25.7%; top:66.4%;}.lpStamp.s7{left:42.5%; top:66.4%;}.lpStamp.s8{left:59.3%; top:66.4%;}
-
-
-/* ✅ Close X (modal) */
-.modalX{
-  position:absolute;
-  top:12px;
-  right:12px;
-  width:38px;
-  height:38px;
-  border:none;
-  border-radius:12px;
-  background:rgba(0,0,0,.06);
-  font-size:18px;
-  font-weight:900;
-  line-height:38px;
-  text-align:center;
-  cursor:pointer;
-}
-.modalX:active{transform:scale(.98)}
-.sheet{position:relative}
 
 </style>
 
@@ -825,15 +777,15 @@
           <p id="helpIntro"></p>
         </div>
       </div>
-        <button class="modalX" id="closeLoyaltyModalX" aria-label="Fermer">✕</button>
 
       <div class="step" id="helpSteps"></div>
       <div class="copied" id="copiedMsg">✅ Lien copié</div>
 
       <div class="modalActions">
+        <div style="display:flex;justify-content:center;">
         <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
-        <button class="okBtn" id="closeHelp">OK</button>
-      </div>
+        <button class="okBtn" style="margin:0 auto;display:block;text-align:center;" id="closeHelp">OK</button>
+      </div></div>
     </div>
   </div>
 
@@ -932,7 +884,7 @@
     // ✅ Service worker (cache-bust)
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=20260129").catch(() => {});
+        navigator.serviceWorker.register("./service-worker.js?v=20260101").catch(() => {});
       });
     }
 
@@ -1705,45 +1657,43 @@
   </footer>
 
 
-  <!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) -->
+  <!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) [v7] -->
   <div class="modal" id="loyaltyModal" aria-hidden="true">
-    <div class="sheet">
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Carte de fidélité">
+      <button class="modalX" id="closeLoyaltyModalX" aria-label="Fermer">✕</button>
+
       <div class="sheetHead">
         <div class="sheetIcon">🎟️</div>
-        <div>
+        <div class="sheetHeadText">
           <h3>Carte de fidélité</h3>
-          <p>Débloquer des fonctionnalités exclusives avec l’application <strong>APÉRO DE NUIT 66®</strong> : carte de fidélité, jeux, cadeaux et suivi en direct.</p>
+          <p>Débloquer des fonctionnalités exclusives avec l’application <strong>APÉRO DE NUIT 66®</strong></p>
         </div>
       </div>
 
       <div class="step">
         <b>Bénéfices de l’application :</b><br>
-        • Accès à la carte de fidélité et au QR code<br>
+        • Accès à la carte de fidélité<br>
         • Accès aux jeux et cadeaux<br>
         • Suivi de livraison en direct<br>
         • Expérience plus rapide et plus fiable
       </div>
 
-      
-      
       <div class="loyaltyPreview" aria-hidden="true">
         <div class="lpRealCard" id="lpRealCard">
-          <img class="lpCardImg" src="./fidel/img/carte.png" alt="Carte fidélité" />
-          <div class="lpStamp s1" data-slot="1" style="--rot:-12deg"></div>
-          <div class="lpStamp s2" data-slot="2" style="--rot:7deg"></div>
-          <div class="lpStamp s3" data-slot="3" style="--rot:-3deg"></div>
-          <div class="lpStamp s4" data-slot="4" style="--rot:11deg"></div>
-          <div class="lpStamp s5" data-slot="5" style="--rot:-9deg"></div>
-          <div class="lpStamp s6" data-slot="6" style="--rot:5deg"></div>
-          <div class="lpStamp s7" data-slot="7" style="--rot:-14deg"></div>
-          <div class="lpStamp s8" data-slot="8" style="--rot:8deg"></div>
+          <img class="lpCardImg" src="./fidel/img/carte.png" alt="Carte de fidélité" />
+          <div class="lpStamp s1" style="--rot:-12deg"></div>
+          <div class="lpStamp s2" style="--rot:7deg"></div>
+          <div class="lpStamp s3" style="--rot:-3deg"></div>
+          <div class="lpStamp s4" style="--rot:11deg"></div>
+          <div class="lpStamp s5" style="--rot:-9deg"></div>
+          <div class="lpStamp s6" style="--rot:5deg"></div>
+          <div class="lpStamp s7" style="--rot:-14deg"></div>
+          <div class="lpStamp s8" style="--rot:8deg"></div>
         </div>
       </div>
 
-
       <div class="modalActions">
-    
-        <button class="okBtn" id="openPlayStore">Installer l’application<br>APÉRO DE NUIT 66®</button>
+        <button class="okBtn" style="margin:0 auto;display:block;text-align:center;" id="openPlayStore">Installer l’application<br>APÉRO DE NUIT 66®</button>
       </div>
     </div>
   </div>
@@ -1758,14 +1708,13 @@
     try{
       return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
         || (window.navigator && window.navigator.standalone === true)
-        || document.referrer.startsWith("android-app://");
+        || (document.referrer && document.referrer.startsWith("android-app://"));
     }catch(e){ return false; }
   }
 
   const modal = document.getElementById("loyaltyModal");
-  const closeBtn = document.getElementById("closeLoyaltyModal");
   const closeX = document.getElementById("closeLoyaltyModalX");
-const playBtn = document.getElementById("openPlayStore");
+  const playBtn = document.getElementById("openPlayStore");
 
   function openModal(){
     if(!modal) return;
@@ -1773,14 +1722,12 @@ const playBtn = document.getElementById("openPlayStore");
     modal.setAttribute("aria-hidden","false");
     startStamps();
   }
-
   function closeModal(){
     if(!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden","true");
   }
 
-  // ✅ Animation tampons — 1 tampon toutes les 0,8s jusqu’à 8 (boucle)
   function startStamps(){
     const host = document.getElementById("lpRealCard");
     if(!host) return;
@@ -1804,30 +1751,26 @@ const playBtn = document.getElementById("openPlayStore");
     }, 800);
   }
 
-  // ✅ Click handler robuste (menu)
+  // Click handler robuste (capture)
   document.addEventListener("click", function(e){
     const item = e.target && e.target.closest ? e.target.closest("#adnMenuLoyalty") : null;
     if(!item) return;
 
     e.preventDefault();
-
     if(isStandalone()){
       window.location.href = LOYALTY_URL;
-      return;
+    }else{
+      openModal();
     }
-    openModal();
   }, true);
 
-  // Close actions
-  if(closeBtn) closeBtn.addEventListener("click", closeModal);
   if(closeX) closeX.addEventListener("click", closeModal);
-if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
-
   if(modal){
     modal.addEventListener("click", function(e){
       if(e.target === modal) closeModal();
     });
   }
+  if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
 })();
 </script>
 
