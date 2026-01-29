@@ -8,11 +8,14 @@
 
   <style>
     :root{
-      --blue:#0b1c2d;
-      --sky:#5db7ee;
-      --text:#0b1c2d;
-      --muted:rgba(11,28,45,.65);
-      --line:rgba(11,28,45,.15);
+      /* ✅ Style marketing (aligné zone_livraison.html) */
+      --blue:#0b1c2d;               /* header / titres */
+      --sky:#5db7ee;                /* CTA */
+      --text:#0b1c2d;               /* texte principal */
+      --muted:rgba(11,28,45,.65);   /* texte secondaire */
+      --t2:var(--muted);            /* alias compat */
+      --line:rgba(11,28,45,.15);    /* bordures */
+      --bg:#f7fbff;                 /* fond page */
       --shadow:0 12px 30px rgba(0,0,0,.08);
       --shadowBtn:0 10px 18px rgba(93,183,238,.32);
       --radiusCard:18px;
@@ -23,17 +26,17 @@
     body{
       margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:#050b12;
+      background:radial-gradient(1200px 800px at 50% -10%, rgba(93,183,238,.16), transparent 55%), #050b12;
+      color:#ffffff;
       min-height:100vh;
       display:flex;
       align-items:center;
       justify-content:center;
-      padding:12px;
-      color:#fff;
+      padding:12px; /* ✅ carte plus large sans toucher les bords */
     }
 
     .wrap{width:100%;display:flex;justify-content:center}
-    .stack{position:relative;width:min(720px,100%)}
+    .stack{position:relative;width:min(720px,100%)} /* ✅ plus large sur mobile */
 
     .stack::before{
       content:"";
@@ -65,18 +68,21 @@
       display:flex;
       justify-content:space-between;
       align-items:center;
+      gap:10px;
     }
-    .card-h h1{margin:0;font-size:16px;font-weight:900}
-    .sub{font-size:12px;color:var(--muted);font-weight:800}
+    .card-h h1{margin:0;font-size:20px;font-weight:900;letter-spacing:-.2px}
+    .tag{font-size:14px;color:var(--muted);font-weight:800}
 
     .panel{padding:14px}
 
+    .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
     button{
       flex:1;
-      padding:10px 14px;
+      min-width:140px;
+      padding:14px 16px;
       border-radius:var(--radiusBtn);
       font-weight:900;
-      font-size:14px;
+      font-size:18px;
       border:none;
       cursor:pointer;
       background:var(--sky);
@@ -90,9 +96,13 @@
       box-shadow:none;
     }
 
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .kpis{
+      display:flex;justify-content:space-between;align-items:flex-end;
+      padding:6px 2px 12px 2px;
+    }
+    .kpis .big{font-size:36px;font-weight:1000;letter-spacing:-1px}
+    .kpis .right{color:var(--muted);font-weight:900;font-size:20px}
 
-    /* ===== Carte visuelle ===== */
     .visual{
       width:100%;
       position:relative;
@@ -101,30 +111,31 @@
       border:1px solid var(--line);
       background:#fff;
     }
-    .visual img{width:100%;height:auto;display:block}
+    .visual img{width:100%;height:auto;display:block} /* ✅ aucune distorsion */
 
+    /* ===== Tampons (suivent la carte en %) ===== */
     .stamp{
       position:absolute;
       width:15.05%;
       aspect-ratio:1/1;
-      background:url("tampon.png") center/contain no-repeat;
+      background:url("tampon.png") center center/contain no-repeat;
       opacity:0;
-      transform-origin:center;
-      transform:translate(-50%,-50%) rotate(var(--rot));
+      transform-origin:center center;
+      transform:translate(-50%,-50%) rotate(var(--rot,0deg));
       pointer-events:none;
+      filter:contrast(1.05);
     }
     .stamp.filled{opacity:1}
 
-    /* positions */
-    .s1{left:18.1%; top:44.6%; --rot:-18deg;}
-    .s2{left:34.1%; top:44.6%; --rot:-14deg;}
-    .s3{left:50.1%; top:44.6%; --rot:12deg;}
-    .s4{left:65.5%; top:44.6%; --rot:-10deg;}
-    .s5{left:81.5%; top:44.6%; --rot:14deg;}
-
-    .s6{left:25.7%; top:66.4%; --rot:-12deg;}
-    .s7{left:42.5%; top:66.4%; --rot:10deg;}
-    .s8{left:59.3%; top:66.4%; --rot:16deg;}
+    /* positions (5 en haut / 3 en bas) */
+    .s1{left:18.1%; top:44.6%;}
+    .s2{left:34.1%; top:44.6%;}
+    .s3{left:50.1%; top:44.6%;}
+    .s4{left:65.5%; top:44.6%;}
+    .s5{left:81.5%; top:44.6%;}
+    .s6{left:25.7%; top:66.4%;}
+    .s7{left:42.5%; top:66.4%;}
+    .s8{left:59.3%; top:66.4%;}
 
     /* ===== Modals ===== */
     .modal{
@@ -139,22 +150,26 @@
     }
     .modal.open{display:flex}
 
+    /* ✅ plus de dépassement écran + aucun scroll externe */
     .modal .box{
       width:min(720px,100%);
-      max-height:92vh;
       background:#fff;
-      border-radius:18px;
       border:1px solid var(--line);
+      border-radius:18px;
+      overflow:hidden;
       box-shadow:var(--shadow);
+      max-height:92vh;
       display:flex;
       flex-direction:column;
-      overflow:hidden;
     }
-
     .modal .head{
       padding:12px 14px;
       border-bottom:1px solid var(--line);
-      font-weight:900;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-weight:1000;
       color:var(--text);
     }
     .modal .content{
@@ -162,55 +177,166 @@
       flex:1;
       min-height:0;
     }
+    label{display:block;margin:10px 0 6px;font-weight:900;color:var(--muted)}
+    input{
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      outline:none;
+      font-size:18px;
+    }
+    .hint{color:var(--muted);font-weight:700;margin-top:6px}
 
+    /* ✅ scan ne dépasse plus : hauteur responsive */
     .scan{
       width:100%;
-      height:min(52vh,420px);
-      min-height:220px;
-      background:#0b1c2d;
       border-radius:16px;
+      border:1px solid var(--line);
+      background:#0b1c2d;
+      height:min(52vh, 420px);
+      min-height:220px;
       overflow:hidden;
+      position:relative;
+      box-shadow:0 10px 22px rgba(0,0,0,.12);
+      margin-top:10px;
     }
     video{width:100%;height:100%;object-fit:cover}
 
-    @media (max-height:700px){
-      .scan{height:min(46vh,360px)}
+    @media (max-height: 700px){
+      .modal{padding:12px;}
+      .modal .head{padding:10px 12px;}
+      .modal .content{padding:12px;}
+      .scan{height:min(46vh, 360px); min-height:200px;}
+      label{margin:8px 0 5px;}
+      .row{margin-top:10px;}
+      .hint{margin-top:8px;font-size:12px;}
+      input{padding:10px 12px;}
+    }
+    @media (max-width: 420px){
+      button{min-width:0;}
+    }
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px}
+    .qrbox{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:16px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
     }
   </style>
 </head>
 
 <body>
-<div class="wrap">
-  <div class="stack">
-    <div class="card">
-      <div class="card-h">
-        <h1>Ma carte virtuelle</h1>
-        <div class="sub" id="stateText">—</div>
-      </div>
-
-      <div class="panel" id="cardBlock">
-        <div class="visual">
-          <img src="img/carte.png" alt="Carte fidélité">
-          <div class="stamp s1" data-slot="1"></div>
-          <div class="stamp s2" data-slot="2"></div>
-          <div class="stamp s3" data-slot="3"></div>
-          <div class="stamp s4" data-slot="4"></div>
-          <div class="stamp s5" data-slot="5"></div>
-          <div class="stamp s6" data-slot="6"></div>
-          <div class="stamp s7" data-slot="7"></div>
-          <div class="stamp s8" data-slot="8"></div>
+  <div class="wrap">
+    <div class="stack">
+      <div class="card">
+        <div class="card-h">
+          <h1>Ma carte virtuelle</h1>
+          <div class="tag" id="stateText">—</div>
         </div>
 
-        <div class="row">
-          <button id="btnShowQr">Afficher mon QR</button>
-          <button class="secondary" id="btnRefresh">Rafraîchir</button>
+        <!-- START -->
+        <div class="panel" id="startBlock">
+          <div class="hint" style="font-size:18px;color:var(--muted);font-weight:800">
+            Crée ta carte en 10 secondes.<br>
+            Cumule des points à chaque commande et débloque des avantages.
+          </div>
+          <div class="row">
+            <button id="btnOpenCreate">Créer ma carte</button>
+            <button class="secondary" id="btnOpenRestore">Restaurer</button>
+          </div>
+        </div>
+
+        <!-- CARD -->
+        <div class="panel" id="cardBlock" style="display:none">
+          <div class="kpis">
+            <div class="big"><span id="pointsText">0</span> / 8</div>
+            <div class="right" id="syncText">—</div>
+          </div>
+
+          <div class="visual">
+            <img src="carte.png" alt="Carte de fidélité">
+            <div class="stamp s1" data-slot="1" style="--rot:-18deg"></div>
+            <div class="stamp s2" data-slot="2" style="--rot:-14deg"></div>
+            <div class="stamp s3" data-slot="3" style="--rot:12deg"></div>
+            <div class="stamp s4" data-slot="4" style="--rot:-10deg"></div>
+            <div class="stamp s5" data-slot="5" style="--rot:14deg"></div>
+            <div class="stamp s6" data-slot="6" style="--rot:-12deg"></div>
+            <div class="stamp s7" data-slot="7" style="--rot:10deg"></div>
+            <div class="stamp s8" data-slot="8" style="--rot:16deg"></div>
+          </div>
+
+          <div class="row">
+            <button id="btnShowQr">Afficher mon QR</button>
+            <button class="secondary" id="btnRefresh">Rafraîchir</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="./client.js" defer></script>
+  <!-- Modal Action (Create / Restore + Scan) -->
+  <div class="modal" id="actionModal" aria-hidden="true">
+    <div class="box">
+      <div class="head">
+        <b id="modalTitle">Action</b>
+      </div>
+      <div class="content">
+
+        <!-- Create -->
+        <div id="createView" style="display:none">
+          <div class="hint">Crée ta carte, puis affiche ton QR.</div>
+          <label>Prénom</label>
+          <input id="name" autocomplete="given-name" placeholder="Ex: Kevin" />
+          <label>Téléphone</label>
+          <input id="phone" inputmode="tel" autocomplete="tel" placeholder="06..." />
+          <div class="row">
+            <button id="btnCreate">Créer</button>
+            <button class="secondary" id="btnCloseModal1">Fermer</button>
+          </div>
+        </div>
+
+        <!-- Restore -->
+        <div id="restoreView" style="display:none">
+          <div class="hint">Scanne un QR de récupération affiché par l’admin (ou colle l’URL / l’ID).</div>
+          <div class="scan"><video id="video" playsinline></video></div>
+          <div class="row">
+            <button id="btnStartScan">Scanner</button>
+            <button class="secondary" id="btnCloseModal2">Fermer</button>
+          </div>
+          <label>Ou coller</label>
+          <input id="manualCid" class="mono" placeholder="Colle une URL ou un ID…" />
+          <div class="row"><button class="secondary" id="btnUseManual">Utiliser</button></div>
+          <div class="hint" id="scanHint"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal QR -->
+  <div class="modal" id="qrModal" aria-hidden="true">
+    <div class="box">
+      <div class="head"><b>Mon QR</b></div>
+      <div class="content">
+        <div class="qrbox"><div id="qrSvg"></div></div>
+        <div class="row">
+          <button class="secondary" id="btnCopyLink">Copier le lien</button>
+          <button class="secondary" id="btnCloseQr">Fermer</button>
+        </div>
+        <div class="hint" id="copyHint">Le lien copié est exactement celui encodé dans le QR.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR lib (OFFICIEL) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- App -->
+  <script src="./client.js"></script>
 </body>
 </html>
