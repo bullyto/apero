@@ -421,7 +421,7 @@
 
         <!-- Récompense fidélité (Lot 25 points) -->
         <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
-          🎁 Obtenir ma récompense fidélité
+          🎁 Obtenir ma récompense fidélité (TEST)
         </button>
         <p id="reward25Msg" style="display:none; margin-top:0.8vh; font-size:2vh; line-height:1.2;"></p>
       </div>
@@ -893,7 +893,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
       // Lot 25 points : bouton récompense fidélité (remplace le code)
       if (reward25Btn && reward25Msg) {
-        if (best >= 25) {
+        if (best >= 1) {
           reward25Btn.style.display = "block";
           reward25Btn.disabled = false;
           reward25Msg.style.display = "none";
