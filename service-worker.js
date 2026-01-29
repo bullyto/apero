@@ -1,43 +1,18 @@
+const CACHE_NAME = "aperodenuit-v4.2";
 
-const CACHE_NAME = "aperodenuit-v4.1";
-
-// ⚠️ Pré-cache minimal + tolérant aux fichiers absents
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-
-  // (optionnel) si présents
-  "./style.css",
-  "./assets/img/logo.png",
-  "./assets/img/partage.png",
-
-  // icônes possibles (selon tes noms de fichiers)
   "./icon-192.png",
-  "./icon-512.png",
-  "./icône-192.png",
-  "./icône-512.png",
-  "./icône-touch-apple.png",
-  "./assets/apple-touch-icon.png",
-
-  // assets possibles
-  "./assets/img/logo-header.png",
-  "./assets/img/bottle1.png",
-  "./assets/img/bottle2.png",
-  "./assets/img/bottle3.png",
-  "./assets/img/bottle4.png",
-  "./assets/img/bottle5.png",
-  "./assets/img/bottle6.png",
-  "./assets/img/bottle7.png",
+  "./icon-512.png"
 ];
 
-// Ajout tolérant: si 1 fichier manque, on n’annule pas tout le SW
-async function precacheSafe(cache){
-  const results = await Promise.allSettled(
+// Pré-cache tolérant
+async function precacheSafe(cache) {
+  await Promise.allSettled(
     CORE_ASSETS.map((url) => cache.add(url))
   );
-  // (silencieux) — si tu veux debug: console.log(results)
-  return results;
 }
 
 self.addEventListener("install", (event) => {
@@ -54,7 +29,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+      await Promise.all(
+        keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
+      );
       await self.clients.claim();
     })()
   );
@@ -66,28 +43,16 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
 
-  // ✅ Toujours frais (anti-bug caches/PWA)
-  // 1) status-popup.js (ton JS qui pilote les blocages)
-  if (url.origin === self.location.origin && url.pathname.endsWith("/status-popup.js")) {
-    event.respondWith(fetch(req, { cache: "no-store" }));
+  /* ================================
+     ✅ AUTORISER CLOUDflare WORKERS
+     ================================ */
+  if (url.hostname.endsWith("workers.dev")) {
+    // ⛔ NE PAS intercepter → laisser passer le réseau
     return;
   }
 
-  // 2) status.json + toutes ressources du dossier status (cross-origin)
-  if (url.href.includes("bullyto.github.io/status/")) {
-    event.respondWith(fetch(req, { cache: "no-store" }));
-    return;
-  }
-
-  // ✅ Évite de cacher le cross-origin (opaque) autrement
-  if (url.origin !== self.location.origin) {
-    return;
-  }
-
-  const accept = req.headers.get("accept") || "";
-
-  // Network-first pour HTML
-  if (accept.includes("text/html")) {
+  // HTML → network-first
+  if (req.headers.get("accept")?.includes("text/html")) {
     event.respondWith(
       fetch(req)
         .then((res) => {
@@ -95,12 +60,12 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((c) => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
+        .catch(() => caches.match(req) || caches.match("./index.html"))
     );
     return;
   }
 
-  // Cache-first pour le reste
+  // Autres assets → cache-first
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
