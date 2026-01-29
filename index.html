@@ -619,49 +619,28 @@
     .adn-legal-footer .dot{ margin:0 6px; opacity:.6; }
 
 
-/* ✅ Loyalty marketing preview (site) */
-.loyaltyPreview{margin:12px 0 14px}
+/* 🎟️ Loyalty marketing preview */
+.loyaltyPreview{margin:14px 0}
 .lpCard{
-  width:100%;
-  border-radius:16px;
-  border:1px solid rgba(0,0,0,.10);
-  background:linear-gradient(180deg,#1c5b87 0%, #0f2e49 100%);
+  border-radius:18px;
   padding:14px;
-  box-shadow:0 10px 22px rgba(0,0,0,.10);
+  background:linear-gradient(180deg,#1c5b87,#0f2e49);
+  color:#fff;
 }
-.lpTop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;color:#fff}
-.lpTitle{font-weight:1000;letter-spacing:.2px;font-size:18px}
-.lpSub{font-weight:800;opacity:.92;font-size:13px}
+.lpTop{display:flex;justify-content:space-between;align-items:baseline}
+.lpTitle{font-weight:900}
+.lpSub{font-size:13px;opacity:.9}
 .lpStamps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
 .lpStamp{
-  width:100%;
-  aspect-ratio:1/1;
-  border-radius:999px;
-  background:rgba(255,255,255,.16);
-  border:1px solid rgba(255,255,255,.28);
-  position:relative;
-  overflow:hidden;
-}
-.lpStamp.on{
-  background:rgba(255,255,255,.24);
-  border-color:rgba(255,255,255,.55);
+  aspect-ratio:1/1;border-radius:999px;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.35);
 }
 .lpStamp.on::after{
   content:"🦉";
-  position:absolute;
-  inset:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:22px;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.25));
+  display:flex;align-items:center;justify-content:center;
+  height:100%;
 }
-
-
-/* ✅ Marketing list (modal) */
-.mkList{margin:10px 0 12px;display:grid;gap:8px}
-.mkItem{display:flex;align-items:center;gap:10px;font-weight:900;color:#0b1420}
-.mkDot{width:10px;height:10px;border-radius:999px;background:rgba(84,180,255,.55);box-shadow:0 0 0 4px rgba(84,180,255,.15)}
 
 </style>
 
@@ -1476,6 +1455,15 @@
       <span class="adn-tag">Nouveau</span>
     </div>
 
+    
+    <div class="adn-menu-item" id="adnMenuLoyalty">
+      <div class="adn-menu-left">
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Carte de fidélité</div>
+        <div class="adn-menu-sub">Avantages & récompenses</div>
+      </div>
+    </div>
+
+
     <div class="adn-menu-item" id="adnMenuZone">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
@@ -1644,144 +1632,98 @@
   </footer>
 
 
-  <!-- ✅ Modal marketing — Carte de fidélité (site web) -->
-  <div class="modal" id="loyaltyMarketingModal" aria-hidden="true">
-    <div class="box" role="dialog" aria-modal="true" aria-labelledby="loyaltyMkTitle">
-      <div class="head">
-        <div class="title" id="loyaltyMkTitle">Carte de fidélité</div>
-        <button class="iconBtn" id="btnCloseLoyaltyMk" aria-label="Fermer">✕</button>
+  <!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) -->
+  <div class="modal" id="loyaltyModal" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheetHead">
+        <div class="sheetIcon">🎟️</div>
+        <div>
+          <h3>Carte de fidélité</h3>
+          <p>Pour accéder à la carte de fidélité, l’application <strong>APÉRO DE NUIT 66®</strong> est recommandée.</p>
+        </div>
       </div>
-      <div class="content">
-        <div class="hint" style="margin-top:0">
-          Installation recommandée : application <strong>APÉRO DE NUIT 66®</strong> (accès plus rapide).
-        </div>
 
-        <div class="loyaltyPreview" aria-hidden="true">
-          <div class="lpCard">
-            <div class="lpTop">
-              <div class="lpTitle">Carte de Fidélité</div>
-              <div class="lpSub">8 tampons = 1 récompense</div>
-            </div>
-            <div class="lpStamps" id="lpStamps">
-              <!-- stamps injected by JS -->
-            </div>
+      <div class="step">
+        <b>Bénéfices de l’application :</b><br>
+        • Accès à la carte de fidélité et au QR code<br>
+        • Accès aux jeux et cadeaux<br>
+        • Suivi de livraison en direct<br>
+        • Expérience plus rapide et plus fiable
+      </div>
+
+      <div class="loyaltyPreview">
+        <div class="lpCard">
+          <div class="lpTop">
+            <div class="lpTitle">Carte de fidélité</div>
+            <div class="lpSub">8 tampons = récompense</div>
           </div>
+          <div class="lpStamps" id="lpStamps"></div>
         </div>
+      </div>
 
-        <div class="row" style="width:100%">
-          <a class="primary" href="./fidel/client.html" id="btnOpenLoyaltyPage">Ouvrir la carte</a>
-          <a class="secondary" href="./maps/client.html" id="btnOpenLiveTracking">Suivi livreur</a>
-        </div>
-
-        <div class="row" style="width:100%">
-          <a class="secondary" href="./?go=order" id="btnOpenOrder">Commande</a>
-          <a class="secondary" href="./?go=games" id="btnOpenGames">Jeux / cadeaux</a>
-        </div>
-
-        <div class="row" style="width:100%">
-          <a class="primary" href="https://play.google.com/store/apps/details?id=fr.aperos.nuit66.driver" target="_blank" rel="noopener" id="btnOpenPlayStore">
-            Installer l’application APÉRO DE NUIT 66®
-          </a>
-        </div>
+      <div class="modalActions">
+        <button class="okBtn" id="openPlayStore">Installer l’application APÉRO DE NUIT 66®</button>
+        <button class="copyBtn" id="closeLoyaltyModal">Continuer sur le site</button>
       </div>
     </div>
   </div>
 
 
-  <script>
-    (function(){
-      var LOYALTY_URL = "./fidel/client.html";
-      var PLAY_URL = "https://play.google.com/store/apps/details?id=fr.aperos.nuit66";
+<script>
+(function(){
+  const LOYALTY_URL = "./fidel/client.html";
+  const PLAY_URL = "https://play.google.com/store/apps/details?id=fr.aperos.nuit66";
 
-      function isStandalone(){
-        try{
-          return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
-            || (window.navigator && window.navigator.standalone)
-            || document.referrer.includes("android-app://");
-        }catch(e){ return false; }
+  function isStandalone(){
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+
+  const menuBtn = document.getElementById("adnMenuLoyalty");
+  const modal = document.getElementById("loyaltyModal");
+  const closeBtn = document.getElementById("closeLoyaltyModal");
+  const playBtn = document.getElementById("openPlayStore");
+
+  function openModal(){
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden","false");
+    startStamps();
+  }
+  function closeModal(){
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+  }
+
+  function startStamps(){
+    const host = document.getElementById("lpStamps");
+    if(!host) return;
+    host.innerHTML = "";
+    for(let i=0;i<8;i++){
+      const d=document.createElement("div");
+      d.className="lpStamp";
+      host.appendChild(d);
+    }
+    const stamps=[...host.children];
+    let i=0;
+    setInterval(()=>{
+      stamps.forEach(s=>s.classList.remove("on"));
+      for(let j=0;j<=i && j<8;j++) stamps[j].classList.add("on");
+      i=(i+1)%8;
+    },500);
+  }
+
+  if(menuBtn){
+    menuBtn.addEventListener("click",()=>{
+      if(isStandalone()){
+        window.location.href = LOYALTY_URL;
+      }else{
+        openModal();
       }
-
-      function qs(id){ return document.getElementById(id); }
-
-      function openModal(){
-        var m = qs("loyaltyMarketingModal");
-        if(!m) return;
-        m.classList.add("open");
-        m.setAttribute("aria-hidden","false");
-      }
-      function closeModal(){
-        var m = qs("loyaltyMarketingModal");
-        if(!m) return;
-        m.classList.remove("open");
-        m.setAttribute("aria-hidden","true");
-      }
-
-      // Animated stamps: 1 stamp each 0.5s up to 8, loop
-      var stampTimer = null;
-      function startStampAnim(){
-        var host = qs("lpStamps");
-        if(!host) return;
-        host.innerHTML = "";
-        for(var i=0;i<8;i++){
-          var d = document.createElement("div");
-          d.className = "lpStamp";
-          host.appendChild(d);
-        }
-        var stamps = host.querySelectorAll(".lpStamp");
-        var idx = 0;
-        if(stampTimer) clearInterval(stampTimer);
-        stamps.forEach(function(s){ s.classList.remove("on"); });
-        stampTimer = setInterval(function(){
-          if(!qs("loyaltyMarketingModal") || !qs("loyaltyMarketingModal").classList.contains("open")) return;
-          if(idx >= stamps.length){
-            // reset + restart
-            idx = 0;
-            stamps.forEach(function(s){ s.classList.remove("on"); });
-            return;
-          }
-          stamps[idx].classList.add("on");
-          idx++;
-        }, 500);
-      }
-      function stopStampAnim(){
-        if(stampTimer){ clearInterval(stampTimer); stampTimer = null; }
-      }
-
-      var menuBtn = qs("menuLoyalty");
-      if(menuBtn){
-        menuBtn.addEventListener("click", function(e){
-          e.preventDefault();
-          if(isStandalone()){
-            window.location.href = LOYALTY_URL;
-            return;
-          }
-          openModal();
-          startStampAnim();
-        });
-      }
-
-      var closeBtn = qs("btnCloseLoyaltyMk");
-      if(closeBtn) closeBtn.addEventListener("click", function(){
-        closeModal();
-        stopStampAnim();
-      });
-
-      // Close on backdrop click
-      var modal = qs("loyaltyMarketingModal");
-      if(modal){
-        modal.addEventListener("click", function(e){
-          if(e.target === modal){
-            closeModal();
-            stopStampAnim();
-          }
-        });
-      }
-
-      // Make sure Play Store link exists (in case HTML was edited)
-      var ps = qs("btnOpenPlayStore");
-      if(ps) ps.setAttribute("href", PLAY_URL);
-    })();
-  </script>
+    });
+  }
+  if(closeBtn) closeBtn.addEventListener("click", closeModal);
+  if(playBtn) playBtn.addEventListener("click", ()=>window.location.href=PLAY_URL);
+})();
+</script>
 
 </body>
 </html>
