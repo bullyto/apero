@@ -134,7 +134,7 @@
     /* Bouton son ON/OFF */
     #soundToggle {
       position:absolute;
-      top:8vh;
+      top:13vh;
       right:2vw;
       z-index:11;
       background:rgba(0,0,0,0.5);
@@ -146,6 +146,26 @@
       cursor:pointer;
       pointer-events:auto;
     }
+
+
+/* Bouton retour */
+#backBtn{
+  position:absolute;
+  top:8vh;
+  right:2vw;
+  z-index:11;
+  background:rgba(84,180,255,0.95);
+  color:#001;
+  border:none;
+  padding:0.6vh 1.2vw;
+  border-radius:1vh;
+  font-size:2.1vh;
+  font-weight:700;
+  cursor:pointer;
+  pointer-events:auto;
+  box-shadow:0 0 14px rgba(84,180,255,0.35);
+}
+#backBtn:active{ transform: scale(0.98); }
 
     /* Overlays */
     .overlay {
@@ -370,6 +390,9 @@
       <div class="heart"></div>
       <div class="heart"></div>
       <div class="heart"></div>
+    <!-- Bouton retour -->
+    <button id="backBtn">Retour</button>
+
     </div>
 
     <!-- Bouton son ON/OFF -->
@@ -417,11 +440,11 @@
       </div>
       <div id="promoCodes">
         <h2>🎁 SURPRISE</h2>
-        <div id="promoCodesList"><p>Pas disponible.</p></div>
+        <div id="promoCodesList"><p>À débloquer.</p></div>
 
         <!-- Récompense fidélité (Lot 25 points) -->
         <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
-          🎁 Obtenir ma récompense fidélité (TEST)
+          🎁 Tamponner ma carte
         </button>
         <p id="reward25Msg" style="display:none; margin-top:0.8vh; font-size:2vh; line-height:1.2;"></p>
       </div>
@@ -893,7 +916,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
       // Lot 25 points : bouton récompense fidélité (remplace le code)
       if (reward25Btn && reward25Msg) {
-        if (best >= 1) {
+        if (best >= 25) {
           reward25Btn.style.display = "block";
           reward25Btn.disabled = false;
           reward25Msg.style.display = "none";
@@ -906,7 +929,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       const codes = [];
       if(best>=50) codes.push('POLOFRT');
       if(codes.length) codes.forEach(c=> promo.innerHTML+=`<p>Code promo : ${c}</p>`);
-      else promo.innerHTML='<p>Pas disponible.</p>';
+      else promo.innerHTML='<p>À débloquer.</p>';
     }
     function saveScore(sc){
       const arr=loadHighScores();
@@ -1176,6 +1199,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     }
 
     // Boutons + son de clic
+    const backBtn = document.getElementById('backBtn');
     const playBtn = document.getElementById('playBtn');
     const instructionsBtn = document.getElementById('instructionsBtn');
     const useCodeBtn = document.getElementById('useCodeBtn');
@@ -1230,8 +1254,23 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         clearTimeout(tmr);
         const data = await res.json().catch(()=> ({}));
 
+        const code = String((data && (data.code || data.status || data.error_code)) || "").trim();
+
         if (!res.ok) {
-          reward25Msg.textContent = (data && data.error) ? data.error : "Récompense déjà utilisée sur cette carte.";
+          let msg = "Erreur. Réessaie plus tard.";
+          if (code === "already_claimed") msg = "Récompense déjà validée.";
+          else if (code === "not_eligible") msg = "À débloquer.";
+          else if (data && data.error) msg = String(data.error);
+          else if (data && data.message) msg = String(data.message);
+
+          reward25Msg.textContent = msg;
+          reward25Btn.style.display = "none";
+          return;
+        }
+
+        // Si le backend renvoie un statut sans token (ex: déjà validée)
+        if (code === "already_claimed") {
+          reward25Msg.textContent = "Récompense déjà validée.";
           reward25Btn.style.display = "none";
           return;
         }
@@ -1277,6 +1316,14 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         fn();
       };
     }
+
+
+if (backBtn) {
+  backBtn.onclick = clickAnd(() => {
+    // Retour vers le site principal
+    window.location.href = "https://www.aperos.net/";
+  });
+}
 
     playBtn.onclick = clickAnd(startGame);
     instructionsBtn.onclick = clickAnd(()=>{
