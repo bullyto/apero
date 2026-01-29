@@ -163,7 +163,7 @@
 
     .stamp{
       position:absolute;
-      width:11%;
+      width:17.6%;
       aspect-ratio:1/1;
       opacity:0;
       pointer-events:none;
@@ -171,11 +171,11 @@
       background-size:contain;
       background-repeat:no-repeat;
       background-position:center;
-      transform:rotate(-10deg);
+      transform:rotate(var(--rot, -10deg));
     }
     .stamp.filled{opacity:1;}
-    .s1{left:14%; top:56%;}.s2{left:32%; top:56%;}.s3{left:50%; top:56%;}.s4{left:68%; top:56%;}
-    .s5{left:14%; top:74%;}.s6{left:32%; top:74%;}.s7{left:50%; top:74%;}.s8{left:68%; top:74%;}
+    .s1{left:14%; top:28%;}.s2{left:32%; top:28%;}.s3{left:50%; top:28%;}.s4{left:68%; top:28%;}
+    .s5{left:14%; top:37%;}.s6{left:32%; top:37%;}.s7{left:50%; top:37%;}.s8{left:68%; top:37%;}
 
     /* Modal (pop-up) */
     .modal{position:fixed;inset:0;background:rgba(11,28,45,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
@@ -306,14 +306,14 @@
 
           <div class="visual" id="visual">
             <img id="cardImg" src="img/carte.png" alt="Carte fidélité" />
-            <div class="stamp s1" data-slot="1"></div>
-            <div class="stamp s2" data-slot="2"></div>
-            <div class="stamp s3" data-slot="3"></div>
-            <div class="stamp s4" data-slot="4"></div>
-            <div class="stamp s5" data-slot="5"></div>
-            <div class="stamp s6" data-slot="6"></div>
-            <div class="stamp s7" data-slot="7"></div>
-            <div class="stamp s8" data-slot="8"></div>
+            <div class="stamp s1" data-slot="1" style="--rot:-12deg"></div>
+            <div class="stamp s2" data-slot="2" style="--rot:7deg"></div>
+            <div class="stamp s3" data-slot="3" style="--rot:-3deg"></div>
+            <div class="stamp s4" data-slot="4" style="--rot:11deg"></div>
+            <div class="stamp s5" data-slot="5" style="--rot:-9deg"></div>
+            <div class="stamp s6" data-slot="6" style="--rot:5deg"></div>
+            <div class="stamp s7" data-slot="7" style="--rot:-14deg"></div>
+            <div class="stamp s8" data-slot="8" style="--rot:8deg"></div>
           </div>
 
           <div class="row" style="width:100%">
