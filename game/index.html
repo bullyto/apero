@@ -147,25 +147,7 @@
       pointer-events:auto;
     }
 
-    
-
-    #backBtn {
-      position: absolute;
-      top: 8vh;
-      right: 2vw;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 12px;
-      background: rgba(80, 170, 255, 0.9);
-      color: #fff;
-      font-weight: 700;
-      font-size: 14px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.25);
-      cursor: pointer;
-      z-index: 12;
-    }
-    #backBtn:active { transform: scale(0.98); }
-/* Overlays */
+    /* Overlays */
     .overlay {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
       background:rgba(0,0,0,0.7); padding:2.7vh 2.7vw; border-radius:2vh;
@@ -435,7 +417,13 @@
       </div>
       <div id="promoCodes">
         <h2>🎁 SURPRISE</h2>
-        <div id="promoCodesList"><p>À débloquer.</p></div>
+        <div id="promoCodesList"><p>Pas disponible.</p></div>
+
+        <!-- Récompense fidélité (Lot 25 points) -->
+        <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
+          🎁 Obtenir ma récompense fidélité (TEST)
+        </button>
+        <p id="reward25Msg" style="display:none; margin-top:0.8vh; font-size:2vh; line-height:1.2;"></p>
       </div>
     </div>
 
@@ -515,12 +503,6 @@
     const clickSound = document.getElementById('clickSound');
 
     const soundToggleBtn = document.getElementById('soundToggle');
-    const backBtn = document.getElementById('backBtn');
-    if (backBtn) {
-      backBtn.addEventListener('click', () => {
-        window.location.href = 'https://www.aperos.net/';
-      });
-    }
     let soundOn = true;
 
     // Volumes
@@ -875,19 +857,17 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
 
     // High scores & codes
-
-    function hasUnlockedCode25(){
-      // Débloqué si un score >= 25 a été atteint (persistant)
-      return localStorage.getItem('unlockedCode25') === '1';
+    function hasUnlockedCode50(){
+      return localStorage.getItem('unlockedCode50') === '1';
     }
-    function setUnlockedCode25(){
-      localStorage.setItem('unlockedCode25', '1');
+    function setUnlockedCode50(){
+      localStorage.setItem('unlockedCode50', '1');
       if (useCodeBtn) useCodeBtn.style.display = 'block';
     }
     function syncUseCodeButton(bestScore){
-      // Montre uniquement après 25 points atteints
+      // Montre uniquement après 50 points atteints (lot 50)
       if (!useCodeBtn) return;
-      if (bestScore >= 25 || hasUnlockedCode25()) useCodeBtn.style.display = 'block';
+      if (bestScore >= 50 || hasUnlockedCode50()) useCodeBtn.style.display = 'block';
       else useCodeBtn.style.display = 'none';
     }
     function loadHighScores(){
@@ -910,11 +890,23 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
       const best = arr.length ? Math.max(...arr.map(e=>e.score)) : 0;
       syncUseCodeButton(best);
+
+      // Lot 25 points : bouton récompense fidélité (remplace le code)
+      if (reward25Btn && reward25Msg) {
+        if (best >= 1) {
+          reward25Btn.style.display = "block";
+          reward25Btn.disabled = false;
+          reward25Msg.style.display = "none";
+          reward25Msg.textContent = "";
+        } else {
+          reward25Btn.style.display = "none";
+          reward25Msg.style.display = "none";
+        }
+      }
       const codes = [];
-      if(best>=25) codes.push('LIVOFRT');
       if(best>=50) codes.push('POLOFRT');
       if(codes.length) codes.forEach(c=> promo.innerHTML+=`<p>Code promo : ${c}</p>`);
-      else promo.innerHTML='<p>À débloquer.</p>';
+      else promo.innerHTML='<p>Pas disponible.</p>';
     }
     function saveScore(sc){
       const arr=loadHighScores();
@@ -1090,10 +1082,11 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           score++;
           updateHUD();
           updateBrandProgress(score);
+          if (score === 50) { setUnlockedCode50(); }
       syncInfoButton(score);
           syncInfoButton(score);
 
-          if (score === 25) { setUnlockedCode25(); }
+
           playSound(pointSound);
 
           pointFlash.style.opacity = '0.2';
@@ -1190,6 +1183,92 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     const continueBtn = document.getElementById('continueBtn');
     const restartBtn = document.getElementById('restartBtn');
     const menuBtn = document.getElementById('menuBtn');
+    // Récompense fidélité (Lot 25 points)
+    const reward25Btn = document.getElementById('reward25Btn');
+    const reward25Msg = document.getElementById('reward25Msg');
+    const LOYALTY_WORKER_URL = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
+
+    function getLoyaltyClientId(){
+      // On tente plusieurs clés possibles (compatibilité)
+      return (
+        localStorage.getItem('client_id') ||
+        localStorage.getItem('fidel_client_id') ||
+        localStorage.getItem('loyalty_client_id') ||
+        localStorage.getItem('adn66_loyalty_client_id') ||
+        ""
+      ).trim();
+    }
+
+    async function requestReward25(){
+      if (!reward25Btn || !reward25Msg) return;
+
+      const clientId = getLoyaltyClientId();
+      if (!clientId) {
+        reward25Msg.style.display = 'block';
+        reward25Msg.textContent = "Active d’abord ta carte de fidélité pour recevoir ta récompense.";
+        // Redirection utile
+        setTimeout(() => {
+          window.location.href = "https://www.aperos.net/fidel/client.html";
+        }, 900);
+        return;
+      }
+
+      reward25Btn.disabled = true;
+      reward25Msg.style.display = 'block';
+      reward25Msg.textContent = "Vérification de ta récompense…";
+
+      try{
+        const controller = new AbortController();
+        const tmr = setTimeout(()=>controller.abort(), 10000);
+
+        const res = await fetch(LOYALTY_WORKER_URL + "/game/reward/request", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          signal: controller.signal,
+          body: JSON.stringify({ client_id: clientId, milestone: "GAME_25" })
+        });
+        clearTimeout(tmr);
+        const data = await res.json().catch(()=> ({}));
+
+        if (!res.ok) {
+          reward25Msg.textContent = (data && data.error) ? data.error : "Récompense déjà utilisée sur cette carte.";
+          reward25Btn.style.display = "none";
+          return;
+        }
+
+        if (!data || !data.token) {
+          reward25Msg.textContent = "Réponse invalide. Réessaie plus tard.";
+          reward25Btn.disabled = false;
+          return;
+        }
+
+        // On envoie le client vers la carte fidélité avec le token
+        window.location.href = "https://www.aperos.net/fidel/client.html?reward_token=" + encodeURIComponent(data.token);
+
+      } catch(e){
+        // Debug friendly message (helps diagnose CORS / SW / network)
+        let msg = "Erreur réseau. Réessaie plus tard.";
+        try{
+          msg += " (" + (e && (e.message || e.toString())) + ")";
+        }catch(_){}
+        reward25Msg.textContent = msg;
+
+        // Attempt a quick health probe to display more info
+        try{
+          const probe = await fetch(LOYALTY_WORKER_URL + "/health", { method: "GET", cache: "no-store" });
+          reward25Msg.textContent += probe.ok ? " • /health OK" : (" • /health HTTP " + probe.status);
+        }catch(_){
+          reward25Msg.textContent += " • /health KO";
+        }
+
+        reward25Btn.disabled = false;
+      }
+    }
+
+    if (reward25Btn) {
+      reward25Btn.onclick = clickAnd(() => { requestReward25(); });
+    }
+
 
     function clickAnd(fn){
       return () => {
@@ -1246,7 +1325,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
     // Au chargement
     displayHighScores();
-    syncUseCodeButton(hasUnlockedCode25() ? 25 : 0);
+    syncUseCodeButton(hasUnlockedCode50() ? 50 : 0);
     syncInfoButton(0);
     updateBackground();
     updateCloud();
