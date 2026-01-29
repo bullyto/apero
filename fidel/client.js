@@ -58,6 +58,14 @@ function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function normalizePhone(raw){ return (raw||"").replace(/[^0-9+]/g,"").trim(); }
 function normalizeName(raw){ return (raw||"").trim().slice(0,40); }
 
+function getInputValueByIds(ids){
+  for(const id of (ids||[])){
+    const el = document.getElementById(id);
+    if(el && typeof el.value !== "undefined") return String(el.value || "");
+  }
+  return "";
+}
+
 function isValidClientId(cid){
   if(!cid) return false;
   const s = String(cid).trim();
@@ -387,12 +395,40 @@ function qrRender(text){
 
 /* ---------- API ---------- */
 async function api(path, opts={}){
-  const res = await fetch(API_BASE + path, {
-    headers: {"content-type":"application/json"},
-    ...opts
-  });
-  const data = await res.json().catch(()=> ({}));
-  if(!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  const method = String((opts && opts.method) ? opts.method : "GET").toUpperCase();
+  const headers = Object.assign({}, (opts && opts.headers) ? opts.headers : {});
+  const init = Object.assign({}, opts);
+
+  // Avoid forcing headers on GET (preflight + blocked in some environments)
+  if(method !== "GET" && method !== "HEAD"){
+    // Send as text/plain to avoid CORS preflight; Worker accepts JSON string.
+    if(!headers["content-type"] && !headers["Content-Type"]){
+      headers["content-type"] = "text/plain;charset=UTF-8";
+    }
+    init.headers = headers;
+  }else{
+    // Keep only explicit headers set by caller
+    if(Object.keys(headers).length) init.headers = headers;
+  }
+
+  // Always avoid cached API responses
+  init.cache = "no-store";
+  init.credentials = "omit";
+  init.redirect = "follow";
+
+  const res = await fetch(API_BASE + path, init);
+
+  let data = {};
+  try{ data = await res.json(); }catch(_){ data = {}; }
+
+  if(!res.ok){
+    const code = (data && (data.error || data.code || data.message)) ? (data.error || data.code || data.message) : ("HTTP " + res.status);
+    const err = new Error(String(code));
+    // attach for callers if needed
+    err.http_status = res.status;
+    err.payload = data;
+    throw err;
+  }
   return data;
 }
 
@@ -521,8 +557,8 @@ async function createCard(){
     return;
   }
 
-  const name = normalizeName(($("name") && $("name").value) ? $("name").value : "");
-  const phone = normalizePhone(($("phone") && $("phone").value) ? $("phone").value : "");
+  const name = normalizeName(getInputValueByIds(["name","prenom","firstName","firstname","prenomClient","clientName"]));
+  const phone = normalizePhone(getInputValueByIds(["phone","tel","telephone","mobile","numero","clientPhone"]));
 
   if(!name){
     showInfoPopup(
@@ -593,7 +629,7 @@ async function createCard(){
       body: JSON.stringify({name, phone})
     });
 
-    if(r && r.exists){
+    if(r && (r.exists || r.existed || r.already_exists || r.alreadyExists)){
       showInfoPopup(
         "Carte déjà existante",
         `Une carte de fidélité est déjà associée à ce numéro.<br><br>
@@ -622,6 +658,17 @@ async function createCard(){
          Si vous rencontrez un problème, contactez-nous à :<br>
          <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
          en précisant ce que vous essayez de faire et le message affiché.`
+      );
+      return;
+    }
+
+    if(code === "already_exists" || code === "exists"){ 
+      showInfoPopup(
+        "Carte déjà existante",
+        `Une carte de fidélité est déjà associée à ce numéro.<br><br>
+         Pour la récupérer en toute sécurité, contactez notre équipe :<br>
+         <a href="mailto:Contact@aperos.net">📧 Contact@aperos.net</a><br><br>
+         👉 La récupération se fait uniquement avec vérification, afin de protéger vos avantages.`
       );
       return;
     }
