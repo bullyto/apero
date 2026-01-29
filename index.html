@@ -1738,59 +1738,40 @@
     return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   }
 
-  const menuBtn = document.getElementById("adnMenuLoyalty");
   const modal = document.getElementById("loyaltyModal");
   const closeBtn = document.getElementById("closeLoyaltyModal");
   const playBtn = document.getElementById("openPlayStore");
 
   function openModal(){
+    if(!modal) return;
     modal.classList.add("open");
     modal.setAttribute("aria-hidden","false");
     startStamps();
   }
   function closeModal(){
+    if(!modal) return;
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden","true");
   }
 
-  
-  function startStamps(){
-    var host = document.getElementById("lpRealCard");
-    if(!host) return;
-    var stamps = host.querySelectorAll(".lpStamp");
-    if(!stamps || !stamps.length) return;
+  // ✅ Click handler (robuste) — fonctionne même si le menu est injecté plus tard
+  document.addEventListener("click", function(e){
+    var t = e.target;
+    var item = t && t.closest ? t.closest("#adnMenuLoyalty") : null;
+    if(!item) return;
+    e.preventDefault();
+    // Ferme le menu natif s’il est ouvert (sans casser l’existant)
+    try{
+      var sheet = document.querySelector(".adn-menu-sheet.open");
+      if(sheet) sheet.classList.remove("open");
+    }catch(_){}
 
-    // reset
-    stamps.forEach(function(s){ s.classList.remove("filled"); });
-
-    var idx = 0;
-    if(window.__lpStampTimer) clearInterval(window.__lpStampTimer);
-    window.__lpStampTimer = setInterval(function(){
-      if(!modal || !modal.classList.contains("open")) return;
-      // reset when complete
-      if(idx >= stamps.length){
-        idx = 0;
-        stamps.forEach(function(s){ s.classList.remove("filled"); });
-        return;
-      }
-      stamps[idx].classList.add("filled");
-      idx++;
-    }, 800);
-  }
-const stamps=[...host.children];
-    let i=0;
-    setInterval(()=>{
-      stamps.forEach(s=>s.classList.remove("on"));
-      for(let j=0;j<=i && j<8;j++) stamps[j].classList.add("on");
-      i=(i+1)%8;
-    },800);
-  }
-
-  if(menuBtn){
-    menuBtn.addEventListener("click",()=>{
-      if(isStandalone()){
-        window.location.href = LOYALTY_URL;
-      }else{
+    if(isStandalone()){
+      window.location.href = LOYALTY_URL;
+    }else{
+      openModal();
+    }
+  });else{
         openModal();
       }
     });
