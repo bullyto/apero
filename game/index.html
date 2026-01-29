@@ -1223,7 +1223,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
         const res = await fetch(LOYALTY_WORKER_URL + "/game/reward/request", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
           signal: controller.signal,
           body: JSON.stringify({ client_id: clientId, milestone: "GAME_25" })
         });
