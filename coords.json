@@ -194,5 +194,33 @@
   "villemolaque|66300": {
     "lat": 42.5976,
     "lng": 2.848
+  },
+  "ille-sur-tet|66130": {
+    "lat": 42.6746,
+    "lng": 2.6167
+  },
+  "llupia|66300": {
+    "lat": 42.6275,
+    "lng": 2.7827
+  },
+  "saint-jean-lasseille|66300": {
+    "lat": 42.5863,
+    "lng": 2.8646
+  },
+  "tresserre|66300": {
+    "lat": 42.5559,
+    "lng": 2.842
+  },
+  "banyuls-dels-aspres|66300": {
+    "lat": 42.5653,
+    "lng": 2.8649
+  },
+  "ortaffa|66560": {
+    "lat": 42.5855,
+    "lng": 2.9191
+  },
+  "villeneuve-la-riviere|66610": {
+    "lat": 42.7046,
+    "lng": 2.7964
   }
 }
