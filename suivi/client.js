@@ -143,6 +143,47 @@ function toast(msg) {
   alert(msg);
 }
 
+function showOverlayPopup(title, html, primaryLabel = "OK") {
+  const overlay = document.getElementById("adnOverlay");
+  const t = document.getElementById("adnOverlayTitle");
+  const txt = document.getElementById("adnOverlayText");
+  const btn1 = document.getElementById("adnOverlayPrimary");
+  const btn2 = document.getElementById("adnOverlaySecondary");
+
+  // Fallback si l'overlay n'existe pas (sécurité)
+  if (!overlay || !t || !txt || !btn1 || !btn2) {
+    alert((title ? title + "
+
+" : "") + String(html).replace(/<[^>]*>/g, ""));
+    return;
+  }
+
+  t.textContent = title || "Information";
+  txt.innerHTML = html || "";
+  btn1.textContent = primaryLabel || "OK";
+  btn1.onclick = () => {
+    overlay.style.display = "none";
+  };
+  btn2.style.display = "none";
+  btn2.onclick = null;
+
+  overlay.style.display = "";
+}
+
+function showTrackingRequestSentPopup() {
+  showOverlayPopup(
+    "🔐 Information — Suivi de livraison",
+    "Votre demande de suivi de livraison a bien été transmise.<br><br>" +
+      "Dans le cadre de ce service, le livreur peut avoir accès à :<br><br>" +
+      "• votre <b>position GPS</b>,<br>" +
+      "• votre <b>nom</b>,<br>" +
+      "• votre <b>numéro de téléphone</b>.<br><br>" +
+      "Le livreur reste libre d’accepter ou de refuser le partage de sa position.<br><br>" +
+      "Les données sont utilisées uniquement pour la gestion de la livraison en cours et sont définitivement supprimées du serveur sous 24 heures.",
+    "OK"
+  );
+}
+
 function fmtRemaining(ms) {
   if (ms == null) return "—";
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -961,13 +1002,13 @@ function startAcceptedLoops() {
 async function handleRequestClick() {
   const name = (els.name?.value || "").trim().slice(0, 40);
   if (!name) {
-    toast("Entre ton prénom.");
+    showOverlayPopup("Information — Suivi de livraison", "Entre ton prénom.", "OK");
     return;
   }
 
   const phone = persistPhoneIfValid();
   if (!phone) {
-    toast("Entre ton numéro de téléphone (ex: 06 12 34 56 78).");
+    showOverlayPopup("Information — Suivi de livraison", "Entre ton numéro de téléphone (ex: 06 12 34 56 78).", "OK");
     return;
   }
 
@@ -1028,7 +1069,7 @@ async function handleRequestClick() {
     stopTimeout(STATE.tPollStatus);
     STATE.tPollStatus = setTimeout(pollStatus, 400);
 
-    toast("✅ Demande envoyée. Le livreur a reçu une notification.");
+    showTrackingRequestSentPopup();
   } catch (e) {
     console.error(e);
     setBadge("Erreur");
