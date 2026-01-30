@@ -417,6 +417,25 @@
   margin-top:14px;
 }
 
+
+    /* === ADN66 — Mention légale alcool (footer global) === */
+    :root{ --adnLegalH: 44px; }
+    body{ padding-bottom: calc(var(--adnLegalH) + env(safe-area-inset-bottom)); }
+    .adn-legal-footer{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:9996;
+      background:#000;
+      color:#fff;
+      text-align:center;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.1px;
+      padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+      box-sizing:border-box;
+      opacity:.92;
+    }
+    
 </style>
 
 </head>
@@ -621,5 +640,7 @@
     })();
   </script>
 
+
+  <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</footer>
 </body>
 </html>
