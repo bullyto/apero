@@ -69,6 +69,7 @@
       --muted:rgba(255,255,255,.68);
       --muted2:rgba(255,255,255,.55);
       --accent:#5db7ee; /* bleu ADN */
+      --accent2:#50ffaa; /* vert validation */
       --ring: rgba(93,183,238,.22);
       --shadow: 0 18px 60px rgba(0,0,0,.35);
       --shadow2: 0 10px 25px rgba(0,0,0,.28);
@@ -205,7 +206,20 @@
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-    .card-hd{
+    
+    /* Lisibilité: alternance très légère des articles (bleu / vert) */
+    main.wrap > section.card{
+      position: relative;
+    }
+    main.wrap > section.card:nth-of-type(odd){
+      border-left: 3px solid rgba(93,183,238,.28);
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(93,183,238,.06);
+    }
+    main.wrap > section.card:nth-of-type(even){
+      border-left: 3px solid rgba(80,255,170,.20);
+      box-shadow: var(--shadow), inset 0 0 0 1px rgba(80,255,170,.05);
+    }
+.card-hd{
       padding:14px 14px 10px;
       border-bottom:1px solid rgba(255,255,255,.08);
       display:flex;
@@ -924,46 +938,86 @@
         </p>
 </div>
 </section>
+
 <section class="card" id="article-13">
 <div class="card-hd">
 <div class="pill">13</div>
 <div>
 <h2>Commande en ligne — redirection vers www.aperodenuit.com</h2>
-<p>Information sur la redirection et les documents contractuels applicables.</p>
+<p>Information sur la redirection, la conservation des données et les documents contractuels applicables.</p>
 </div>
 </div>
 <div class="card-bd">
 <p>
-          En cliquant sur le bouton <b>« Commander en ligne »</b>, l’utilisateur est redirigé vers le site web
-          <b>www.aperodenuit.com</b>, une URL appartenant à <b>Apéro de Nuit 66®</b>, dédiée à la prise de commande en ligne.
-        </p>
+En cliquant sur le bouton <b>« Commander en ligne »</b>, l’utilisateur est redirigé vers le site web
+<b>www.aperodenuit.com</b>, une URL appartenant à <b>Apéro de Nuit 66®</b>, dédiée à la prise de commande en ligne.
+</p>
+
 <p style="margin-top:10px">
-          Cette redirection implique que l’utilisateur quitte l’application ou le site actuel afin d’accéder à un service web distinct,
-          exploité par la même entité.
-        </p>
+Cette redirection implique que l’utilisateur quitte l’application ou le site actuel afin d’accéder à un
+<b>service web distinct</b>, exploité par <b>la même entité</b>.
+</p>
+
 <div class="hr"></div>
+
 <p style="margin:0 0 8px"><b>Conditions Générales de Vente (CGV)</b></p>
-<p style="margin:0">
-          Les <b>Conditions Générales de Vente (CGV)</b> applicables aux commandes passées sur <b>www.aperodenuit.com</b> sont
-          <b>strictement identiques</b> à celles de l’application <b>Apéro de Nuit 66®</b>.
-          Les règles relatives aux prix, aux délais, aux modalités de livraison, aux obligations légales (notamment la vente d’alcool et la majorité légale),
-          ainsi qu’aux responsabilités restent inchangées.
-        </p>
+<p>
+Les <b>Conditions Générales de Vente (CGV)</b> applicables aux commandes passées sur <b>www.aperodenuit.com</b> sont
+<b>strictement identiques</b> à celles de l’application <b>Apéro de Nuit 66®</b>.
+Les règles relatives aux prix, aux délais, aux modalités de livraison, aux obligations légales
+(notamment la vente d’alcool et la majorité légale), ainsi qu’aux responsabilités restent inchangées.
+</p>
+
 <div class="hr"></div>
+
+<p style="margin:0 0 8px"><b>Conservation des données de commande</b></p>
+<p>
+Les <b>données liées aux commandes passées en ligne sur www.aperodenuit.com</b> sont conservées pendant une durée de
+<b>dix (10) ans</b>, conformément aux obligations légales, comptables et fiscales en vigueur.
+</p>
+<p>Cette conservation inclut notamment :</p>
+<ul>
+<li>la commande (produits, date, montant, paiement),</li>
+<li>le nom et le prénom,</li>
+<li>le numéro de téléphone,</li>
+<li>l’adresse postale,</li>
+<li>l’adresse e-mail.</li>
+</ul>
+
+<p style="margin-top:10px">
+Lorsque l’utilisateur a donné son <b>consentement explicite (opt-in)</b> pour recevoir des communications marketing,
+les données utilisées à cette fin sont conservées pour une durée maximale de <b>trois (3) ans</b>
+à compter de la dernière interaction.
+</p>
+
+<div class="hr"></div>
+
 <p style="margin:0 0 8px"><b>Conditions d’utilisation</b></p>
-<p style="margin:0">
-          Les conditions d’utilisation du site <b>www.aperodenuit.com</b> sont <b>similaires dans leur fonctionnement</b> à celles de l’application,
-          notamment en ce qui concerne l’accès au service, les règles de bonne utilisation, et les limitations techniques et de responsabilité.
-          Toutefois, le site <b>www.aperodenuit.com</b> constitue un <b>service web distinct</b> et dispose, à ce titre, de <b>ses propres conditions générales d’utilisation</b>,
-          accessibles directement depuis le site.
-        </p>
+<p>
+Les conditions d’utilisation du site <b>www.aperodenuit.com</b> sont similaires dans leur fonctionnement à celles de l’application,
+notamment en ce qui concerne l’accès au service, les règles de bonne utilisation et les limitations techniques et de responsabilité.
+Toutefois, <b>www.aperodenuit.com constitue un service web distinct</b> et dispose, à ce titre,
+de <b>ses propres conditions générales d’utilisation</b>, accessibles directement depuis le site.
+</p>
+
 <div class="hr"></div>
+
 <p style="margin:0 0 8px"><b>Information de l’utilisateur</b></p>
-<p style="margin:0">
-          L’utilisateur est invité à consulter les documents juridiques disponibles sur <b>www.aperodenuit.com</b> avant de finaliser sa commande.
-        </p>
+<p>
+L’utilisateur est invité à consulter, avant de finaliser sa commande :
+</p>
+<ul>
+<li>les documents juridiques,</li>
+<li>les Conditions Générales de Vente,</li>
+<li>les Conditions d’utilisation,</li>
+<li>ainsi que les <b>mentions légales</b>, notamment celles relatives à <b>l’hébergement du site</b>,</li>
+</ul>
+<p>
+directement sur <b>www.aperodenuit.com</b>.
+</p>
 </div>
 </section>
+
 <section class="card" id="article-14">
 <div class="card-hd">
 <div class="pill">14</div>
