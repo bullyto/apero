@@ -180,7 +180,7 @@ function adnOverlayShow({ title = "Information", html = "", primaryLabel = "OK" 
 function adnOverlayNameMissing() {
   adnOverlayShow({
     title: "Information",
-    html: "Entre ton <b>prénom</b>.<br><br>Il permet au livreur<br>de t’identifier rapidement<br>lors de la livraison.",
+    html: "Entrez vôtre <b>prénom</b>.<br><br>Il permet au livreur<br>de vous identifier rapidement<br>lors de la livraison.",
     primaryLabel: "OK",
   });
 }
@@ -188,7 +188,7 @@ function adnOverlayNameMissing() {
 function adnOverlayPhoneMissing() {
   adnOverlayShow({
     title: "Information",
-    html: "Entre ton <b>numéro de téléphone</b>.<br><br>Il est utilisé uniquement<br>si le livreur doit te contacter<br>pendant la livraison.",
+    html: "Entrez vôtre <b>numéro de téléphone</b>.<br><br>Il est utilisé uniquement<br>si le livreur doit vous contacter<br>pendant la livraison.",
     primaryLabel: "OK",
   });
 }
