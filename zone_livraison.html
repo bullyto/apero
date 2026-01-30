@@ -274,7 +274,7 @@
         <input id="adn66SearchInput" class="adn66Field" type="text" placeholder="Rechercher une commune…" autocomplete="off" />
         <div id="adn66CountInfo">
           <div class="adn66LoadRow">
-            <span id="adn66LoadLabel">Chargement des points…</span>
+            <span id="adn66LoadLabel">Chargement des points (rapide)…</span>
             <span id="adn66LoadFrac">0/0</span>
           </div>
           <div class="adn66Progress" aria-hidden="true">
@@ -295,7 +295,7 @@
 
   const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
   const GEO_CACHE_KEY = "adn66_geo_cache_v1";
-  const GEO_RATE_MS = 1100;
+  const GEO_RATE_MS = 250; // accéléré (throttle léger pour rester poli)
 
   // ========= DATA =========
   const COMMUNES = [
@@ -544,7 +544,7 @@
     if (t > 0 && n >= t) {
       labelEl.textContent = "Points chargés";
     } else {
-      labelEl.textContent = "Chargement des points…";
+      labelEl.textContent = "Chargement des points (rapide)…";
     }
   }
 
@@ -710,17 +710,37 @@
   }
 
   async function geocodeMissingSequential(list){
+    // ⚡️ Accélération : géocodage en "pool" (concurrence limitée)
+    // Objectif : remplir les lat/lng vite sans bloquer ~1 minute.
     if (geoQueueRunning) return;
     geoQueueRunning = true;
+
+    const concurrency = 4;                 // 3-4 = bon compromis
+    const interRequestDelayMs = GEO_RATE_MS; // petite pause entre jobs (politesse)
+    const missing = (Array.isArray(list) ? list : []).filter(c => !isValidLatLng(c.lat, c.lng));
+
     try{
-      for (const c of list) {
-        if (isValidLatLng(c.lat, c.lng)) continue;
-        await geocodeOne(c);
-        buildOrUpdateMarkers(list);
-        syncLoadedToMarkers();
-        saveGeoCache();
-        await sleep(1100);
+      let idx = 0;
+
+      async function worker(){
+        while (idx < missing.length){
+          const i = idx++;
+          const c = missing[i];
+
+          await geocodeOne(c);
+          // Rebuild markers au fur et à mesure : ressenti "ça arrive"
+          buildOrUpdateMarkers(list);
+          syncLoadedToMarkers();
+          saveGeoCache();
+
+          // petite pause (évite de spammer Nominatim)
+          if (interRequestDelayMs > 0) await sleep(interRequestDelayMs);
+        }
       }
+
+      const workers = [];
+      for (let k = 0; k < concurrency; k++) workers.push(worker());
+      await Promise.allSettled(workers);
     } finally {
       geoQueueRunning = false;
     }
