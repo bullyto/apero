@@ -540,7 +540,7 @@
   font-weight:750;
   color:rgba(255,255,255,.72);
   line-height:1;        /* texte plus compact */
-  margin-top:-7px;         /* remonte le sous-texte vers le titre */
+  margin-top:-9px;         /* remonte le sous-texte vers le titre */
   white-space:nowrap; 
   overflow:hidden; 
   text-overflow:ellipsis;
@@ -1448,28 +1448,30 @@
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="adn-menu-item" id="adnMenuCall" data-call>
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez par appel</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez en direct</div>
+        <div class="adn-menu-sub">Appel immédiat au livreur</div>
       </div>
     </div>
 
     <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:50px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/commande.png" class="adn-menu-icon caddie" alt="">Commandez en ligne</div>
-        <div class="adn-menu-sub">Paiement en ligne</div>
+        <div class="adn-menu-title"><img src="assets/commande.png" class="adn-menu-icon caddie" alt="">Paiement en ligne</div>
+        <div class="adn-menu-sub">Commande rapide et sécurisée</div>
       </div>
     </div>
 
     <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
+        <div class="adn-menu-sub">Suivez votre livraison en direct</div>
       </div>
       <span class="adn-tag">Nouveau</span>
     </div>
 
     <div class="adn-menu-item" id="adnMenuGame" style="display:none; --adn-icon:52px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Cadeaux</div>
-        <div class="adn-menu-sub">Gagne ta livraison</div>
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Jeux</div>
+        <div class="adn-menu-sub">Des défis &amp; des surprises.</div>
       </div>
       <span class="adn-tag">Nouveau</span>
     </div>
@@ -1485,16 +1487,12 @@
     <div class="adn-menu-item" id="adnMenuZone">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
+        <div class="adn-menu-sub">Zones, tarifs &amp; délais</div>
       </div>
     </div>
 
 </div>
 
-    <div class="adn-menu-item" id="adnMenuClose">
-      <div class="adn-menu-left">
-        <div class="adn-menu-title">✖️ Fermer</div>
-      </div>
-    </div>
   </div>
 
   <footer class="adn-legal-footer" aria-label="Informations légales">
@@ -1516,7 +1514,6 @@
       const btn = document.getElementById("adnMenuBtn");
       const sheet = document.getElementById("adnMenuSheet");
       const back = document.getElementById("adnMenuBackdrop");
-      const closeBtn = document.getElementById("adnMenuClose");
 
       function openMenu(){
         if(!sheet || !back || !btn) return;
@@ -1544,7 +1541,6 @@
         });
       }
 
-      if(closeBtn) closeBtn.addEventListener("click", closeMenu);
       if(back) back.addEventListener("click", closeMenu);
 
       // Visibility rules
