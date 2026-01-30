@@ -360,6 +360,24 @@
 }
 #advMoreLink:active{ transform: scale(0.98); }
 
+
+/* === Ajustements clean Avantage Client === */
+.advTitle{
+  font-size:2.1vh;       /* plus petit que Meilleurs scores */
+  white-space:nowrap;   /* une seule ligne */
+  margin-bottom:0.4vh;
+}
+.advStatus{
+  margin:0;             /* colle avec le lien */
+}
+#advMoreLink{
+  display:block;
+  margin-top:2px;       /* espace très réduit */
+  font-size:11px;
+  opacity:.85;
+  color:#3b82f6;        /* bleu lien */
+}
+
 </style>
 <script>
       appId: "639b5a31-e09f-4d34-ad0f-d111d66a14ac",
@@ -432,12 +450,9 @@
         <div id="highScoresList"><p>Aucun score.</p></div>
       </div>
       <div id="promoCodes">
-        <h2>🔓 AVANTAGE CLIENT</h2>
-        <div id="promoCodesList"><p>À débloquer.</p></div>
-
-        <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">
-          en savoir plus
-        </a>
+        <h2 class="advTitle">🔓 AVANTAGE CLIENT</h2>
+        <div id="promoCodesList"><p class="advStatus">À débloquer.</p></div>
+        <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">en savoir plus</a>
 
         <!-- Récompense fidélité (Lot 25 points) -->
         <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
