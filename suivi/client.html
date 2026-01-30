@@ -450,7 +450,21 @@
         <button class="clientBtn secondary" id="adnOverlaySecondary" type="button" style="display:none">Fermer</button>
       </div>
     </div>
-  </section>
+  
+<!-- OVERLAY POPUP (ENVOI DEMANDE) : dédiée au clic sur "Activer le suivi" -->
+<section class="clientPopup clientPopupOverlay" id="adnSent" style="display:none" aria-live="polite" aria-modal="true" role="dialog">
+  <div class="clientPopupCard" id="adnSentCard">
+    <h2 class="clientPopupTitle" id="adnSentTitle">🔐 Information — Suivi de livraison</h2>
+    <p class="clientPopupSub" id="adnSentText">…</p>
+    <div class="clientBtnRow">
+      <button class="clientBtn" id="adnSentOk" type="button">OK</button>
+    </div>
+  </div>
+</section>
+
+
+
+</section>
 
 
 
@@ -817,6 +831,39 @@ try {
 })();
 </script>
 
+
+
+<script>
+/* ===== ADN66 POPUP ENVOI DEMANDE (SAFE) =====
+   - Pop-up dédiée au clic "Activer le suivi" (confirmation + info DGCCRF)
+   - Séparée des autres pop-ups (RGPD mensuelle / refus GPS)
+*/
+(() => {
+  const root = document.getElementById('adnSent');
+  const titleEl = document.getElementById('adnSentTitle');
+  const textEl = document.getElementById('adnSentText');
+  const okBtn = document.getElementById('adnSentOk');
+
+  const show = () => { if (root) root.style.display = ''; };
+  const hide = () => { if (root) root.style.display = 'none'; };
+
+  if (okBtn) okBtn.addEventListener('click', hide);
+
+  // API globale dédiée
+  try {
+    window.ADN66SentPopup = {
+      show: (title, html) => {
+        try {
+          if (titleEl) titleEl.textContent = String(title || 'Information');
+          if (textEl) textEl.innerHTML = String(html || '');
+          show();
+        } catch (e) {}
+      },
+      hide: () => { try { hide(); } catch (e) {} }
+    };
+  } catch (e) {}
+})();
+</script>
 
 </body>
 </html>
