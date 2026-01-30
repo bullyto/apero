@@ -348,6 +348,18 @@
 /* bouton ℹ️ au-dessus du menu */
 #infoBtn{ z-index: 20001; }
 
+
+/* === Lien discret "en savoir plus" (avantage client) === */
+#advMoreLink{
+  display:inline-block;
+  margin-top:6px;
+  font-size:11px;
+  opacity:0.55;
+  text-decoration:none;
+  color:#fff;
+}
+#advMoreLink:active{ transform: scale(0.98); }
+
 </style>
 <script>
       appId: "639b5a31-e09f-4d34-ad0f-d111d66a14ac",
@@ -420,8 +432,12 @@
         <div id="highScoresList"><p>Aucun score.</p></div>
       </div>
       <div id="promoCodes">
-        <h2>🎁 SURPRISE</h2>
+        <h2>🔓 AVANTAGE CLIENT</h2>
         <div id="promoCodesList"><p>À débloquer.</p></div>
+
+        <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">
+          en savoir plus
+        </a>
 
         <!-- Récompense fidélité (Lot 25 points) -->
         <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
