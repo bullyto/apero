@@ -656,7 +656,8 @@
     txt.innerHTML =
       'Dans le cadre du service de suivi de livraison, le livreur a accès à votre <b>prénom</b>, votre <b>numéro de téléphone</b> et votre <b>position GPS</b>.<br><br>' +
       'Ces informations sont utilisées <b>uniquement</b> pour des raisons de <b>sécurité</b> et de <b>gestion de la livraison</b>.<br><br>' +
-      'L’accès au suivi est <b>strictement limité dans le temps</b>.';
+      'L’accès au suivi est <b>strictement limité dans le temps</b>.<br>' +
+      '<a href="https://www.aperos.net/privacy.html#article-7" style="font-size:11px;opacity:.55;font-weight:800;text-decoration:none;color:#3b82f6">🔒 en savoir plus</a>';
     setButtons('Suivant', () => {
       try { localStorage.setItem(LS_INFO_TS, String(Date.now())); } catch (e) {}
       hide();
