@@ -289,13 +289,75 @@
       white-space: nowrap;
     }
   
-.top-menu{position:absolute;top:14px;right:14px}
-.top-menu details summary{cursor:pointer;font-weight:900}
-.top-menu nav{display:flex;flex-direction:column;background:#0d1422;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px;margin-top:6px}
-.top-menu nav a{color:white;text-decoration:none;font-size:12px;padding:4px 6px}
-.top-menu nav a:hover{text-decoration:underline}
+    /* Menu Articles (mobile-first) */
+    .topbar-inner{position:relative}
+    .articles-menu{position:absolute;right:14px;top:12px;display:block}
+    .articles-details{position:relative}
+    .articles-summary{
+      list-style:none;
+      cursor:pointer;
+      user-select:none;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:1000;
+      color:var(--text);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .articles-summary::-webkit-details-marker{display:none}
+    .articles-details[open] .articles-summary{
+      border-color: rgba(93,183,238,.30);
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    .articles-label{display:none}
+    .articles-nav{
+      position:absolute;
+      right:0;
+      margin-top:10px;
+      width:min(70vw, 260px);
+      max-height:min(60vh, 420px);
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      background: rgba(13,20,34,.96);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      padding:8px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+    }
+    .articles-link{
+      display:block;
+      padding:10px 10px;
+      border-radius:12px;
+      text-decoration:none;
+      color: rgba(255,255,255,.88);
+      border:1px solid transparent;
+      font-weight:800;
+      font-size:13px;
+    }
+    .articles-link:hover{
+      border-color: rgba(93,183,238,.22);
+      background: rgba(93,183,238,.10);
+      color: rgba(255,255,255,.92);
+    }
 
-</style>
+    /* Confort mobile: éviter que le header sticky cache l'article lors d'un scroll vers une ancre */
+    section.card[id^="article-"]{scroll-margin-top: 86px;}
+
+    /* Sur écrans un peu plus larges, afficher le libellé "Articles" à côté de l'icône */
+    @media (min-width: 420px){
+      .articles-label{display:inline}
+    }
+
+    /* Si l'écran est très petit, on cache le bouton "Retour" pour ne pas chevaucher (menu + retour), mais on garde la navigation via swipe/back navigateur */
+    @media (max-width: 360px){
+      .topbar-inner .btn{display:none}
+    }
+
+  </style>
 </head>
 
 <body>
@@ -310,6 +372,18 @@
       </div>
 
       <a class="btn" href="./index.html">← Retour</a>
+
+      <div class="articles-menu" aria-label="Menu des articles">
+        <details class="articles-details">
+          <summary class="articles-summary" aria-label="Ouvrir le menu des articles">
+            ☰ <span class="articles-label">Articles</span>
+          </summary>
+          <nav class="articles-nav" aria-label="Aller à un article">
+            <a class="articles-link" href="#article-1">Article 1</a><a class="articles-link" href="#article-2">Article 2</a><a class="articles-link" href="#article-3">Article 3</a><a class="articles-link" href="#article-4">Article 4</a><a class="articles-link" href="#article-5">Article 5</a><a class="articles-link" href="#article-6">Article 6</a><a class="articles-link" href="#article-7">Article 7</a><a class="articles-link" href="#article-8">Article 8</a><a class="articles-link" href="#article-9">Article 9</a><a class="articles-link" href="#article-10">Article 10</a><a class="articles-link" href="#article-11">Article 11</a><a class="articles-link" href="#article-12">Article 12</a><a class="articles-link" href="#article-13">Article 13</a><a class="articles-link" href="#article-14">Article 14</a><a class="articles-link" href="#article-15">Article 15</a>
+          </nav>
+        </details>
+      </div>
+
     </div>
   </header>
 
@@ -975,5 +1049,37 @@
       Apéro de Nuit 66® — Document d’information.
     </div>
   </main>
+
+<script>
+(function(){
+  const details = document.querySelector('.articles-details');
+  if(!details) return;
+
+  // Close on link click
+  details.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if(a){
+      // allow anchor jump then close
+      setTimeout(()=>{ details.open = false; }, 50);
+    }
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if(!details.open) return;
+    if(!details.contains(e.target)){
+      details.open = false;
+    }
+  }, true);
+
+  // Close on ESC
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && details.open){
+      details.open = false;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
