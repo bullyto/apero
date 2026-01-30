@@ -450,21 +450,7 @@
         <button class="clientBtn secondary" id="adnOverlaySecondary" type="button" style="display:none">Fermer</button>
       </div>
     </div>
-  
-<!-- OVERLAY POPUP (ENVOI DEMANDE) : dédiée au clic sur "Activer le suivi" -->
-<section class="clientPopup clientPopupOverlay" id="adnSent" style="display:none" aria-live="polite" aria-modal="true" role="dialog">
-  <div class="clientPopupCard" id="adnSentCard">
-    <h2 class="clientPopupTitle" id="adnSentTitle">🔐 Information — Suivi de livraison</h2>
-    <p class="clientPopupSub" id="adnSentText">…</p>
-    <div class="clientBtnRow">
-      <button class="clientBtn" id="adnSentOk" type="button">OK</button>
-    </div>
-  </div>
-</section>
-
-
-
-</section>
+  </section>
 
 
 
@@ -672,24 +658,19 @@
     }
   };
 
-  
   const showInfoMonthly = () => {
-    t.textContent = '🔐 Information — Suivi de livraison';
+    t.textContent = 'Information importante — Suivi de livraison';
     txt.innerHTML =
-      'Votre demande de suivi de livraison a bien été transmise.<br><br>' +
-      'Dans le cadre de ce service, le <b>livreur peut avoir accès</b> à :<br>' +
-      '• votre <b>position GPS</b><br>' +
-      '• votre <b>nom</b><br>' +
-      '• votre <b>numéro de téléphone</b><br><br>' +
-      'Le livreur reste libre d’accepter ou de refuser le partage de sa position.<br><br>' +
-      'Les données sont utilisées <b>uniquement</b> pour la gestion de la livraison en cours et sont <b>définitivement supprimées du serveur sous 24 heures</b>.<br>' +
-      '<a href="https://www.aperos.net/privacy.html#article-7" style="display:inline-block;margin-top:6px;font-size:11px;opacity:.55;font-weight:800;text-decoration:none;color:#3b82f6">🔒 en savoir plus</a>';
-setButtons('Suivant', () => {
+      'Dans le cadre du service de suivi de livraison, le livreur a accès à votre <b>prénom</b>, votre <b>numéro de téléphone</b> et votre <b>position GPS</b>.<br><br>' +
+      'Ces informations sont utilisées <b>uniquement</b> pour des raisons de <b>sécurité</b> et de <b>gestion de la livraison</b>.<br><br>' +
+      'L’accès au suivi est <b>strictement limité dans le temps</b>.<br>' +
+      '<a href="https://www.aperos.net/privacy.html#article-7" style="font-size:11px;opacity:.55;font-weight:800;text-decoration:none;color:#3b82f6">🔒 en savoir plus</a>';
+    setButtons('Suivant', () => {
       try { localStorage.setItem(LS_INFO_TS, String(Date.now())); } catch (e) {}
       hide();
     }, null, null);
     show();
-  }
+  };
 
   const requestGeoAgain = () => {
     // Relance du prompt d'autorisation (si possible)
@@ -775,24 +756,6 @@ setButtons('Suivant', () => {
     show();
   };
 
-
-
-// ✅ API globale pour remplacer les alert() navigateur par une popup esthétique
-// Usage: window.ADN66Overlay.show(title, htmlText, primaryLabel)
-try {
-  window.ADN66Overlay = {
-    show: (title, htmlText, primaryLabel = 'OK') => {
-      try {
-        t.textContent = String(title || 'Information');
-        txt.innerHTML = String(htmlText || '');
-        setButtons(primaryLabel, () => hide(), null, null);
-        show();
-      } catch (e) {}
-    },
-    hide: () => { try { hide(); } catch (e) {} }
-  };
-} catch (e) {}
-
   // 1) INFO mensuelle (30 jours)
   try {
     const last = parseInt(localStorage.getItem(LS_INFO_TS) || '0', 10) || 0;
@@ -831,39 +794,6 @@ try {
 })();
 </script>
 
-
-
-<script>
-/* ===== ADN66 POPUP ENVOI DEMANDE (SAFE) =====
-   - Pop-up dédiée au clic "Activer le suivi" (confirmation + info DGCCRF)
-   - Séparée des autres pop-ups (RGPD mensuelle / refus GPS)
-*/
-(() => {
-  const root = document.getElementById('adnSent');
-  const titleEl = document.getElementById('adnSentTitle');
-  const textEl = document.getElementById('adnSentText');
-  const okBtn = document.getElementById('adnSentOk');
-
-  const show = () => { if (root) root.style.display = ''; };
-  const hide = () => { if (root) root.style.display = 'none'; };
-
-  if (okBtn) okBtn.addEventListener('click', hide);
-
-  // API globale dédiée
-  try {
-    window.ADN66SentPopup = {
-      show: (title, html) => {
-        try {
-          if (titleEl) titleEl.textContent = String(title || 'Information');
-          if (textEl) textEl.innerHTML = String(html || '');
-          show();
-        } catch (e) {}
-      },
-      hide: () => { try { hide(); } catch (e) {} }
-    };
-  } catch (e) {}
-})();
-</script>
 
 </body>
 </html>
