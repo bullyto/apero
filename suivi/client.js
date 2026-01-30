@@ -157,9 +157,7 @@ function adnOverlayShow({ title = "Information", html = "", primaryLabel = "OK" 
   const btn2 = document.getElementById("adnOverlaySecondary");
   if (!overlay || !t || !txt || !btn1) {
     // fallback (ne casse rien)
-    alert((title ? title + "
-
-" : "") + String(html).replace(/<[^>]*>/g, ""));
+    alert((title ? title + "\n\n" : "") + String(html).replace(/<[^>]*>/g, ""));
     return;
   }
 
