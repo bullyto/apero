@@ -139,8 +139,41 @@ function updatePopupVisibility() {
   setPopupVisible(!hasActiveAccess);
 }
 
-function toast(msg) {
-  alert(msg);
+function toast(msg, { title = "Information" } = {}) {
+  // ✅ Remplace l'alert navigateur (www.aperos.net indique) par la popup ADN66, si dispo
+  const safeMsg = String(msg ?? "");
+  try {
+    if (window.ADN66Overlay && typeof window.ADN66Overlay.show === "function") {
+      const html = safeMsg
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/
+/g, "<br>");
+      window.ADN66Overlay.show(title, html, "OK");
+      return;
+    }
+  } catch {}
+  alert(safeMsg);
+}
+
+function showDgccrfSentPopup() {
+  const title = "🔐 Information — Suivi de livraison";
+  const html =
+    "Votre demande de suivi de livraison a bien été transmise.<br><br>" +
+    "Dans le cadre de ce service, le <b>livreur peut avoir accès</b> à :<br>" +
+    "• votre <b>position GPS</b><br>" +
+    "• votre <b>nom</b><br>" +
+    "• votre <b>numéro de téléphone</b><br><br>" +
+    "Le livreur reste libre d’accepter ou de refuser le partage de sa position.<br><br>" +
+    "Les données sont utilisées <b>uniquement</b> pour la gestion de la livraison en cours et sont <b>définitivement supprimées du serveur sous 24 heures</b>.";
+  try {
+    if (window.ADN66Overlay && typeof window.ADN66Overlay.show === "function") {
+      window.ADN66Overlay.show(title, html, "OK");
+      return;
+    }
+  } catch {}
+  alert("✅ Demande envoyée. Le livreur a reçu une notification.");
 }
 
 function fmtRemaining(ms) {
@@ -1028,7 +1061,7 @@ async function handleRequestClick() {
     stopTimeout(STATE.tPollStatus);
     STATE.tPollStatus = setTimeout(pollStatus, 400);
 
-    toast("✅ Demande envoyée. Le livreur a reçu une notification.");
+    showDgccrfSentPopup();
   } catch (e) {
     console.error(e);
     setBadge("Erreur");
