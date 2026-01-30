@@ -131,43 +131,27 @@
       background-size:cover; display:inline-block; margin-left:1vw;
     }
 
-    /* Bouton son ON/OFF */
-    #soundToggle {
-      position:absolute;
-      top:13vh;
-      right:2vw;
-      z-index:11;
-      background:rgba(0,0,0,0.5);
-      color:#fff;
-      border:none;
-      padding:0.5vh 1vw;
-      border-radius:1vh;
-      font-size:2.2vh;
-      cursor:pointer;
-      pointer-events:auto;
-    }
-
-
 /* Bouton retour */
 #backBtn{
   position:absolute;
-  top:8vh;
-  right:2vw;
+  /* aligné près des cœurs (haut droite) */
+  top:2vh;
+  right: calc(2vw + 14vh); /* à gauche des 3 cœurs */
   z-index:11;
-  background:rgba(84,180,255,0.95);
-  color:#001;
-  border:none;
+  background:rgba(255,255,255,0.92);
+  color:#0b1420;
+  border:1px solid rgba(0,0,0,0.18);
   padding:0.6vh 1.2vw;
   border-radius:1vh;
   font-size:2.1vh;
-  font-weight:700;
+  font-weight:800;
   cursor:pointer;
   pointer-events:auto;
-  box-shadow:0 0 14px rgba(84,180,255,0.35);
+  box-shadow:0 0 14px rgba(255,255,255,0.22);
+  backdrop-filter: blur(6px);
 }
 #backBtn:active{ transform: scale(0.98); }
-
-    /* Overlays */
+/* Overlays */
     .overlay {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
       background:rgba(0,0,0,0.7); padding:2.7vh 2.7vw; border-radius:2vh;
@@ -266,7 +250,7 @@
     /* 25 pts */
     #gift25 {
       left:50%;
-      top:-16px;
+      top:-8px;
       font-size: 22px;
     }
     /* 50 pts */
@@ -394,9 +378,6 @@
     <button id="backBtn">Retour</button>
 
     </div>
-
-    <!-- Bouton son ON/OFF -->
-    <button id="soundToggle">🔊</button>
 
 
     <!-- Bouton Info (visible uniquement à partir du score 10) -->
@@ -569,16 +550,18 @@
       audioEl.play().catch(()=>{});
     }
 
-    soundToggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      soundOn = !soundOn;
-      soundToggleBtn.textContent = soundOn ? '🔊' : '🔈';
-      if (!soundOn) {
-        bgMusic.pause();
-      } else if (gameRunning) {
-        bgMusic.play().catch(()=>{});
-      }
-    });
+    if (soundToggleBtn) {
+      soundToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        soundOn = !soundOn;
+        soundToggleBtn.textContent = soundOn ? '🔊' : '🔈';
+        if (!soundOn) {
+          bgMusic.pause();
+        } else if (gameRunning) {
+          bgMusic.play().catch(()=>{});
+        }
+      });
+    }
 
     // Variables de jeu
     let score = 0, lives = 3, avions = [], bottles = [], frameCount = 0;
