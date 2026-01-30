@@ -370,8 +370,6 @@
   let totalPoints = 0;
   let loadedPoints = 0;
   let loadUiReady = false;
-  let geoCache = loadGeoCache();
-  let geoQueueRunning = false;
   let inited = false;
 
   function whenReady(cb){
@@ -430,13 +428,15 @@
     buildSelect(sorted);
     bindUI();
 
-    applyCachedCoords(sorted);
-    buildMarkersProgressive(sorted);
+    // ✅ charge les coordonnées précalculées (instant)
+    loadCoordsFile(sorted).finally(() => {
+      buildMarkersProgressive(sorted);
+      try { fitToAll(); } catch(e) {}
+    });
 
     installAutoRefresh();
     refreshMapSize();
 
-    geocodeMissingSequential(sorted);
     updateCountInfo();
   });
 
@@ -568,14 +568,8 @@
     if (!item || !map) return;
 
     if (!isValidLatLng(item.lat, item.lng)) {
-      geocodeOne(item).then(ok => {
-        if (!ok) return;
-        buildOrUpdateMarkers(sorted);
-        refreshMapSize();
-        map.setView([item.lat, item.lng], Math.max(map.getZoom(), 12), { animate:true });
-        const marker = markersByKey.get(key);
-        if (marker && openPopup) marker.openPopup();
-      });
+      // Pas de coords disponibles pour cette commune (coords.json manquant / incomplet)
+      if (openPopup) alert("Coordonnées non disponibles pour cette commune. Ajoute/MAJ coords.json pour un affichage instantané.");
       return;
     }
 
@@ -650,8 +644,6 @@
 
       if (i < totalPoints) {
         requestAnimationFrame(step);
-      } else {
-        try { fitToAll(); } catch(e) {}
       }
     };
 
@@ -686,102 +678,46 @@
     map.fitBounds(bounds.pad(0.12));
   }
 
-  // ========= GEO =========
-  function loadGeoCache(){
+
+  // ========= COORDS (pré-calculées) =========
+  // Format attendu: { "<slug(name)>|<cp>": { "lat": 42.0, "lng": 2.9 } , ... }
+  async function loadCoordsFile(list){
     try{
-      const raw = localStorage.getItem("adn66_geo_cache_v1");
-      const obj = raw ? JSON.parse(raw) : {};
-      return (obj && typeof obj === "object") ? obj : {};
-    }catch(e){ return {}; }
-  }
-  function saveGeoCache(){
-    try{ localStorage.setItem("adn66_geo_cache_v1", JSON.stringify(geoCache || {})); }catch(e){}
-  }
+      const url = COORDS_URL + (COORDS_URL.includes("?") ? "&" : "?") + "v=" + Date.now();
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("coords.json introuvable");
+      const coords = await res.json();
+      if (!coords || typeof coords !== "object") throw new Error("coords.json invalide");
 
-  function applyCachedCoords(list){
-    list.forEach(c => {
-      const key = makeKey(c);
-      const cached = geoCache[key];
-      if (cached && isValidLatLng(cached.lat, cached.lng)) {
-        c.lat = cached.lat;
-        c.lng = cached.lng;
-      }
-    });
-  }
-
-  async function geocodeMissingSequential(list){
-    // ⚡️ Accélération : géocodage en "pool" (concurrence limitée)
-    // Objectif : remplir les lat/lng vite sans bloquer ~1 minute.
-    if (geoQueueRunning) return;
-    geoQueueRunning = true;
-
-    const concurrency = 4;                 // 3-4 = bon compromis
-    const interRequestDelayMs = GEO_RATE_MS; // petite pause entre jobs (politesse)
-    const missing = (Array.isArray(list) ? list : []).filter(c => !isValidLatLng(c.lat, c.lng));
-
-    try{
-      let idx = 0;
-
-      async function worker(){
-        while (idx < missing.length){
-          const i = idx++;
-          const c = missing[i];
-
-          await geocodeOne(c);
-          // Rebuild markers au fur et à mesure : ressenti "ça arrive"
-          buildOrUpdateMarkers(list);
-          syncLoadedToMarkers();
-          saveGeoCache();
-
-          // petite pause (évite de spammer Nominatim)
-          if (interRequestDelayMs > 0) await sleep(interRequestDelayMs);
+      let applied = 0;
+      list.forEach(c => {
+        const key = makeKey(c);
+        const v = coords[key];
+        if (v && isValidLatLng(Number(v.lat), Number(v.lng))) {
+          c.lat = Number(v.lat);
+          c.lng = Number(v.lng);
+          applied++;
         }
-      }
+      });
 
-      const workers = [];
-      for (let k = 0; k < concurrency; k++) workers.push(worker());
-      await Promise.allSettled(workers);
-    } finally {
-      geoQueueRunning = false;
-    }
-  }
-
-  async function geocodeOne(c){
-    const key = makeKey(c);
-    if (geoCache[key] && isValidLatLng(geoCache[key].lat, geoCache[key].lng)) {
-      c.lat = geoCache[key].lat;
-      c.lng = geoCache[key].lng;
-      return true;
-    }
-
-    const q = `${c.name} ${c.cp} France`;
-    const url = new URL("https://nominatim.openstreetmap.org/search");
-    url.searchParams.set("format", "jsonv2");
-    url.searchParams.set("limit", "1");
-    url.searchParams.set("q", q);
-    url.searchParams.set("countrycodes", "fr");
-
-    try{
-      const res = await fetch(url.toString(), { method:"GET", headers:{ "Accept":"application/json" }});
-      if (!res.ok) return false;
-      const data = await res.json();
-      if (!Array.isArray(data) || !data.length) return false;
-
-      const lat = Number(data[0].lat);
-      const lng = Number(data[0].lon);
-      if (!isValidLatLng(lat, lng)) return false;
-
-      c.lat = lat;
-      c.lng = lng;
-      geoCache[key] = { lat, lng, ts: Date.now() };
-      saveGeoCache();
-      return true;
+      const lbl = document.getElementById("adn66LoadLabel");
+      const frac = document.getElementById("adn66LoadFrac");
+      const bar = document.getElementById("adn66ProgressBar");
+      if (lbl) lbl.textContent = "Coordonnées prêtes";
+      if (frac) frac.textContent = `${applied}/${list.length}`;
+      if (bar) bar.style.width = (list.length ? Math.round((applied/list.length)*100) : 0) + "%";
     }catch(e){
-      return false;
+      // Si coords.json absent, la carte s'ouvre quand même (mais sans points)
+      const lbl = document.getElementById("adn66LoadLabel");
+      const frac = document.getElementById("adn66LoadFrac");
+      const bar = document.getElementById("adn66ProgressBar");
+      const txt = document.getElementById("adn66CountText");
+      if (lbl) lbl.textContent = "Coords manquantes (ajoute coords.json)";
+      if (frac) frac.textContent = `0/${(list && list.length) ? list.length : 0}`;
+      if (bar) bar.style.width = "0%";
+      if (txt) txt.textContent = "Astuce: génère coords.json (centres des communes) pour un chargement instantané.";
     }
   }
-
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   // ========= HELPERS =========
   function normalizeAndSort(list){
