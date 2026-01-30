@@ -143,45 +143,71 @@ function toast(msg) {
   alert(msg);
 }
 
-function showOverlayPopup(title, html, primaryLabel = "OK") {
+/* ===== ADN66 OVERLAY POPUP (reuse existing #adnOverlay) =====
+   Utilisé UNIQUEMENT pour remplacer 3 alertes:
+   - prénom manquant
+   - téléphone manquant
+   - demande envoyée (après envoi au livreur)
+*/
+function adnOverlayShow({ title = "Information", html = "", primaryLabel = "OK" } = {}) {
   const overlay = document.getElementById("adnOverlay");
   const t = document.getElementById("adnOverlayTitle");
   const txt = document.getElementById("adnOverlayText");
   const btn1 = document.getElementById("adnOverlayPrimary");
   const btn2 = document.getElementById("adnOverlaySecondary");
-
-  // Fallback si l'overlay n'existe pas (sécurité)
-  if (!overlay || !t || !txt || !btn1 || !btn2) {
+  if (!overlay || !t || !txt || !btn1) {
+    // fallback (ne casse rien)
     alert((title ? title + "
 
 " : "") + String(html).replace(/<[^>]*>/g, ""));
     return;
   }
 
-  t.textContent = title || "Information";
-  txt.innerHTML = html || "";
+  t.textContent = title;
+  txt.innerHTML = html;
+
   btn1.textContent = primaryLabel || "OK";
   btn1.onclick = () => {
     overlay.style.display = "none";
   };
-  btn2.style.display = "none";
-  btn2.onclick = null;
+
+  if (btn2) {
+    btn2.style.display = "none";
+    btn2.onclick = null;
+  }
 
   overlay.style.display = "";
 }
 
-function showTrackingRequestSentPopup() {
-  showOverlayPopup(
-    "🔐 Information — Suivi de livraison",
-    "Votre demande de suivi de livraison a bien été transmise.<br><br>" +
+function adnOverlayNameMissing() {
+  adnOverlayShow({
+    title: "Information",
+    html: "Entre ton <b>prénom</b>.",
+    primaryLabel: "OK",
+  });
+}
+
+function adnOverlayPhoneMissing() {
+  adnOverlayShow({
+    title: "Information",
+    html: "Entre ton <b>numéro de téléphone</b> (ex: 06 12 34 56 78).",
+    primaryLabel: "OK",
+  });
+}
+
+function adnOverlayRequestSent() {
+  adnOverlayShow({
+    title: "🔐 Information — Suivi de livraison",
+    html:
+      "<b>Votre demande de suivi de livraison a bien été transmise.</b><br><br>" +
       "Dans le cadre de ce service, le livreur peut avoir accès à :<br><br>" +
       "• votre <b>position GPS</b>,<br>" +
       "• votre <b>nom</b>,<br>" +
       "• votre <b>numéro de téléphone</b>.<br><br>" +
       "Le livreur reste libre d’accepter ou de refuser le partage de sa position.<br><br>" +
       "Les données sont utilisées uniquement pour la gestion de la livraison en cours et sont définitivement supprimées du serveur sous 24 heures.",
-    "OK"
-  );
+    primaryLabel: "OK",
+  });
 }
 
 function fmtRemaining(ms) {
@@ -1002,13 +1028,13 @@ function startAcceptedLoops() {
 async function handleRequestClick() {
   const name = (els.name?.value || "").trim().slice(0, 40);
   if (!name) {
-    showOverlayPopup("Information — Suivi de livraison", "Entre ton prénom.", "OK");
+    adnOverlayNameMissing();
     return;
   }
 
   const phone = persistPhoneIfValid();
   if (!phone) {
-    showOverlayPopup("Information — Suivi de livraison", "Entre ton numéro de téléphone (ex: 06 12 34 56 78).", "OK");
+    adnOverlayPhoneMissing();
     return;
   }
 
@@ -1069,7 +1095,7 @@ async function handleRequestClick() {
     stopTimeout(STATE.tPollStatus);
     STATE.tPollStatus = setTimeout(pollStatus, 400);
 
-    showTrackingRequestSentPopup();
+    adnOverlayRequestSent();
   } catch (e) {
     console.error(e);
     setBadge("Erreur");
