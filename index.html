@@ -587,15 +587,15 @@
     }
 
     .adn-tag{
-      font-size:11px;
+      font-size:6px;
       font-weight:950;
-      padding:4px 9px;
+      padding:2px 5px;
       border-radius:999px;
       border:1px solid rgba(255,255,255,.20);
       color:rgba(255,255,255,.95);
       background:rgba(93,183,238,.22);
       flex:0 0 auto;
-      letter-spacing:.2px;
+      letter-spacing:.1px;
     }
 
     .adn-legal-footer{
@@ -1446,7 +1446,7 @@
   <div class="adn-menu-backdrop" id="adnMenuBackdrop" aria-hidden="true"></div>
 
   <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="adn-menu-item" id="adnMenuCall" data-call>
+    <div class="adn-menu-item" id="adnMenuCall" data-call style="--adn-icon:62px">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez en direct</div>
         <div class="adn-menu-sub">Appel immédiat au livreur</div>
@@ -1460,7 +1460,7 @@
       </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuTrack" style="display:none">
+    <div class="adn-menu-item" id="adnMenuTrack" style="display:none; --adn-icon:62px">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
         <div class="adn-menu-sub">Suivez votre livraison en direct</div>
@@ -1477,14 +1477,16 @@
     </div>
 
     
-    <div class="adn-menu-item" id="adnMenuLoyalty">
+    <div class="adn-menu-item" id="adnMenuLoyalty" style="--adn-icon:62px">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Carte de fidélité</div>
         <div class="adn-menu-sub">Avantages & récompenses</div>
       </div>
+    <span class="adn-tag">Nouveau</span>
+
     </div>
 
-    <div class="adn-menu-item" id="adnMenuZone">
+    <div class="adn-menu-item" id="adnMenuZone" style="--adn-icon:62px">
       <div class="adn-menu-left">
         <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
         <div class="adn-menu-sub">Zones, tarifs &amp; délais</div>
