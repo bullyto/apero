@@ -369,7 +369,24 @@
       .articles-label{display:none}
     }
 
-  </style>
+  
+@media (max-width: 480px){
+  .topbar-inner{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar-inner .btn{
+    margin-left: auto;
+    display: inline-flex !important;
+    align-items: center;
+    white-space: nowrap;
+    padding: 8px 12px;
+  }
+}
+
+</style>
 </head>
 <body>
 <header class="topbar">
