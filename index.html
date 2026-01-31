@@ -662,6 +662,75 @@
 .lpStamp.s1{left:18.1%; top:44.6%;}.lpStamp.s2{left:34.1%; top:44.6%;}.lpStamp.s3{left:50.1%; top:44.6%;}.lpStamp.s4{left:65.5%; top:44.6%;}.lpStamp.s5{left:81.5%; top:44.6%;}
 .lpStamp.s6{left:25.7%; top:66.4%;}.lpStamp.s7{left:42.5%; top:66.4%;}.lpStamp.s8{left:59.3%; top:66.4%;}
 
+
+  /* 🍺 Indicateur d’alcoolémie — Pop-up iframe (menu) */
+  .alcoModal .sheet{
+    width: min(96vw, 720px);
+    height: min(92vh, 920px);
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .alcoHead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 12px 12px 10px;
+    border-bottom: 1px solid rgba(255,255,255,.10);
+    background: rgba(11,20,32,.92);
+    backdrop-filter: blur(8px);
+  }
+  .alcoHead .left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .alcoHead .ic{
+    width:36px;height:36px;border-radius:12px;
+    display:grid;place-items:center;
+    background: rgba(84,180,255,.12);
+    border: 1px solid rgba(84,180,255,.25);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    flex: 0 0 auto;
+    font-size:18px;
+  }
+  .alcoHead .txt{min-width:0}
+  .alcoHead h3{
+    margin:0;
+    font-size: 15px;
+    letter-spacing:.2px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+  }
+  .alcoHead p{
+    margin:2px 0 0;
+    font-size: 12px;
+    color: rgba(255,255,255,.72);
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+  }
+  .alcoClose{
+    width:42px;height:42px;border-radius:16px;
+    display:grid;place-items:center;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color:#fff;
+    cursor:pointer;
+    flex: 0 0 auto;
+  }
+  .alcoClose:active{ transform: translateY(1px); }
+  .alcoFrame{
+    width:100%;
+    height:100%;
+    border:0;
+    background: transparent;
+  }
+
 </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
@@ -1485,6 +1554,14 @@
     <span class="adn-tag">Nouveau</span>
 
     </div>
+    <div class="adn-menu-item" id="adnMenuAlcohol" style="--adn-icon:62px">
+      <div class="adn-menu-left">
+        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Indicateur d’alcoolémie</div>
+        <div class="adn-menu-sub">Prévention &amp; sécurité</div>
+      </div>
+    </div>
+
+
 
     <div class="adn-menu-item" id="adnMenuZone" style="--adn-icon:62px">
       <div class="adn-menu-left">
@@ -1615,7 +1692,26 @@
     <a href="./privacy.html">Confidentialité</a>
   </footer>
 
-  <!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) [v7] -->
+  
+  <!-- 🍺 Indicateur d’alcoolémie — Pop-up iframe (menu) -->
+  <div class="modal alcoModal" id="alcoholModal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="Indicateur d’alcoolémie">
+      <div class="alcoHead">
+        <div class="left">
+          <div class="ic">🧪</div>
+          <div class="txt">
+            <h3>Indicateur d’alcoolémie</h3>
+            <p>Prévention &amp; sécurité — estimation indicative</p>
+          </div>
+        </div>
+        <button class="alcoClose" id="closeAlcoholModal" aria-label="Fermer">✕</button>
+      </div>
+
+      <iframe class="alcoFrame" id="alcoholFrame" src="./calculateur.html" title="Indicateur d’alcoolémie"></iframe>
+    </div>
+  </div>
+
+<!-- 🎟️ Carte de fidélité — Pop-up marketing (site uniquement) [v7] -->
   <div class="modal" id="loyaltyModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-label="Carte de fidélité">
       <button class="modalX" id="closeLoyaltyModalX" aria-label="Fermer">✕</button>
@@ -1728,6 +1824,46 @@
     });
   }
   if(playBtn) playBtn.addEventListener("click", function(){ window.location.href = PLAY_URL; });
+})();
+</script>
+
+
+<script>
+/* 🍺 Menu → Indicateur d’alcoolémie (iframe popup) */
+(function(){
+  const modal = document.getElementById("alcoholModal");
+  const frame = document.getElementById("alcoholFrame");
+  const closeBtn = document.getElementById("closeAlcoholModal");
+
+  function openAlcohol(){
+    if(!modal) return;
+    // recharge douce : évite un état interne “cassé” si l’utilisateur relance plusieurs fois
+    try { if(frame) frame.src = frame.getAttribute("src") || "./calculateur.html"; } catch(e){}
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden","false");
+  }
+  function closeAlcohol(){
+    if(!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden","true");
+  }
+
+  document.addEventListener("click", function(e){
+    const item = e.target && e.target.closest ? e.target.closest("#adnMenuAlcohol") : null;
+    if(!item) return;
+    e.preventDefault();
+    openAlcohol();
+  }, true);
+
+  if(closeBtn) closeBtn.addEventListener("click", closeAlcohol);
+  if(modal){
+    modal.addEventListener("click", function(e){
+      if(e.target === modal) closeAlcohol();
+    });
+  }
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && modal && modal.classList.contains("open")) closeAlcohol();
+  });
 })();
 </script>
 
