@@ -416,7 +416,7 @@
               <div class="rowTop">
                 <div>
                   <div class="big" id="bigValue">— g/L</div>
-                  <div class="pill" id="badgePill">Données estimées</div>
+                  
                 </div>
                 <div class="meta">
                   <div><strong>Taux</strong> : <span id="tauxInline">—</span></div>
@@ -578,13 +578,13 @@
 
       if(level === "ok"){
         ico.textContent = "✔️";
-        txt.textContent = "Vous êtes sous le seuil légal général — restez prudent.";
+        txt.textContent = "restez prudent";
       } else if(level === "warn"){
         ico.textContent = "⚠️";
-        txt.textContent = "Ne prenez pas le volant — attendez ou faites‑vous raccompagner.";
+        txt.textContent = "Ne prenez pas le volant";
       } else {
         ico.textContent = "🚫";
-        txt.textContent = "Conduite interdite — choisissez un transport sûr immédiatement.";
+        txt.textContent = "Conduite interdite";
       }
       msg.style.display = "flex";
     }
