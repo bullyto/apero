@@ -232,10 +232,12 @@
 .tone-warn .resultTop{
   background:#0b1220; /* noir uni */
 }
+.tone-warn .resultTop, .tone-warn .resultTop *{ color:#ffffff !important; }
 
 .tone-danger .resultTop{
   background:#0b1220; /* noir uni */
 }
+.tone-danger .resultTop, .tone-danger .resultTop *{ color:#ffffff !important; }
 
 
 .tone-warn .badge{
@@ -373,6 +375,47 @@
 .tone-danger .box,
 .tone-danger .pill,
 .tone-danger .big{ animation:none; }
+
+
+/* === BARRE SEUILS: COULEURS TRÈS VOYANTES === */
+.threshold{
+  height:14px; /* un peu plus épais */
+  background:rgba(0,0,0,.06);
+}
+.threshold .segA{ background: rgba(33,208,122,.55) !important; }  /* vert */
+.threshold .segB{ background: rgba(255,204,51,.60) !important; }  /* jaune */
+.threshold .segC{ background: rgba(255,77,77,.55) !important; }   /* rouge */
+
+
+/* === BARRE DE PROGRESSION : ULTRA VOYANTE === */
+.threshold{
+  height:18px;
+  background:#0a0f16;
+  border-radius:999px;
+}
+.threshold .segA{
+  background:linear-gradient(90deg,#00ff9c,#21d07a);
+}
+.threshold .segB{
+  background:linear-gradient(90deg,#ffd84d,#ffcc33);
+}
+.threshold .segC{
+  background:linear-gradient(90deg,#ff6b6b,#ff1f1f);
+}
+
+/* Curseur */
+.threshold .marker{
+  width:3px;
+  background:#ffffff;
+  box-shadow:0 0 8px rgba(255,255,255,.9), 0 0 16px rgba(255,255,255,.6);
+}
+.threshold .dot{
+  width:18px;
+  height:18px;
+  background:#ffffff;
+  border:3px solid #000;
+  box-shadow:0 0 10px rgba(255,255,255,.9), 0 0 18px rgba(255,255,255,.6);
+}
 
 </style>
 </head>
@@ -689,3 +732,5 @@ tauxInline.textContent = toFixedFr(taux, 2) + " g/L";
   </script>
 </body>
 </html>
+
+
