@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Calculateur d'alcoolémie — ADN66</title>
+  <meta name="description" content="Estimation indicative d'alcoolémie. Ne remplace pas un éthylotest homologué." />
+  <meta name="theme-color" content="#0b1c2d" />
+
+  <style>
+    :root{
+      /* ✅ Style bleu & blanc (aligné ADN66) */
+      --blue:#0b1c2d;
+      --sky:#5db7ee;
+      --text:#0b1c2d;
+      --muted:rgba(11,28,45,.68);
+      --line:rgba(11,28,45,.15);
+      --bg:#f7fbff;
+      --shadow:0 12px 30px rgba(0,0,0,.08);
+      --shadowBtn:0 10px 18px rgba(93,183,238,.32);
+      --radiusCard:18px;
+      --radiusBtn:14px;
+
+      /* Accents (sans abus) */
+      --ok:#21d07a;
+      --warn:#ffcc33;
+      --danger:#ff4d4d;
+      --okBg:rgba(33,208,122,.10);
+      --warnBg:rgba(255,204,51,.10);
+      --dangerBg:rgba(255,77,77,.10);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(93,183,238,.18), transparent 55%),
+        var(--bg);
+      color:var(--text);
+    }
+    button,input{font:inherit}
+    button{-webkit-tap-highlight-color:transparent; touch-action:manipulation}
+
+    .wrap{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:10px;}
+    .stack{width:min(680px,96vw); position:relative;}
+    .stack::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:var(--radiusCard);
+      background:#fff;
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      transform:translateY(12px) scale(.987);
+      opacity:.55;
+      z-index:0;
+      pointer-events:none;
+    }
+    .card{position:relative; z-index:1; width:100%; border:1px solid var(--line); border-radius:var(--radiusCard); background:#fff; box-shadow:var(--shadow); overflow:hidden;}
+
+    /* Header bar */
+    .brand{
+      background:var(--blue);
+      color:#fff;
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .brand .left{min-width:0;display:flex;flex-direction:column;gap:2px;}
+    .brand b{font-size:15px;font-weight:900;opacity:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand span{font-size:12px;opacity:.85}
+    .brand .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:7px 10px;border-radius:999px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      font-weight:900;font-size:12px;white-space:nowrap;
+    }
+
+    .panel{padding:12px;}
+
+    /* Inputs */
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px;font-weight:900}
+    .seg{
+      display:flex;
+      gap:8px;
+      padding:6px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(93,183,238,.08);
+    }
+    .seg button{
+      flex:1;
+      border:1px solid transparent;
+      background:#fff;
+      color:var(--blue);
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:none;
+    }
+    .seg button.active{
+      background:rgba(93,183,238,.22);
+      border-color:rgba(93,183,238,.60);
+      color:var(--text);
+    }
+
+    input{
+      width:100%;
+      border-radius:14px;
+      border:2px solid rgba(93,183,238,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      box-shadow:0 6px 14px rgba(93,183,238,.14);
+      color:var(--text);
+    }
+    input::placeholder{ color:rgba(11,28,45,.45); }
+    input:focus{
+      border-color: rgba(93,183,238,1);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.22);
+    }
+
+    .hint{margin-top:8px;font-size:12.5px;color:var(--muted);line-height:1.28;font-weight:800}
+
+    .actions{display:flex;gap:10px;margin-top:14px;}
+    .btn{
+      flex:1;
+      padding:12px 14px;
+      border-radius:var(--radiusBtn);
+      font-weight:900;
+      font-size:15px;
+      cursor:pointer;
+      border:none;
+      background:var(--sky);
+      color:#fff;
+      box-shadow:var(--shadowBtn);
+    }
+    .btn:active{transform:translateY(1px);}
+
+    /* Results */
+    .resultWrap{display:none;margin-top:14px;}
+    .resultWrap.show{display:block;}
+
+    .resultTop{
+      border:1px solid var(--line);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 10px 22px rgba(0,0,0,.07);
+    }
+    .resultTop .rowTop{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:10px;
+      padding:12px;
+      background:linear-gradient(180deg, rgba(93,183,238,.14), rgba(93,183,238,0));
+    }
+    .big{font-size:34px;font-weight:1000;letter-spacing:.2px;line-height:1;}
+    .pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      padding:7px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-weight:900;font-size:12px;color:var(--blue);
+      white-space:nowrap;
+    }
+    .meta{text-align:right;color:var(--muted);font-size:12.5px;line-height:1.3;font-weight:900}
+    .meta strong{color:var(--text)}
+
+    .boxes{margin-top:10px;display:grid;gap:10px;}
+    .box{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+    }
+    .box h3{margin:0 0 8px;font-size:14px;font-weight:1000;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .box ul{margin:0;padding-left:18px;}
+    .box li{margin:6px 0; font-size:13.5px; line-height:1.35; color:rgba(11,28,45,.92); font-weight:800;}
+    .note{margin-top:10px; color:rgba(11,28,45,.55); font-size:12.5px; font-weight:900; line-height:1.35;}
+
+    /* Subtle level accents */
+    .tone-ok .big{color:var(--ok);}
+    .tone-warn .big{color:var(--warn);}
+    .tone-danger .big{color:var(--danger);}
+
+    .tone-ok .resultTop{border-color:rgba(33,208,122,.35);}
+    .tone-warn .resultTop{border-color:rgba(255,204,51,.45);}
+    .tone-danger .resultTop{border-color:rgba(255,77,77,.45);}
+
+    .tone-ok .box{border-left:4px solid rgba(33,208,122,.55);}
+    .tone-warn .box{border-left:4px solid rgba(255,204,51,.65);}
+    .tone-danger .box{border-left:4px solid rgba(255,77,77,.65);}
+
+    .info{
+      margin-top:12px;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(93,183,238,.08);
+      color:rgba(11,28,45,.88);
+      font-weight:900;
+      font-size:13.5px;
+      line-height:1.35;
+    }
+
+    /* Embed mode */
+    body.embed .wrap{padding:8px;}
+    body.embed .brand{border-radius:0;}
+    body.embed .stack::before{display:none;}
+    body.embed .card{border-radius:18px;}
+    @media (max-width:420px){
+      .big{font-size:30px;}
+      .meta{font-size:12px;}
+      .panel{padding:11px;}
+    }
+  
+/* === Accentuation ORANGE / ROUGE (sans agressivité) === */
+.tone-warn .brand{
+  background: linear-gradient(90deg, #f59e0b, #0b1c2d 65%);
+}
+.tone-danger .brand{
+  background: linear-gradient(90deg, #ff4d4d, #0b1c2d 65%);
+}
+
+.tone-warn .resultTop{
+  background: linear-gradient(180deg, rgba(245,158,11,.18), rgba(255,255,255,0));
+}
+.tone-danger .resultTop{
+  background: linear-gradient(180deg, rgba(255,77,77,.22), rgba(255,255,255,0));
+}
+
+.tone-warn .badge{
+  background: rgba(245,158,11,.25);
+  border-color: rgba(245,158,11,.55);
+}
+.tone-danger .badge{
+  background: rgba(255,77,77,.25);
+  border-color: rgba(255,77,77,.55);
+}
+
+/* Subtle pulse for danger (draw attention without stress) */
+@keyframes softPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255,77,77,.35); }
+  70% { box-shadow: 0 0 0 8px rgba(255,77,77,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,77,77,0); }
+}
+.tone-danger .big{
+  animation: softPulse 1.6s ease-out infinite;
+}
+
+
+/* === Pulse also pills & boxes in DANGER === */
+.tone-danger .pill{
+  animation: softPulse 1.6s ease-out infinite;
+}
+
+.tone-danger .box{
+  animation: softPulse 1.8s ease-out infinite;
+}
+
+
+/* === Final pulse rules === */
+/* ORANGE: pulse ONLY pills */
+.tone-warn .pill{
+  animation: softPulse 1.8s ease-out infinite;
+}
+.tone-warn .box,
+.tone-warn .card,
+.tone-warn .resultTop{
+  animation:none !important;
+}
+
+/* RED: pulse EVERYTHING (windows/cards) */
+.tone-danger .card,
+.tone-danger .resultTop,
+.tone-danger .box{
+  animation: softPulse 1.6s ease-out infinite;
+}
+
+
+
+/* === Threshold bar === */
+.threshold{
+  margin-top:10px;
+  border:1px solid var(--line);
+  background:rgba(93,183,238,.06);
+  border-radius:999px;
+  height:12px;
+  position:relative;
+  overflow:hidden;
+}
+.threshold .segA{position:absolute;left:0;top:0;bottom:0;width:33.333%;background:rgba(33,208,122,.18);}
+.threshold .segB{position:absolute;left:33.333%;top:0;bottom:0;width:20.000%;background:rgba(255,204,51,.20);}
+.threshold .segC{position:absolute;left:53.333%;top:0;bottom:0;right:0;background:rgba(255,77,77,.18);}
+.threshold .marker{
+  position:absolute;
+  top:-5px;
+  width:2px;
+  height:22px;
+  background:rgba(11,28,45,.88);
+  left:0%;
+}
+.threshold .dot{
+  position:absolute;
+  top:-2px;
+  width:16px;height:16px;
+  border-radius:999px;
+  border:2px solid rgba(11,28,45,.88);
+  background:#fff;
+  transform:translateX(-50%);
+  left:0%;
+}
+
+/* === Action message === */
+.actionMsg{
+  margin-top:10px;
+  padding:10px 12px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.85);
+  font-weight:950;
+  font-size:13.5px;
+  line-height:1.35;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+}
+.actionMsg .ico{
+  width:22px;height:22px;
+  border-radius:8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  background:rgba(93,183,238,.15);
+  border:1px solid rgba(93,183,238,.25);
+}
+.actionMsg .txt{color:rgba(11,28,45,.92);}
+
+/* === Time icon in meta === */
+.meta .timeIco{opacity:.9; margin-right:6px;}
+
+/* === Small pictograms near pills === */
+.pill .pico{margin-right:6px;}
+
+/* === Pulse only for a short duration (class pulse-on) === */
+@keyframes softPulse {
+  0% { box-shadow: 0 0 0 0 rgba(255,77,77,.30); }
+  70% { box-shadow: 0 0 0 10px rgba(255,77,77,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,77,77,0); }
+}
+/* ORANGE: pulse ONLY pills (when pulse-on) */
+.tone-warn.pulse-on .pill{ animation: softPulse 1.9s ease-out infinite; }
+.tone-warn .pill{ animation:none; }
+
+/* RED: pulse EVERYTHING (when pulse-on) */
+.tone-danger.pulse-on .card,
+.tone-danger.pulse-on .resultTop,
+.tone-danger.pulse-on .box{ animation: softPulse 1.6s ease-out infinite; }
+.tone-danger.pulse-on .pill{ animation: softPulse 1.6s ease-out infinite; }
+.tone-danger.pulse-on .big{ animation: softPulse 1.6s ease-out infinite; }
+.tone-danger .card,
+.tone-danger .resultTop,
+.tone-danger .box,
+.tone-danger .pill,
+.tone-danger .big{ animation:none; }
+
+</style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="stack">
+      <div class="card" id="card">
+        <div class="brand">
+          <div class="left">
+            <b>Calculateur d’alcoolémie</b>
+            <span>Estimation indicative • ne remplace pas un éthylotest homologué</span>
+          </div>
+          <div class="badge">Prévention</div>
+        </div>
+
+        <div class="panel">
+          <label>Sexe</label>
+          <div class="seg" role="tablist" aria-label="Sexe">
+            <button id="btnH" class="active" type="button" role="tab" aria-selected="true">Homme</button>
+            <button id="btnF" type="button" role="tab" aria-selected="false">Femme</button>
+          </div>
+
+          <label for="poids">Poids (kg)</label>
+          <input id="poids" inputmode="decimal" placeholder="Ex : 75" />
+
+          <label for="verres">Nombre de verres</label>
+          <input id="verres" inputmode="decimal" placeholder="Ex : 3" />
+          <div class="hint">1 verre “standard” ≈ 10 g d’alcool (bière 25 cl, vin 10 cl, spiritueux 3 cl).</div>
+
+          <div class="actions">
+            <button class="btn" type="button" id="calcBtn">Calculer</button>
+          </div>
+
+          <div class="resultWrap" id="resultWrap" aria-live="polite">
+            <div class="resultTop" id="resultTop">
+              <div class="rowTop">
+                <div>
+                  <div class="big" id="bigValue">— g/L</div>
+                  <div class="pill" id="badgePill">Données estimées</div>
+                </div>
+                <div class="meta">
+                  <div><strong>Taux</strong> : <span id="tauxInline">—</span></div>
+                  <div><strong>Élimination</strong> : <span class="timeIco" aria-hidden="true">⏱️</span> <span id="elimInline">—</span></div>
+                </div>
+              </div>
+              <div class="threshold" id="thresholdBar" aria-label="Seuils 0,5 et 0,8 g/L">
+                <div class="segA"></div><div class="segB"></div><div class="segC"></div>
+                <div class="marker" id="thrMarker"></div>
+                <div class="dot" id="thrDot"></div>
+              </div>
+              <div class="actionMsg" id="actionMsg" style="display:none;">
+                <div class="ico" id="actionIco">ℹ️</div>
+                <div class="txt" id="actionTxt">—</div>
+              </div>
+            </div>
+
+            <div class="boxes">
+              <div class="box" id="boxSituation">
+                <h3>Votre situation <span class="pill" id="pillSituation">—</span></h3>
+                <ul id="listSituation"></ul>
+              </div>
+
+              <div class="box" id="boxJuridique">
+                <h3>Conséquences juridiques <span class="pill" id="pillJuridique">—</span></h3>
+                <ul id="listJuridique"></ul>
+              </div>
+
+              <div class="box" id="boxConseil">
+                <h3>Conseil sécurité <span class="pill" id="pillConseil">—</span></h3>
+                <ul id="listConseil"></ul>
+                <div class="note">Estimation indicative : seul un éthylotest homologué donne un taux réel.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info">Cet outil n’est pas une autorisation à prendre la route. En cas de doute : ne conduisez pas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    // Detect embed mode (iframe or ?embed=1)
+    function isInIframe(){ try { return window.self !== window.top; } catch(e){ return true; } }
+    const qs = new URLSearchParams(location.search);
+    const EMBED = (qs.get("embed") === "1") || isInIframe();
+    if (EMBED) document.body.classList.add("embed");
+
+    // State
+    let coef = 0.68; // Homme
+    const GRAMS_PER_GLASS = 10; // standard
+    const ELIM_PER_HOUR = 0.15; // g/L per hour (indicative)
+
+    // Elements
+    const btnH = document.getElementById('btnH');
+    const btnF = document.getElementById('btnF');
+    const poids = document.getElementById('poids');
+    const verres = document.getElementById('verres');
+    const calcBtn = document.getElementById('calcBtn');
+
+    const resultWrap = document.getElementById('resultWrap');
+    const resultTop = document.getElementById('resultTop');
+    const bigValue = document.getElementById('bigValue');
+    const badgePill = document.getElementById('badgePill');
+
+    const tauxInline = document.getElementById('tauxInline');
+    const elimInline = document.getElementById('elimInline');
+
+    const boxSituation = document.getElementById('boxSituation');
+    const boxJuridique = document.getElementById('boxJuridique');
+    const boxConseil = document.getElementById('boxConseil');
+
+    const pillSituation = document.getElementById('pillSituation');
+    const pillJuridique = document.getElementById('pillJuridique');
+    const pillConseil = document.getElementById('pillConseil');
+
+    const listSituation = document.getElementById('listSituation');
+    const listJuridique = document.getElementById('listJuridique');
+    const listConseil = document.getElementById('listConseil');
+
+    function setSex(sex){
+      if(sex === 'H'){
+        coef = 0.68;
+        btnH.classList.add('active'); btnH.setAttribute('aria-selected','true');
+        btnF.classList.remove('active'); btnF.setAttribute('aria-selected','false');
+      } else {
+        coef = 0.55;
+        btnF.classList.add('active'); btnF.setAttribute('aria-selected','true');
+        btnH.classList.remove('active'); btnH.setAttribute('aria-selected','false');
+      }
+    }
+
+    btnH.addEventListener('click', ()=> setSex('H'));
+    btnF.addEventListener('click', ()=> setSex('F'));
+
+    function toFixedFr(n, digits){
+      const s = n.toFixed(digits);
+      return s.replace('.', ',');
+    }
+
+    function formatElim(hours){
+      // hours can be huge; display h + min
+      const h = Math.floor(hours);
+      const m = Math.round((hours - h) * 60);
+      if (h <= 0) return m + " min";
+      return h + " h " + String(m).padStart(2,'0') + " min";
+    }
+
+    function clearList(ul){ ul.innerHTML = ""; }
+    function addItem(ul, text){
+      const li = document.createElement('li');
+      li.textContent = text;
+      ul.appendChild(li);
+    }
+
+    function applyTone(tone){
+      const card = document.getElementById('card');
+      [resultTop, boxSituation, boxJuridique, boxConseil, card].forEach(el=>{
+        if(!el) return;
+        el.classList.remove('tone-ok','tone-warn','tone-danger');
+      });
+      [resultTop, boxSituation, boxJuridique, boxConseil, card].forEach(el=>{
+        if(!el) return;
+        el.classList.add(tone);
+      });
+    }
+
+    function setPulse(durationMs){
+      // remove then re-add to restart animations
+      document.getElementById('card').classList.remove('pulse-on');
+      document.getElementById('resultTop').classList.remove('pulse-on');
+      document.getElementById('boxSituation').classList.remove('pulse-on');
+      document.getElementById('boxJuridique').classList.remove('pulse-on');
+      document.getElementById('boxConseil').classList.remove('pulse-on');
+      // we use tone class on resultTop, but pulse-on should be on the root card for CSS selectors
+      document.getElementById('card').classList.add('pulse-on');
+      clearTimeout(window.__pulseTimer);
+      window.__pulseTimer = setTimeout(()=>{
+        document.getElementById('card').classList.remove('pulse-on');
+      }, durationMs);
+    }
+
+    function setThreshold(bac){
+      const max = 1.5; // clamp for UI
+      const pct = Math.max(0, Math.min(1, bac / max)) * 100;
+      const marker = document.getElementById('thrMarker');
+      const dot = document.getElementById('thrDot');
+      if(marker) marker.style.left = pct + "%";
+      if(dot) dot.style.left = pct + "%";
+    }
+
+    function setAction(level, hours){
+      const msg = document.getElementById('actionMsg');
+      const ico = document.getElementById('actionIco');
+      const txt = document.getElementById('actionTxt');
+      if(!msg || !ico || !txt) return;
+
+      if(level === "ok"){
+        ico.textContent = "✔️";
+        txt.textContent = "Vous êtes sous le seuil légal général — restez prudent.";
+      } else if(level === "warn"){
+        ico.textContent = "⚠️";
+        txt.textContent = "Ne prenez pas le volant — attendez ou faites‑vous raccompagner.";
+      } else {
+        ico.textContent = "🚫";
+        txt.textContent = "Conduite interdite — choisissez un transport sûr immédiatement.";
+      }
+      msg.style.display = "flex";
+    }
+
+    function pillIcon(level){
+      if(level === "ok") return "✅";
+      if(level === "warn") return "⚠️";
+      return "🚫";
+    }
+
+
+    function compute(){
+      const p = parseFloat(String(poids.value).replace(',', '.'));
+      const v = parseFloat(String(verres.value).replace(',', '.'));
+
+      if(!p || p <= 0 || !v || v <= 0){
+        // Minimal feedback: focus first missing field
+        if(!p || p <= 0) poids.focus();
+        else verres.focus();
+        return;
+      }
+
+      const grams = v * GRAMS_PER_GLASS;
+      const taux = grams / (p * coef); // simple Widmark-ish
+      const hours = Math.max(0, taux / ELIM_PER_HOUR);
+
+      setThreshold(taux);
+
+      // Render top
+      bigValue.textContent = toFixedFr(taux, 2) + " g/L";
+      badgePill.textContent = "Données estimées";
+      tauxInline.textContent = toFixedFr(taux, 2) + " g/L";
+      elimInline.textContent = formatElim(hours);
+
+      // Decide level
+      clearList(listSituation);
+      clearList(listJuridique);
+      clearList(listConseil);
+
+      if(taux < 0.5){
+        applyTone('tone-ok');
+        pillSituation.textContent = "< 0,5 g/L";
+        pillJuridique.textContent = "Sous le seuil";
+        pillConseil.textContent = "Prévention";
+        // pictograms on pills
+        pillSituation.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("ok") + "</span>" + pillSituation.textContent;
+        pillJuridique.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("ok") + "</span>" + pillJuridique.textContent;
+        pillConseil.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("ok") + "</span>" + pillConseil.textContent;
+        setAction("ok", hours);
+        setPulse(6000);
+        addItem(listSituation, "Vous êtes en dessous du seuil légal général (0,5 g/L).");
+        addItem(listSituation, "Restez prudent : l’alcool altère vigilance et réflexes.");
+        addItem(listJuridique, "Aucune sanction liée au seuil général si le taux reste inférieur à 0,5 g/L.");
+        addItem(listJuridique, "En cas d’accident, la responsabilité peut être engagée selon les circonstances.");
+        addItem(listConseil, "Évitez de reprendre le volant si vous vous sentez fatigué ou diminué.");
+        addItem(listConseil, "Attendez davantage ou faites-vous raccompagner si vous avez un doute.");
+      } else if(taux < 0.8){
+        applyTone('tone-warn');
+        pillSituation.textContent = "0,5–0,79 g/L";
+        pillJuridique.textContent = "Contravention";
+        pillConseil.textContent = "Risque";
+        // pictograms on pills
+        pillSituation.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("warn") + "</span>" + pillSituation.textContent;
+        pillJuridique.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("warn") + "</span>" + pillJuridique.textContent;
+        pillConseil.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("warn") + "</span>" + pillConseil.textContent;
+        setAction("warn", hours);
+        setPulse(6000);
+        addItem(listSituation, "Vous dépassez le seuil légal général (0,5 g/L).");
+        addItem(listSituation, "Risque important pour vous et les autres : ne conduisez pas.");
+        addItem(listJuridique, "Sanctions possibles : amende (forfaitaire), retrait de points.");
+        addItem(listJuridique, "Contrôles routiers : immobilisation du véhicule possible.");
+        addItem(listConseil, "Ne reprenez pas le volant : taxi / VTC / raccompagnement.");
+        addItem(listConseil, "Attendez la baisse du taux (estimatif) avant toute conduite.");
+      } else {
+        applyTone('tone-danger');
+        pillSituation.textContent = "≥ 0,8 g/L";
+        pillJuridique.textContent = "Délit";
+        pillConseil.textContent = "Urgent";
+        // pictograms on pills
+        pillSituation.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("danger") + "</span>" + pillSituation.textContent;
+        pillJuridique.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("danger") + "</span>" + pillJuridique.textContent;
+        pillConseil.innerHTML = "<span class='pico' aria-hidden='true'>" + pillIcon("danger") + "</span>" + pillConseil.textContent;
+        setAction("danger", hours);
+        setPulse(6000);
+        addItem(listSituation, "Vous êtes au-dessus du seuil délit (0,8 g/L).");
+        addItem(listSituation, "Interdiction absolue de conduire.");
+        addItem(listJuridique, "Sanctions possibles : amende jusqu’à 4 500 €.");
+        addItem(listJuridique, "Retrait de 6 points.");
+        addItem(listJuridique, "Suspension / annulation du permis possible.");
+        addItem(listJuridique, "Peine de prison possible selon les circonstances.");
+        addItem(listConseil, "Demandez de l’aide immédiatement.");
+        addItem(listConseil, "Choisissez un transport sûr : raccompagnement / taxi / VTC.");
+      }
+
+      resultWrap.classList.add('show');
+      // scroll to result in iframe
+      resultWrap.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    calcBtn.addEventListener('click', compute);
+
+    // Enter to compute
+    [poids, verres].forEach((el)=>{
+      el.addEventListener('keydown', (e)=>{
+        if(e.key === 'Enter'){ e.preventDefault(); compute(); }
+      });
+    });
+  
+  </script>
+</body>
+</html>
