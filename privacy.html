@@ -365,7 +365,8 @@
 
     /* Si l'écran est très petit, on cache le bouton "Retour" pour ne pas chevaucher (menu + retour), mais on garde la navigation via swipe/back navigateur */
     @media (max-width: 360px){
-      .topbar-inner .btn{display:none}
+      .topbar-inner .btn{display:inline-flex; padding:8px 10px; border-radius:12px}
+      .articles-label{display:none}
     }
 
   </style>
