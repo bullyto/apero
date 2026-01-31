@@ -671,6 +671,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+      position: relative;
   }
   .alcoHead{
     display:flex;
@@ -723,6 +724,18 @@
     cursor:pointer;
     flex: 0 0 auto;
   }
+
+  /* ✅ Bouton fermer flottant (sans barre en haut) */
+  .alcoCloseFloat{
+    position:absolute;
+    top: calc(10px + env(safe-area-inset-top));
+    right: calc(10px + env(safe-area-inset-right));
+    z-index: 6;
+    background: rgba(11,20,32,75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
   .alcoClose:active{ transform: translateY(1px); }
   .alcoFrame{
     width:100%;
@@ -1696,17 +1709,7 @@
   <!-- 🍺 Indicateur d’alcoolémie — Pop-up iframe (menu) -->
   <div class="modal alcoModal" id="alcoholModal" aria-hidden="true">
     <div class="sheet" role="dialog" aria-modal="true" aria-label="Indicateur d’alcoolémie">
-      <div class="alcoHead">
-        <div class="left">
-          <div class="ic">🧪</div>
-          <div class="txt">
-            <h3>Indicateur d’alcoolémie</h3>
-            <p>Prévention &amp; sécurité — estimation indicative</p>
-          </div>
-        </div>
-        <button class="alcoClose" id="closeAlcoholModal" aria-label="Fermer">✕</button>
-      </div>
-
+      <button class="alcoClose alcoCloseFloat" id="closeAlcoholModal" aria-label="Fermer">✕</button>
       <iframe class="alcoFrame" id="alcoholFrame" src="./calculateur.html" title="Indicateur d’alcoolémie"></iframe>
     </div>
   </div>
