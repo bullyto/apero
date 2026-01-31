@@ -221,26 +221,22 @@
   
 /* === Accentuation ORANGE / ROUGE (sans agressivité) === */
 .tone-warn .brand{
-  background: #0b1220; /* noir uni */
-/* gradient removed */
-/* background: linear-gradient(90deg, #f59e0b, #0b1c2d 65%);
-}
-.tone-danger .brand{
-  background: #0b1220; /* noir uni */
-/* gradient removed */
-/* background: linear-gradient(90deg, #ff4d4d, #0b1c2d 65%);
+  background:#0b1220; /* noir uni */
 }
 
+.tone-danger .brand{
+  background:#0b1220; /* noir uni */
+}
+
+
 .tone-warn .resultTop{
-  background: #0b1220; /* noir uni */
-/* gradient removed */
-/* background: linear-gradient(180deg, rgba(245,158,11,.18), rgba(255,255,255,0));
+  background:#0b1220; /* noir uni */
 }
+
 .tone-danger .resultTop{
-  background: #0b1220; /* noir uni */
-/* gradient removed */
-/* background: linear-gradient(180deg, rgba(255,77,77,.22), rgba(255,255,255,0));
+  background:#0b1220; /* noir uni */
 }
+
 
 .tone-warn .badge{
   background: rgba(245,158,11,.25);
@@ -482,9 +478,7 @@
     const resultWrap = document.getElementById('resultWrap');
     const resultTop = document.getElementById('resultTop');
     const bigValue = document.getElementById('bigValue');
-    const badgePill = document.getElementById('badgePill');
-
-    const tauxInline = document.getElementById('tauxInline');
+const tauxInline = document.getElementById('tauxInline');
     const elimInline = document.getElementById('elimInline');
 
     const boxSituation = document.getElementById('boxSituation');
@@ -615,8 +609,7 @@
 
       // Render top
       bigValue.textContent = toFixedFr(taux, 2) + " g/L";
-      badgePill.textContent = "Données estimées";
-      tauxInline.textContent = toFixedFr(taux, 2) + " g/L";
+tauxInline.textContent = toFixedFr(taux, 2) + " g/L";
       elimInline.textContent = formatElim(hours);
 
       // Decide level
