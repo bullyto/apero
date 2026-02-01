@@ -742,6 +742,22 @@ async function copyLink(){
   }catch(_){}
 }
 
+
+/* ---------- Pré-permission Caméra (UX) ---------- */
+function openCamPermModal(){
+  const m = document.getElementById("camPermModal");
+  if(!m) return false;
+  m.classList.add("open");
+  m.setAttribute("aria-hidden","false");
+  return true;
+}
+function closeCamPermModal(){
+  const m = document.getElementById("camPermModal");
+  if(!m) return;
+  m.classList.remove("open");
+  m.setAttribute("aria-hidden","true");
+}
+
 /* ---------- Restore (Scan + Manual) ---------- */
 async function stopRestoreScan(){
   restoreScanning = false;
@@ -910,7 +926,29 @@ function bind(){
   if(btnClose1) btnClose1.onclick = closeModal;
   if(btnClose2) btnClose2.onclick = closeModal;
 
-  if(btnStartScan) btnStartScan.onclick = startRestoreScan;
+  if(btnStartScan) btnStartScan.onclick = ()=>{ if(openCamPermModal()) return;
+
+  const camPermModal = document.getElementById("camPermModal");
+  const camPermClose = document.getElementById("camPermClose");
+  const camPermCancel = document.getElementById("camPermBtnCancel");
+  const camPermGo = document.getElementById("camPermBtnGo");
+
+  if(camPermClose) camPermClose.onclick = closeCamPermModal;
+  if(camPermCancel) camPermCancel.onclick = closeCamPermModal;
+
+  if(camPermModal){
+    camPermModal.addEventListener("click", (e)=>{
+      if(e.target === camPermModal) closeCamPermModal();
+    });
+  }
+
+  if(camPermGo){
+    camPermGo.onclick = async ()=>{
+      closeCamPermModal();
+      await startRestoreScan();
+    };
+  }
+ startRestoreScan(); };
 
   if(manual){
     const clean = ()=>{ manual.value = extractClientIdFromAny(manual.value); };
