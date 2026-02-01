@@ -378,6 +378,23 @@
   color:#3b82f6;        /* bleu lien */
 }
 
+
+    /* =======================
+       ✨ HALO ULTIME – Cadeau Niveau 50
+       ======================= */
+    #gift50.ultimate {
+      filter:
+        drop-shadow(0 0 6px rgba(255,215,0,0.9))
+        drop-shadow(0 0 14px rgba(255,193,7,0.85))
+        drop-shadow(0 0 28px rgba(255,160,0,0.6));
+      animation: ultimateGlow 1.8s ease-in-out infinite;
+    }
+    @keyframes ultimateGlow {
+      0%   { transform: translateX(-50%) scale(1);    opacity:0.85; }
+      50%  { transform: translateX(-50%) scale(1.15); opacity:1; }
+      100% { transform: translateX(-50%) scale(1);    opacity:0.85; }
+    }
+
 </style>
 <script>
       appId: "639b5a31-e09f-4d34-ad0f-d111d66a14ac",
@@ -714,7 +731,16 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
       const capped = Math.min(currentScore, 50);
       const ratio = capped / 50;
+      
       brandFillEl.style.width = (ratio * 100) + '%';
+
+      // ✨ Halo ultime sur le cadeau niveau 50 (objectif final)
+      const gift50 = document.getElementById('gift50');
+      if (gift50) {
+        if (currentScore >= 32) gift50.classList.add('ultimate');
+        else gift50.classList.remove('ultimate');
+      }
+
 
       if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
       if (lastProgressScore < 50 && currentScore >= 50) playSound(rewardSound);
