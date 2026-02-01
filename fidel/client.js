@@ -7,6 +7,21 @@ const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
 
+
+
+// ===== ADN66 — CTA Social (Facebook / Avis Google) =====
+// ⚠️ Remplace les 2 liens ci-dessous par les tiens (liens directs)
+const FACEBOOK_PAGE_URL = "https://www.facebook.com/";   // <-- ton lien Facebook officiel
+const GOOGLE_REVIEW_URL = "https://g.page/r/XXXXXXXX/review"; // <-- ton lien avis Google (direct)
+
+// Affichage: 1er tampon => Facebook ; 3e tampon => Avis Google
+const CTA_FB_AT = 1;
+const CTA_GOOGLE_AT = 3;
+
+// Anti-spam (on n'affiche + pulse qu'une seule fois)
+const LS_CTA_FB_DONE = "adn66_cta_fb_done_v1";
+const LS_CTA_GOOGLE_DONE = "adn66_cta_google_done_v1";
+
 // Anti-abus (client-side) — erreurs téléphone (progressif)
 const LS_PHONE_ERR = "adn66_loyalty_phone_err_count_v1";
 const LS_PHONE_BLOCK_UNTIL = "adn66_loyalty_phone_block_until_v1";
@@ -504,7 +519,7 @@ async function loadCard(){
     if(goal) goal.textContent = String(GOAL);
     renderVisualStamps(0);
     setStateText(0, null);
-    setSyncText(true);
+    setCtaVisible(false);
     return;
   }
 
@@ -523,10 +538,13 @@ async function loadCard(){
     if(g) g.textContent = String(goal);
 
     renderVisualStamps(points);
+    // CTA Social (Facebook / Avis Google)
+    renderCta(points);
     setStateText(points, card.completed_at || null);
     setSyncText(true);
   }catch(_){
     setSyncText(false);
+    setCtaVisible(false);
   }
 }
 
