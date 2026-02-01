@@ -379,20 +379,59 @@
 }
 
 
-    /* =======================
-       ✨ HALO ULTIME – Cadeau Niveau 50
-       ======================= */
-    #gift50.ultimate {
-      filter:
-        drop-shadow(0 0 6px rgba(255,215,0,0.9))
-        drop-shadow(0 0 14px rgba(255,193,7,0.85))
-        drop-shadow(0 0 28px rgba(255,160,0,0.6));
-      animation: ultimateGlow 1.8s ease-in-out infinite;
-    }
-    @keyframes ultimateGlow {
-      0%   { transform: translateX(-50%) scale(1);    opacity:0.85; }
-      50%  { transform: translateX(-50%) scale(1.15); opacity:1; }
+    50%  { transform: translateX(-50%) scale(1.15); opacity:1; }
       100% { transform: translateX(-50%) scale(1);    opacity:0.85; }
+    }
+
+
+    /* =======================
+       ✨ HALO ULTIME – Cadeau Niveau 50 (PROPRE & ROBUSTE)
+       ======================= */
+    #gift50{
+      position:absolute;
+    }
+    #gift50.ultimate{
+      /* valeurs par défaut (objectif visible dès le départ) */
+      --haloScale: 0.85;
+      --haloOpacity: 0.35;
+    }
+    #gift50.ultimate::before{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:48px;
+      height:48px;
+      border-radius:999px;
+      background: radial-gradient(circle,
+        rgba(255,215,0,0.55) 0%,
+        rgba(255,193,7,0.30) 40%,
+        rgba(255,160,0,0.00) 72%);
+      box-shadow:
+        0 0 12px rgba(255,215,0,0.9),
+        0 0 28px rgba(255,193,7,0.6),
+        0 0 56px rgba(255,160,0,0.4);
+      animation: ultimatePulse 1.6s ease-in-out infinite;
+      pointer-events:none;
+      opacity: var(--haloOpacity);
+      transform:translate(-50%,-50%) scale(var(--haloScale));
+    }
+    @keyframes ultimatePulse{
+      0%{
+        opacity: var(--haloOpacity);
+        transform:translate(-50%,-50%) scale(calc(var(--haloScale) * 0.92));
+      }
+      50%{
+        opacity: min(1, calc(var(--haloOpacity) + 0.25));
+        transform:translate(-50%,-50%) scale(calc(var(--haloScale) * 1.12));
+      }
+      100%{
+        opacity: var(--haloOpacity);
+        transform:translate(-50%,-50%) scale(calc(var(--haloScale) * 0.92));
+      }
+    }
+50%  { opacity:1;   transform:translate(-50%,-50%) scale(1.15); }
+      100% { opacity:.75; transform:translate(-50%,-50%) scale(.95); }
     }
 
 </style>
@@ -734,15 +773,29 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       
       brandFillEl.style.width = (ratio * 100) + '%';
 
-      // ✨ Halo ultime sur le cadeau niveau 50 (objectif final)
+            // ✨ Halo ultime sur le cadeau niveau 50 (objectif visible + intensité progressive)
       const gift50 = document.getElementById('gift50');
       if (gift50) {
-        if (currentScore >= 32) gift50.classList.add('ultimate');
-        else gift50.classList.remove('ultimate');
+        // Visible dès le début (objectif final)
+        gift50.classList.add('ultimate');
+
+        // Intensité progressive
+        let haloScale = 0.85;
+        let haloOpacity = 0.35;
+
+        if (currentScore >= 32) {
+          haloScale = 1.00;
+          haloOpacity = 0.75;
+        }
+        if (currentScore >= 50) {
+          haloScale = 1.15;
+          haloOpacity = 0.95;
+        }
+
+        gift50.style.setProperty('--haloScale', String(haloScale));
+        gift50.style.setProperty('--haloOpacity', String(haloOpacity));
       }
-
-
-      if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
+if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
       if (lastProgressScore < 50 && currentScore >= 50) playSound(rewardSound);
       lastProgressScore = currentScore;
     }
