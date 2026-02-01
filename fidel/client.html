@@ -500,6 +500,22 @@
       background:#fff;
     }
 
+
+/* === Tutoriel bouton pulsant === */
+.tutoBtn{
+  margin-top:10px;
+  background:#fff;
+  color:var(--blue);
+  border:2px dashed rgba(93,183,238,.75);
+  box-shadow:0 0 0 0 rgba(93,183,238,.55);
+  animation:tutoPulse 1.2s ease-in-out infinite;
+}
+@keyframes tutoPulse{
+  0%{ box-shadow:0 0 0 0 rgba(93,183,238,.55); }
+  70%{ box-shadow:0 0 0 10px rgba(93,183,238,0); }
+  100%{ box-shadow:0 0 0 0 rgba(93,183,238,0); }
+}
+
 </style>
 
 </head>
@@ -618,6 +634,8 @@
           <div class="row">
             <button id="btnStartScan">Scanner</button>
             <button class="secondary" id="btnCloseModal2">Fermer</button>
+          <button class="secondary tutoBtn" id="btnOpenTutorial">📘 Tutoriel</button>
+
           </div>
           <label>Ou coller</label>
           <input id="manualCid" class="mono" placeholder="Colle une URL ou un ID…" />
@@ -718,7 +736,19 @@
   </script>
 
 
-  <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</footer>
+  <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.
+<!-- TUTORIEL MODAL (iframe) -->
+<section class="adnPrivacyModal" id="tutoModal" aria-modal="true" role="dialog">
+  <div class="adnPrivacyCard">
+    <div class="adnPrivacyHeader">
+      <span>Tutoriel — Restaurer ma carte</span>
+      <button class="adnPrivacyClose" id="btnCloseTuto" type="button">✕</button>
+    </div>
+    <iframe class="adnPrivacyFrame" src="tutorial.html" loading="eager"></iframe>
+  </div>
+</section>
+
+</footer>
 
 <script>
 /* ===== ADN66 PRIVACY IFRAME POPUP (EN SAVOIR PLUS) =====
@@ -769,6 +799,32 @@
 
 
 <script src="./age-gate.js"></script>
+
+
+<script>
+(function(){
+  const btn = document.getElementById('btnOpenTutorial');
+  const modal = document.getElementById('tutoModal');
+  const close = document.getElementById('btnCloseTuto');
+
+  if(btn){
+    setTimeout(()=>btn.classList.remove('tutoBtn'),3000);
+    btn.addEventListener('click',()=>{
+      if(modal) modal.style.display='flex';
+    });
+  }
+  if(close){
+    close.addEventListener('click',()=>{
+      if(modal) modal.style.display='none';
+    });
+  }
+  if(modal){
+    modal.addEventListener('click',(e)=>{
+      if(e.target===modal) modal.style.display='none';
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
