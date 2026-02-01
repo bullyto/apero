@@ -436,12 +436,89 @@
       opacity:.92;
     }
     
+
+    /* ===== PRIVACY IFRAME MODAL (EN SAVOIR PLUS) ===== */
+    .adnPrivacyModal{
+      position:fixed;
+      inset:0;
+      z-index:100000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px 14px calc(18px + env(safe-area-inset-bottom));
+      background:rgba(0,0,0,.72);
+      backdrop-filter:saturate(140%) blur(10px);
+      -webkit-backdrop-filter:saturate(140%) blur(10px);
+      box-sizing:border-box;
+    }
+
+    .adnPrivacyCard{
+      width:min(96vw, 980px);
+      height:min(88vh, 860px);
+      background:#050b12;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      box-shadow:0 24px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    .adnPrivacyHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 12px;
+      background:rgba(255,255,255,.06);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      color:#fff;
+      font-weight:900;
+      font-size:13px;
+      letter-spacing:.1px;
+    }
+
+    .adnPrivacyClose{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px;
+      background:rgba(93,183,238,.22);
+      border:1px solid rgba(93,183,238,.55);
+      color:#fff;
+      font-weight:900;
+      font-size:13px;
+      line-height:1;
+    }
+    .adnPrivacyClose:active{ transform:translateY(1px); }
+
+    .adnPrivacyFrame{
+      width:100%;
+      height:100%;
+      border:0;
+      background:#fff;
+    }
+
 </style>
 
 </head>
 <body>
 
 <button class="primary globalBack" id="btnBackRootGlobal">← Retour</button>
+
+
+  <!-- PRIVACY MODAL (iframe) -->
+  <section class="adnPrivacyModal" id="adnPrivacyModal" aria-live="polite" aria-modal="true" role="dialog" aria-label="Informations — Confidentialité">
+    <div class="adnPrivacyCard" role="document">
+      <div class="adnPrivacyHeader">
+        <span>Informations — Politique de confidentialité</span>
+        <button class="adnPrivacyClose" id="adnPrivacyClose" type="button" aria-label="Fermer">✕</button>
+      </div>
+      <iframe class="adnPrivacyFrame" id="adnPrivacyFrame" src="about:blank" loading="eager" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </section>
+
 
   <div class="wrap">
     <div class="stack">
@@ -467,7 +544,7 @@
           <small>
             Aucun compte à créer.<br>
             La carte est activée instantanément.<br>
-            <a href="https://www.aperos.net/privacy.html#article-5"
+            <a href="https://www.aperos.net/privacy.html#article-5" class="js-privacy-popup"
                style="font-size:11px;opacity:0.55;text-decoration:none;color:#3b82f6;">
               en savoir plus
             </a>
@@ -642,6 +719,55 @@
 
 
   <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</footer>
+
+<script>
+/* ===== ADN66 PRIVACY IFRAME POPUP (EN SAVOIR PLUS) =====
+   - Intercepte les liens .js-privacy-popup
+   - Ouvre privacy.html#article-x dans une iframe en popup
+*/
+(() => {
+  const modal = document.getElementById('adnPrivacyModal');
+  const frame = document.getElementById('adnPrivacyFrame');
+  const btnClose = document.getElementById('adnPrivacyClose');
+
+  const open = (url) => {
+    if (!modal || !frame) return;
+    try { frame.src = url; } catch (e) { frame.src = 'about:blank'; }
+    modal.style.display = 'flex';
+    if (btnClose) setTimeout(() => btnClose.focus(), 0);
+  };
+
+  const close = () => {
+    if (!modal || !frame) return;
+    modal.style.display = 'none';
+    frame.src = 'about:blank';
+  };
+
+  if (btnClose) btnClose.addEventListener('click', close);
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal && modal.style.display === 'flex') close();
+  });
+
+  // Capture click: works even if the link is inside injected HTML later
+  document.addEventListener('click', (e) => {
+    const a = e.target && e.target.closest ? e.target.closest('a.js-privacy-popup') : null;
+    if (!a) return;
+    const href = a.getAttribute('href') || '';
+    if (!href) return;
+    e.preventDefault();
+    open(href);
+  }, true);
+})();
+</script>
+
+
 <script src="./age-gate.js"></script>
 
 </body>
