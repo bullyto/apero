@@ -1347,14 +1347,17 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
         clearTimeout(tmr);
         const data = await res.json().catch(()=> ({}));
 
-        const code = String((data && (data.code || data.status || data.error_code)) || "").trim();
+        const code = String((data && (data.code || data.status || data.error_code || data.message || data.error)) || "").trim();
 
         if (!res.ok) {
           let msg = "Erreur. Réessaie plus tard.";
-          if (code === "already_claimed") msg = "Récompense déjà validée.";
+          if (code === "already_claimed") msg = "Carte déjà tamponnée.";
           else if (code === "not_eligible") msg = "À débloquer.";
           else if (data && data.error) msg = String(data.error);
           else if (data && data.message) msg = String(data.message);
+
+          // Normalisation : ne jamais afficher un code technique brut
+          if (msg === "already_claimed") msg = "Carte déjà tamponnée.";
 
           reward25Msg.textContent = msg;
           reward25Btn.style.display = "none";
@@ -1363,7 +1366,7 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
         // Si le backend renvoie un statut sans token (ex: déjà validée)
         if (code === "already_claimed") {
-          reward25Msg.textContent = "Récompense déjà validée.";
+          reward25Msg.textContent = "Carte déjà tamponnée.";
           reward25Btn.style.display = "none";
           return;
         }
