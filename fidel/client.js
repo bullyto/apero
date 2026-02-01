@@ -406,6 +406,15 @@ function stopPulseLater(btn, ms){
   setTimeout(()=>{ try{ btn.classList.remove("ctaPulse"); }catch(_){} }, t);
 }
 
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
 function renderCta(points){
   const p = Math.max(0, Math.floor(Number(points)||0));
   const top = $("ctaTop");
@@ -416,7 +425,48 @@ function renderCta(points){
   const showFb = (p === CTA_FB_AT) && localStorage.getItem(LS_CTA_FB_DONE) !== "1";
   const showGg = (p === CTA_GOOGLE_AT) && localStorage.getItem(LS_CTA_GOOGLE_DONE) !== "1";
 
-  if(!showFb && !showGg){
+  // If no CTA to show, display a supportive message by stamp so it NEVER blocks next steps.
+  const messageByStamp = (stamp)=>{
+    switch(stamp){
+      case 2:
+        return {
+          title: "Deux utilisations enregistrées 👀",
+          sub: "On comprend que vous souhaitiez tester le service plusieurs fois avant de vous faire un avis. Prenez le temps, on s’occupe du reste."
+        };
+      case 4:
+        return {
+          title: "Vous êtes à mi-parcours 🎯",
+          sub: "Votre fidélité commence à payer. Plus que quelques tampons avant votre avantage 🎁"
+        };
+      case 5:
+        return {
+          title: "Service local & responsable 🛵",
+          sub: "Apéro de Nuit 66 est un service indépendant. Votre fidélité permet de maintenir un service fiable, même la nuit."
+        };
+      case 6:
+        return {
+          title: "Merci pour votre fidélité 💙",
+          sub: "Ce sont des clients réguliers comme vous qui font vivre le service. Merci de faire partie de l’aventure."
+        };
+      case 7:
+        return {
+          title: "Plus qu’un tampon ⏳",
+          sub: "Votre récompense est presque débloquée 🎉 Encore un effort !"
+        };
+      case 8:
+        return {
+          title: "Félicitations 🎉",
+          sub: "Votre carte est complétée. Merci pour votre confiance envers un service local indépendant 🙏"
+        };
+      default:
+        return null;
+    }
+  };
+
+  // Always show the container when there is something (CTA or message) to display.
+  const msg = (!showFb && !showGg) ? messageByStamp(p) : null;
+
+  if(!showFb && !showGg && !msg){
     setCtaVisible(false);
     return;
   }
@@ -483,6 +533,19 @@ function renderCta(points){
         setTimeout(()=>setCtaVisible(false), 50);
       }, {once:true});
     }
+    return;
+  }
+
+  // No CTA: show message card
+  if(msg){
+    card.innerHTML = `
+      <div class="ctaRow">
+        <div class="ctaText">
+          <p class="ctaTitle">${escapeHtml(msg.title)}</p>
+          <p class="ctaSub">${escapeHtml(msg.sub)}</p>
+        </div>
+      </div>
+    `;
     return;
   }
 }
