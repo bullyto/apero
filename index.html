@@ -174,7 +174,17 @@
     /* TITRE */
     .mid{text-align:center;padding:18px 14px 6px}
     .mid h1{margin:0;font-size:clamp(26px,6vw,40px);color:var(--sky);font-weight:900}
-    .brand66{position:relative;display:inline-block}
+    .mid .hours{
+      margin-top:6px;
+      font-size:14px;
+      font-weight:900;
+      color:rgba(11,28,45,.70);
+      letter-spacing:.2px;
+    }
+    @media (max-width:380px){
+      .mid .hours{font-size:13px;}
+    }
+.brand66{position:relative;display:inline-block}
     .brand66 .reg{position:absolute;top:-0.2em;right:-0.4em;font-size:1em;font-weight:800}
 
     /* ZONE BOUTEILLES */
@@ -813,6 +823,7 @@
 
   <section class="mid">
     <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
+    <div class="hours">Livraison de 19h à 6h • 7j/7</div>
   </section>
 
   <main class="stage">
