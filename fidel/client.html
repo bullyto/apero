@@ -501,14 +501,12 @@
     }
 
 
-/* === Tutoriel bouton pulsant === */
+/* === Bouton Tutoriel (pulse 3s) === */
 .tutoBtn{
   margin-top:10px;
-  background:#fff;
-  color:var(--blue);
   border:2px dashed rgba(93,183,238,.75);
   box-shadow:0 0 0 0 rgba(93,183,238,.55);
-  animation:tutoPulse 1.2s ease-in-out infinite;
+  animation:tutoPulse 1.15s ease-in-out infinite;
 }
 @keyframes tutoPulse{
   0%{ box-shadow:0 0 0 0 rgba(93,183,238,.55); }
@@ -516,9 +514,65 @@
   100%{ box-shadow:0 0 0 0 rgba(93,183,238,0); }
 }
 
-
-/* ✅ Tutoriel doit passer AU-DESSUS de la popup Scanner (actionModal/qrModal) */
-#tutoModal{ z-index: 20000 !important; }
+/* === Modal Tutoriel (au-dessus de la popup Scanner) === */
+#tutoModal{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  background:rgba(0,0,0,.35);
+  z-index:50000;
+}
+#tutoCard{
+  width:min(92vw, 560px);
+  max-height:86vh;
+  border-radius:18px;
+  overflow:hidden;
+  background:rgba(10,18,28,.92);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 18px 60px rgba(0,0,0,.55);
+  display:flex;
+  flex-direction:column;
+}
+#tutoHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 12px;
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+#tutoHead .t{
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#fff;
+  font-size:14px;
+}
+#btnCloseTuto{
+  appearance:none;
+  border:none;
+  background:rgba(255,255,255,.10);
+  color:#fff;
+  font-weight:900;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+}
+#btnCloseTuto:active{ transform:translateY(1px); }
+#tutoFrame{
+  width:100%;
+  height:78vh;
+  max-height:78vh;
+  border:0;
+  background:#050b12;
+}
+@media (max-width:420px){
+  #tutoCard{ width:min(96vw, 560px); max-height:88vh; }
+  #tutoFrame{ height:80vh; max-height:80vh; }
+}
 
 </style>
 
@@ -637,9 +691,7 @@
           <div class="scan"><video id="video" playsinline></video></div>
           <div class="row">
             <button id="btnStartScan">Scanner</button>
-            <button class="secondary" id="btnCloseModal2">Fermer</button>
-          <button class="secondary tutoBtn" id="btnOpenTutorial">📘 Tutoriel</button>
-
+            <button class="secondary" id="btnCloseModal2">Fermer</button>\n          <button class="secondary tutoBtn" id="btnOpenTutorial" type="button">📘 Tutoriel</button>
           </div>
           <label>Ou coller</label>
           <input id="manualCid" class="mono" placeholder="Colle une URL ou un ID…" />
@@ -740,19 +792,7 @@
   </script>
 
 
-  <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.
-<!-- TUTORIEL MODAL (iframe) -->
-<section class="adnPrivacyModal" id="tutoModal" aria-live="polite" aria-modal="true" role="dialog" aria-label="Tutoriel — Restaurer ma carte" style="display:none;">
-  <div class="adnPrivacyCard">
-    <div class="adnPrivacyHeader">
-      <span>Tutoriel — Restaurer ma carte</span>
-      <button class="adnPrivacyClose" id="btnCloseTuto" type="button">✕</button>
-    </div>
-    <iframe class="adnPrivacyFrame" src="tutorial.html" loading="eager"></iframe>
-  </div>
-</section>
-
-</footer>
+  <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</footer>
 
 <script>
 /* ===== ADN66 PRIVACY IFRAME POPUP (EN SAVOIR PLUS) =====
@@ -805,26 +845,45 @@
 <script src="./age-gate.js"></script>
 
 
+<!-- === TUTORIEL MODAL (iframe) === -->
+<div id="tutoModal" aria-modal="true" role="dialog" aria-label="Tutoriel — Restaurer ma carte">
+  <div id="tutoCard">
+    <div id="tutoHead">
+      <div class="t">Tutoriel — Restaurer ma carte</div>
+      <button id="btnCloseTuto" type="button">✕</button>
+    </div>
+    <iframe id="tutoFrame" src="tutoriel.html" loading="eager"></iframe>
+  </div>
+</div>
+
+
 <script>
+/* TUTO_OPEN */
 (function(){
   const btn = document.getElementById('btnOpenTutorial');
   const modal = document.getElementById('tutoModal');
   const close = document.getElementById('btnCloseTuto');
+  const frame = document.getElementById('tutoFrame');
 
-  if(btn){
-    setTimeout(()=>btn.classList.remove('tutoBtn'),3000);
-    btn.addEventListener('click',()=>{
-      if(modal) modal.style.display='flex';
+  if (btn){
+    setTimeout(()=>btn.classList.remove('tutoBtn'), 3000);
+    btn.addEventListener('click', ()=>{
+      if (!modal) return;
+      if (frame) frame.src = 'tutoriel.html';
+      modal.style.display = 'flex';
     });
   }
-  if(close){
-    close.addEventListener('click',()=>{
-      if(modal) modal.style.display='none';
-    });
+
+  function hide(){
+    if (!modal) return;
+    modal.style.display = 'none';
+    if (frame) frame.src = 'about:blank';
   }
-  if(modal){
-    modal.addEventListener('click',(e)=>{
-      if(e.target===modal) modal.style.display='none';
+
+  if (close) close.addEventListener('click', hide);
+  if (modal){
+    modal.addEventListener('click', (e)=>{
+      if (e.target === modal) hide();
     });
   }
 })();
