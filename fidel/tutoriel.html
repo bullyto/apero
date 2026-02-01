@@ -3,28 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="color-scheme" content="light" />
   <title>Tutoriel — Restaurer / partager ma carte</title>
 
   <style>
+    
     :root{
-      --bg:#050b12;
-      --line:rgba(255,255,255,.10);
-      --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.68);
-      --muted2:rgba(255,255,255,.56);
-      --blue:#54b4ff;
-      --shadow:0 18px 60px rgba(0,0,0,.55);
+      --bg:#f7fbff;
+      --card:#ffffff;
+      --line:rgba(11,28,45,.12);
+      --text:#0b1c2d;
+      --muted:rgba(11,28,45,.70);
+      --muted2:rgba(11,28,45,.55);
+      --blue:#0b1c2d;
+      --sky:#5db7ee;
+      --shadow:0 18px 60px rgba(11,28,45,.10);
+      --shadow2:0 10px 26px rgba(93,183,238,.20);
       --radius:18px;
+      --radiusBtn:14px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
       background:
-        radial-gradient(1200px 700px at 30% -10%, rgba(84,180,255,.12), transparent 55%),
-        radial-gradient(900px 700px at 85% 10%, rgba(33,208,122,.10), transparent 55%),
+        radial-gradient(1200px 700px at 30% -10%, rgba(93,183,238,.35), transparent 55%),
+        radial-gradient(900px 700px at 85% 10%, rgba(93,183,238,.22), transparent 55%),
         var(--bg);
       color:var(--text);
       -webkit-font-smoothing:antialiased;
@@ -50,24 +56,33 @@ html,body{overflow:auto}
       gap:10px;
     }
 
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:10px 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    .headtitle{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      padding:4px 2px;
       user-select:none;
     }
+    .kicker{
+      font-weight:900;
+      letter-spacing:.2px;
+      font-size:12px;
+      color:rgba(11,28,45,.55);
+      text-transform:uppercase;
+    }
+    .maintitle{
+      font-weight:950;
+      letter-spacing:.2px;
+      font-size:16px;
+      color:var(--blue);
+    }
 
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
 
     .btn, .btnlink{
       appearance:none;
       border:none;
-      border-radius:14px;
+      border-radius:var(--radiusBtn);
       padding:12px 14px;
       font-weight:800;
       letter-spacing:.2px;
@@ -81,54 +96,54 @@ html,body{overflow:auto}
     }
 
     .btn.secondary, .btnlink.secondary{
-      color:var(--text);
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      color:var(--blue);
+      background: var(--card);
       border:1px solid var(--line);
       box-shadow:none;
     }
 
-    .btn.ghost, .btnlink.ghost{
-      color:var(--text);
+.btn.ghost, .btnlink.ghost{
+      color:var(--blue);
       background: transparent;
       border:1px solid var(--line);
       box-shadow:none;
     }
 
-    .btn.primary, .btnlink.primary{
-      color:#05101a;
-      background: linear-gradient(180deg, rgba(84,180,255,.95), rgba(84,180,255,.78));
-      box-shadow: 0 10px 26px rgba(84,180,255,.18);
+.btn.primary, .btnlink.primary{
+      color:#06131f;
+      background: linear-gradient(180deg, rgba(93,183,238,1), rgba(93,183,238,.82));
+      box-shadow: var(--shadow2);
     }
 
-    .btn:active, .btnlink:active{transform: translateY(1px); filter:brightness(.98)}
+.btn:active, .btnlink:active{transform: translateY(1px); filter:brightness(.98)}
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+      background: var(--card);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
       overflow:hidden;
     }
 
-    .header{
+.header{
       padding:14px 14px 10px;
-      border-bottom:1px solid rgba(255,255,255,.06);
-      background: linear-gradient(180deg, rgba(11,20,32,.85), rgba(11,20,32,.55));
+      border-bottom:1px solid rgba(11,28,45,.08);
+      background: linear-gradient(180deg, rgba(93,183,238,.18), rgba(93,183,238,.06));
     }
-    .title{
+.title{
       margin:0;
       font-size:16px;
       font-weight:950;
       letter-spacing:.2px;
+      color:var(--blue);
     }
-    .subtitle{
+.subtitle{
       margin:8px 0 0;
       color:var(--muted);
       font-size:13px;
       line-height:1.35;
     }
-
-    .content{padding:14px}
+.content{padding:14px}
 
     /* radio navigation */
     .navradio{position:absolute; left:-9999px; width:1px; height:1px; opacity:0}
@@ -151,9 +166,9 @@ html,body{overflow:auto}
     .choice{
       padding:14px;
       border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(14,24,38,.85), rgba(14,24,38,.55));
-      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      border:1px solid rgba(11,28,45,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,1), rgba(247,251,255,.92));
+      box-shadow: 0 18px 55px rgba(11,28,45,.08);
       cursor:pointer;
       transition: transform .08s ease, border-color .12s ease, filter .12s ease;
       display:flex;
@@ -161,26 +176,26 @@ html,body{overflow:auto}
       align-items:flex-start;
       -webkit-tap-highlight-color: transparent;
     }
-    .choice:active{transform: translateY(1px)}
+.choice:active{transform: translateY(1px)}
     .choice:hover{border-color: rgba(84,180,255,.35)}
     .choice .badge{
       width:42px; height:42px;
       border-radius:14px;
       display:grid; place-items:center;
-      border:1px solid rgba(255,255,255,.12);
-      background: radial-gradient(18px 18px at 30% 30%, rgba(84,180,255,.22), transparent 60%),
-                  rgba(0,0,0,.20);
+      border:1px solid rgba(11,28,45,.12);
+      background: radial-gradient(18px 18px at 30% 30%, rgba(93,183,238,.35), transparent 60%),
+                  rgba(11,28,45,.04);
       flex: 0 0 42px;
       user-select:none;
     }
-    .choice .h{margin:0;font-weight:950;font-size:14px;letter-spacing:.2px}
+.choice .h{margin:0;font-weight:950;font-size:14px;letter-spacing:.2px}
     .choice .p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
 
     .img{
       width:100%;
       border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.25);
+      border:1px solid rgba(11,28,45,.12);
+      background:rgba(11,28,45,.03);
       margin-bottom:12px;
       overflow:hidden;
       display:flex;
@@ -188,7 +203,7 @@ html,body{overflow:auto}
       justify-content:center;
       padding:8px;
     }
-    .img img{
+.img img{
       width:100%;
       height:auto;
       max-height:58vh;
@@ -202,15 +217,15 @@ html,body{overflow:auto}
       gap:8px;
       padding:10px 12px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      color:var(--text);
+      border:1px solid rgba(11,28,45,.12);
+      background: rgba(93,183,238,.10);
+      color:var(--blue);
       font-weight:850;
       font-size:12px;
       letter-spacing:.2px;
     }
 
-    .list{
+.list{
       margin:10px 0 0;
       padding-left:18px;
       color:var(--muted);
@@ -223,13 +238,13 @@ html,body{overflow:auto}
       margin-top:10px;
       padding:12px;
       border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(84,180,255,.14), rgba(84,180,255,.06));
-      color:var(--text);
+      border:1px solid rgba(11,28,45,.12);
+      background: linear-gradient(180deg, rgba(93,183,238,.16), rgba(93,183,238,.06));
+      color:var(--blue);
       font-size:13px;
       line-height:1.4;
     }
-    .note strong{font-weight:950}
+.note strong{font-weight:950}
 
     .stepper{
       display:flex;
@@ -237,10 +252,10 @@ html,body{overflow:auto}
       justify-content:space-between;
       gap:10px;
       padding:12px 14px;
-      border-top:1px solid rgba(255,255,255,.06);
-      background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+      border-top:1px solid rgba(11,28,45,.08);
+      background: linear-gradient(180deg, rgba(11,28,45,.03), rgba(11,28,45,.01));
     }
-    .progress{
+.progress{
       display:flex;
       align-items:center;
       gap:10px;
@@ -253,31 +268,44 @@ html,body{overflow:auto}
     .dots{display:flex; gap:6px; align-items:center}
     .dot{
       width:10px;height:10px;border-radius:999px;
-      background: rgba(255,255,255,.12);
-      border:1px solid rgba(255,255,255,.08);
-      box-shadow: inset 0 0 0 2px rgba(0,0,0,.12);
+      background: rgba(11,28,45,.10);
+      border:1px solid rgba(11,28,45,.10);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.55);
     }
-    .dot.on{
-      background: rgba(84,180,255,.85);
-      border-color: rgba(84,180,255,.55);
-      box-shadow: 0 0 0 4px rgba(84,180,255,.14);
+.dot.on{
+      background: rgba(93,183,238,1);
+      border-color: rgba(93,183,238,.70);
+      box-shadow: 0 0 0 4px rgba(93,183,238,.20);
     }
-
-    .footer{
+.footer{
       margin-top:auto;
       padding:10px 2px 0;
-      color:rgba(255,255,255,.42);
+      color:rgba(11,28,45,.45);
       font-size:11px;
       text-align:center;
       user-select:none;
     }
-
-    @media (max-width: 420px){
+@media (max-width: 420px){
       .wrap{padding:12px; gap:10px}
-      .header{padding:12px}
-      .content{padding:12px}
-      .img{padding:6px}
-      .img img{max-height:52vh}
+      .header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(11,28,45,.08);
+      background: linear-gradient(180deg, rgba(93,183,238,.18), rgba(93,183,238,.06));
+    }
+.content{padding:12px}
+      .img{
+      width:100%;
+      border-radius:16px;
+      border:1px solid rgba(11,28,45,.12);
+      background:rgba(11,28,45,.03);
+      margin-bottom:12px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+    }
+.img img{max-height:52vh}
       .btn, .btnlink{padding:11px 12px}
     }
 
@@ -303,13 +331,11 @@ html,body{overflow:auto}
     <input class="navradio" type="radio" name="tab" id="tab_lost2">
 
     <div class="topbar">
-      <div class="pill" aria-label="Tutoriel">
-        <span style="width:10px;height:10px;border-radius:999px;background:rgba(84,180,255,.9);box-shadow:0 0 0 4px rgba(84,180,255,.14)"></span>
-        <span style="font-weight:950;letter-spacing:.2px">Tutoriel</span>
-        <span style="color:var(--muted);font-weight:800;font-size:12px">Restaurer / partager ma carte</span>
+      <div class="headtitle" aria-label="Tutoriel">
+        <div class="kicker">Tutoriel</div>
+        <div class="maintitle">Restaurer / partager ma carte</div>
       </div>
-
-      <div class="row">
+<div class="row">
         <label class="btn secondary" for="tab_home">← Menu</label>
         <a class="btnlink ghost" href="#" onclick="try{window.parent && window.parent.postMessage({type:'TUTORIAL_CLOSE'},'*');}catch(e){}; return false;">Fermer</a>
       </div>
@@ -319,13 +345,7 @@ html,body{overflow:auto}
 
       <!-- HOME -->
       <section class="card view" id="view_home">
-        <div class="header">
-          <h1 class="title">Choisissez votre situation</h1>
-          <p class="subtitle">
-            Suivez le tutoriel correspondant. En général, il suffit de <strong>scanner un QR</strong> ou de <strong>coller l’URL / l’ID</strong> pour restaurer votre carte.
-          </p>
-        </div>
-        <div class="content">
+        <div class="header"><h1 class="title">Restaurer / partager ma carte</h1><p class="subtitle">Choisissez simplement votre situation ci‑dessous.</p></div><div class="content">
           <div class="grid" role="list">
             <label class="choice" role="listitem" tabindex="0" for="tab_qr1">
               <div class="badge" aria-hidden="true">📷</div>
@@ -344,13 +364,11 @@ html,body{overflow:auto}
             </label>
 
             <label class="choice wide" role="listitem" tabindex="0" for="tab_lost1" style="cursor:pointer">
-              <div class="choice" style="margin:0">
-                <div class="badge" aria-hidden="true">🆘</div>
+              <div class="badge" aria-hidden="true">🆘</div>
                 <div>
                   <p class="h">J’ai changé de téléphone (plus de QR / URL / ID)</p>
                   <p class="p">Pas de panique : le livreur peut retrouver votre QR grâce à votre numéro, puis vous le faire scanner pour restaurer.</p>
                 </div>
-              </div>
             </label>
           </div>
         </div>
@@ -503,7 +521,7 @@ html,body{overflow:auto}
 
     </div>
 
-    <div class="footer">Outils internes. L’entreprise Apéro de Nuit 66®</div>
+    <div class="footer">Apéro de Nuit 66®</div>
   </div>
 </body>
 </html>
