@@ -11,8 +11,8 @@ const LS_KEY = "adn66_loyalty_client_id";
 
 // ===== ADN66 — CTA Social (Facebook / Avis Google) =====
 // ⚠️ Remplace les 2 liens ci-dessous par les tiens (liens directs)
-const FACEBOOK_PAGE_URL = "https://www.facebook.com/";   // <-- ton lien Facebook officiel
-const GOOGLE_REVIEW_URL = "https://g.page/r/XXXXXXXX/review"; // <-- ton lien avis Google (direct)
+const FACEBOOK_PAGE_URL = "https://www.facebook.com/share/16o4JJ8gnL/";
+const GOOGLE_REVIEW_URL = "https://www.google.com/maps/place/APERO+DE+NUIT+66+%7C+1er+service+de+Livraison+d'alcools+de+nuit+%C3%A0+Perpignan/@42.8637473,2.9156249,10z/data=!4m7!3m6!1s0x0:0xfdd578ec415e75e4!8m2!3d42.8637473!4d2.9156249!9m1!1b1";
 
 // Affichage: 1er tampon => Facebook ; 3e tampon => Avis Google
 const CTA_FB_AT = 1;
@@ -373,6 +373,118 @@ function renderVisualStamps(points){
     const slot = Number(el.dataset.slot || "0");
     el.classList.toggle("filled", slot > 0 && slot <= safe);
   });
+}
+
+
+/* ---------- CTA Social (Facebook / Avis Google) ---------- */
+function setCtaVisible(show){
+  const top = $("ctaTop");
+  const card = $("ctaCard");
+  if(!top || !card) return;
+  if(show){
+    top.classList.add("show");
+  }else{
+    top.classList.remove("show");
+    card.innerHTML = "";
+  }
+}
+
+function openExternal(url){
+  const u = String(url || "").trim();
+  if(!u) return;
+  try{
+    window.open(u, "_blank", "noopener,noreferrer");
+  }catch(_){
+    // fallback
+    try{ location.href = u; }catch(__){}
+  }
+}
+
+function stopPulseLater(btn, ms){
+  const t = Math.max(500, Number(ms||0));
+  if(!btn) return;
+  setTimeout(()=>{ try{ btn.classList.remove("ctaPulse"); }catch(_){} }, t);
+}
+
+function renderCta(points){
+  const p = Math.max(0, Math.floor(Number(points)||0));
+  const top = $("ctaTop");
+  const card = $("ctaCard");
+  if(!top || !card) return;
+
+  // Rules: 1er tampon => FB ; 3e tampon => Google
+  const showFb = (p === CTA_FB_AT) && localStorage.getItem(LS_CTA_FB_DONE) !== "1";
+  const showGg = (p === CTA_GOOGLE_AT) && localStorage.getItem(LS_CTA_GOOGLE_DONE) !== "1";
+
+  if(!showFb && !showGg){
+    setCtaVisible(false);
+    return;
+  }
+
+  setCtaVisible(true);
+
+  if(showFb){
+    card.innerHTML = `
+      <div class="ctaRow">
+        <div class="ctaText">
+          <p class="ctaTitle">Rejoignez Apéro de Nuit 66 sur Facebook</p>
+          <p class="ctaSub">Horaires, infos, nouveautés — en direct.</p>
+        </div>
+        <div class="ctaBtns">
+          <button type="button" class="ctaBtn ctaPulse" id="adnCtaFbBtn" aria-label="Suivre Apéro de Nuit 66 sur Facebook">
+            <span class="ctaIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path fill="currentColor" d="M13.5 22v-8h2.7l.4-3h-3.1V9.1c0-.9.2-1.5 1.5-1.5h1.7V5c-.3 0-1.4-.1-2.7-.1-2.6 0-4.4 1.6-4.4 4.6V11H7v3h2.7v8h3.8z"/>
+              </svg>
+            </span>
+            <span class="ctaLabel">Facebook</span>
+          </button>
+        </div>
+      </div>
+    `;
+    const btn = document.getElementById("adnCtaFbBtn");
+    if(btn){
+      stopPulseLater(btn, 7000);
+      btn.addEventListener("click", ()=>{
+        try{ localStorage.setItem(LS_CTA_FB_DONE, "1"); }catch(_){}
+        openExternal(FACEBOOK_PAGE_URL);
+        // hide after click
+        setTimeout(()=>setCtaVisible(false), 50);
+      }, {once:true});
+    }
+    return;
+  }
+
+  if(showGg){
+    card.innerHTML = `
+      <div class="ctaRow">
+        <div class="ctaText">
+          <p class="ctaTitle">Votre avis nous aide énormément 🙏</p>
+          <p class="ctaSub">Si vous êtes satisfait, laissez un avis Google (moins d’une minute).</p>
+        </div>
+        <div class="ctaBtns">
+          <button type="button" class="ctaBtn ctaPulse" id="adnCtaGgBtn" aria-label="Laisser un avis Google">
+            <span class="ctaIcon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path fill="currentColor" d="M12 10.2v3.6h5.1c-.2 1.1-1.3 3.2-5.1 3.2-3.1 0-5.6-2.6-5.6-5.7S8.9 5.8 12 5.8c1.8 0 3 .7 3.7 1.4l2.5-2.4C16.7 3.4 14.6 2.4 12 2.4 7 2.4 3 6.5 3 11.5S7 20.6 12 20.6c5.8 0 9.6-4.1 9.6-9.9 0-.7-.1-1.2-.2-1.7H12z"/>
+              </svg>
+            </span>
+            <span class="ctaLabel">Google</span>
+          </button>
+        </div>
+      </div>
+    `;
+    const btn = document.getElementById("adnCtaGgBtn");
+    if(btn){
+      stopPulseLater(btn, 7000);
+      btn.addEventListener("click", ()=>{
+        try{ localStorage.setItem(LS_CTA_GOOGLE_DONE, "1"); }catch(_){}
+        openExternal(GOOGLE_REVIEW_URL);
+        setTimeout(()=>setCtaVisible(false), 50);
+      }, {once:true});
+    }
+    return;
+  }
 }
 
 /* ---------- QR ---------- */

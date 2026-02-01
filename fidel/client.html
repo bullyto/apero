@@ -718,6 +718,19 @@
   .ctaSub{ font-size:11.6px; }
 }
 
+
+/* ===== ADN66 — COMPACT MOBILE/IFRAME (fix rendu) ===== */
+.card-h{ display:none !important; }          /* supprime "Ma carte virtuelle" */
+.loyTop{ display:none !important; }          /* supprime 3/8 + synchro */
+.syncWrap, .liveBar{ display:none !important; }
+.panel{ padding:0 !important; }             /* réduit la hauteur globale */
+.cardVisualWrap{ gap:10px !important; }
+.row{ margin-top:10px !important; }
+button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5px !important; }
+@media (max-width:420px){
+  button{ padding:7px 9px !important; font-size:13px !important; }
+}
+
 </style>
 
 </head>
@@ -874,7 +887,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="/fidel/client.js?v=20260128-8" defer></script>
+  <script src="/fidel/client.js?v=20260202-cta-fix" defer></script>
 
   <script>
     (function(){
