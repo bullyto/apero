@@ -516,6 +516,10 @@
   100%{ box-shadow:0 0 0 0 rgba(93,183,238,0); }
 }
 
+
+/* ✅ Tutoriel doit passer AU-DESSUS de la popup Scanner (actionModal/qrModal) */
+#tutoModal{ z-index: 20000 !important; }
+
 </style>
 
 </head>
@@ -738,7 +742,7 @@
 
   <footer class="adn-legal-footer" role="contentinfo">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.
 <!-- TUTORIEL MODAL (iframe) -->
-<section class="adnPrivacyModal" id="tutoModal" aria-modal="true" role="dialog">
+<section class="adnPrivacyModal" id="tutoModal" aria-live="polite" aria-modal="true" role="dialog" aria-label="Tutoriel — Restaurer ma carte" style="display:none;">
   <div class="adnPrivacyCard">
     <div class="adnPrivacyHeader">
       <span>Tutoriel — Restaurer ma carte</span>

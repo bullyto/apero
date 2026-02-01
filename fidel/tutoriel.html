@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <title>Tutoriel — Restaurer / partager ma carte</title>
+
+  <style>
+    :root{
+      --bg:#050b12;
+      --line:rgba(255,255,255,.10);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.68);
+      --muted2:rgba(255,255,255,.56);
+      --blue:#54b4ff;
+      --shadow:0 18px 60px rgba(0,0,0,.55);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      background:
+        radial-gradient(1200px 700px at 30% -10%, rgba(84,180,255,.12), transparent 55%),
+        radial-gradient(900px 700px at 85% 10%, rgba(33,208,122,.10), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* iframe popup friendly */
+html,body{overflow:auto}
+.wrap{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      padding:16px;
+      padding-top:max(16px, env(safe-area-inset-top));
+      padding-bottom:max(16px, env(safe-area-inset-bottom));
+      gap:12px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:10px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      user-select:none;
+    }
+
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+    .btn, .btnlink{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      font-weight:800;
+      letter-spacing:.2px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn.secondary, .btnlink.secondary{
+      color:var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+
+    .btn.ghost, .btnlink.ghost{
+      color:var(--text);
+      background: transparent;
+      border:1px solid var(--line);
+      box-shadow:none;
+    }
+
+    .btn.primary, .btnlink.primary{
+      color:#05101a;
+      background: linear-gradient(180deg, rgba(84,180,255,.95), rgba(84,180,255,.78));
+      box-shadow: 0 10px 26px rgba(84,180,255,.18);
+    }
+
+    .btn:active, .btnlink:active{transform: translateY(1px); filter:brightness(.98)}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.035));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(11,20,32,.85), rgba(11,20,32,.55));
+    }
+    .title{
+      margin:0;
+      font-size:16px;
+      font-weight:950;
+      letter-spacing:.2px;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .content{padding:14px}
+
+    /* radio navigation */
+    .navradio{position:absolute; left:-9999px; width:1px; height:1px; opacity:0}
+
+    .view{display:none}
+    #tab_home:checked ~ .views #view_home{display:block}
+    #tab_qr1:checked ~ .views #view_qr1{display:block}
+    #tab_qr2:checked ~ .views #view_qr2{display:block}
+    #tab_share1:checked ~ .views #view_share1{display:block}
+    #tab_share2:checked ~ .views #view_share2{display:block}
+    #tab_lost1:checked ~ .views #view_lost1{display:block}
+    #tab_lost2:checked ~ .views #view_lost2{display:block}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+
+    .choice{
+      padding:14px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(14,24,38,.85), rgba(14,24,38,.55));
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+      cursor:pointer;
+      transition: transform .08s ease, border-color .12s ease, filter .12s ease;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .choice:active{transform: translateY(1px)}
+    .choice:hover{border-color: rgba(84,180,255,.35)}
+    .choice .badge{
+      width:42px; height:42px;
+      border-radius:14px;
+      display:grid; place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background: radial-gradient(18px 18px at 30% 30%, rgba(84,180,255,.22), transparent 60%),
+                  rgba(0,0,0,.20);
+      flex: 0 0 42px;
+      user-select:none;
+    }
+    .choice .h{margin:0;font-weight:950;font-size:14px;letter-spacing:.2px}
+    .choice .p{margin:6px 0 0;color:var(--muted);font-size:13px;line-height:1.35}
+
+    .img{
+      width:100%;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.25);
+      margin-bottom:12px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+    }
+    .img img{
+      width:100%;
+      height:auto;
+      max-height:58vh;
+      object-fit:contain;
+      display:block;
+      filter:saturate(1.02) contrast(1.02);
+    }
+.k{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color:var(--text);
+      font-weight:850;
+      font-size:12px;
+      letter-spacing:.2px;
+    }
+
+    .list{
+      margin:10px 0 0;
+      padding-left:18px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+    .list li{margin:6px 0}
+
+    .note{
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(84,180,255,.14), rgba(84,180,255,.06));
+      color:var(--text);
+      font-size:13px;
+      line-height:1.4;
+    }
+    .note strong{font-weight:950}
+
+    .stepper{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 14px;
+      border-top:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.05));
+    }
+    .progress{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.3px;
+      user-select:none;
+    }
+    .dots{display:flex; gap:6px; align-items:center}
+    .dot{
+      width:10px;height:10px;border-radius:999px;
+      background: rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.08);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.12);
+    }
+    .dot.on{
+      background: rgba(84,180,255,.85);
+      border-color: rgba(84,180,255,.55);
+      box-shadow: 0 0 0 4px rgba(84,180,255,.14);
+    }
+
+    .footer{
+      margin-top:auto;
+      padding:10px 2px 0;
+      color:rgba(255,255,255,.42);
+      font-size:11px;
+      text-align:center;
+      user-select:none;
+    }
+
+    @media (max-width: 420px){
+      .wrap{padding:12px; gap:10px}
+      .header{padding:12px}
+      .content{padding:12px}
+      .img{padding:6px}
+      .img img{max-height:52vh}
+      .btn, .btnlink{padding:11px 12px}
+    }
+
+    @media (min-width: 720px){
+      /* iframe popup friendly */
+html,body{overflow:auto}
+.wrap{max-width:860px;margin:0 auto;padding:18px}
+      .grid{grid-template-columns:1fr 1fr}
+      .grid .wide{grid-column:1/-1}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="app">
+
+    <!-- radios -->
+    <input class="navradio" type="radio" name="tab" id="tab_home" checked>
+    <input class="navradio" type="radio" name="tab" id="tab_qr1">
+    <input class="navradio" type="radio" name="tab" id="tab_qr2">
+    <input class="navradio" type="radio" name="tab" id="tab_share1">
+    <input class="navradio" type="radio" name="tab" id="tab_share2">
+    <input class="navradio" type="radio" name="tab" id="tab_lost1">
+    <input class="navradio" type="radio" name="tab" id="tab_lost2">
+
+    <div class="topbar">
+      <div class="pill" aria-label="Tutoriel">
+        <span style="width:10px;height:10px;border-radius:999px;background:rgba(84,180,255,.9);box-shadow:0 0 0 4px rgba(84,180,255,.14)"></span>
+        <span style="font-weight:950;letter-spacing:.2px">Tutoriel</span>
+        <span style="color:var(--muted);font-weight:800;font-size:12px">Restaurer / partager ma carte</span>
+      </div>
+
+      <div class="row">
+        <label class="btn secondary" for="tab_home">← Menu</label>
+        <a class="btnlink ghost" href="#" onclick="try{window.parent && window.parent.postMessage({type:'TUTORIAL_CLOSE'},'*');}catch(e){}; return false;">Fermer</a>
+      </div>
+    </div>
+
+    <div class="views">
+
+      <!-- HOME -->
+      <section class="card view" id="view_home">
+        <div class="header">
+          <h1 class="title">Choisissez votre situation</h1>
+          <p class="subtitle">
+            Suivez le tutoriel correspondant. En général, il suffit de <strong>scanner un QR</strong> ou de <strong>coller l’URL / l’ID</strong> pour restaurer votre carte.
+          </p>
+        </div>
+        <div class="content">
+          <div class="grid" role="list">
+            <label class="choice" role="listitem" tabindex="0" for="tab_qr1">
+              <div class="badge" aria-hidden="true">📷</div>
+              <div>
+                <p class="h">J’ai déjà un QR code ou une URL / ID</p>
+                <p class="p">Scannez simplement votre QR (ou collez l’URL / l’ID) pour restaurer votre carte en quelques secondes.</p>
+              </div>
+            </label>
+
+            <label class="choice" role="listitem" tabindex="0" for="tab_share1">
+              <div class="badge" aria-hidden="true">📲</div>
+              <div>
+                <p class="h">Je veux mettre ma carte sur un autre téléphone</p>
+                <p class="p">Affichez le QR sur le 1er téléphone, puis scannez-le avec le 2ᵉ. La carte sera enregistrée sur les deux.</p>
+              </div>
+            </label>
+
+            <label class="choice wide" role="listitem" tabindex="0" for="tab_lost1" style="cursor:pointer">
+              <div class="choice" style="margin:0">
+                <div class="badge" aria-hidden="true">🆘</div>
+                <div>
+                  <p class="h">J’ai changé de téléphone (plus de QR / URL / ID)</p>
+                  <p class="p">Pas de panique : le livreur peut retrouver votre QR grâce à votre numéro, puis vous le faire scanner pour restaurer.</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- QR / URL / ID -->
+      <section class="card view" id="view_qr1">
+        <div class="header">
+          <h2 class="title">Restaurer avec un QR / URL / ID</h2>
+          <p class="subtitle">Scannez votre QR (ou collez l’URL / l’ID) : la carte est restaurée instantanément.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel3.jpg" alt="Restaurer avec QR / URL — étape 1"></div>
+          <div class="k">Étape 1/2</div>
+          <ul class="list">
+            <li>Ouvrez <strong>Restaurer ma carte</strong>.</li>
+            <li>Appuyez sur <strong>Scanner</strong> et filmez votre QR <strong>ou</strong> collez l’<strong>URL / l’ID</strong>.</li>
+            <li>Appuyez sur <strong>Utiliser</strong> si vous avez collé une URL / ID.</li>
+          </ul>
+          <div class="note"><strong>Conseil :</strong> placez le QR bien à plat et évitez les reflets.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>1/2</span><div class="dots"><div class="dot on"></div><div class="dot"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_home">Précédent</label>
+            <label class="btn primary" for="tab_qr2">Suivant</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card view" id="view_qr2">
+        <div class="header">
+          <h2 class="title">Restaurer avec un QR / URL / ID</h2>
+          <p class="subtitle">Votre carte s’affiche automatiquement après le scan / l’ID.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel4.jpg" alt="Restaurer avec QR / URL — étape 2"></div>
+          <div class="k">Étape 2/2</div>
+          <ul class="list">
+            <li>Patientez une seconde : votre carte apparaît automatiquement.</li>
+            <li>Vous pouvez fermer cette fenêtre et continuer normalement.</li>
+          </ul>
+          <div class="note"><strong>OK :</strong> votre carte est maintenant enregistrée sur ce téléphone.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>2/2</span><div class="dots"><div class="dot"></div><div class="dot on"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_qr1">Précédent</label>
+            <label class="btn primary" for="tab_home">Terminer</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- SHARE (no images provided) -->
+      <section class="card view" id="view_share1">
+        <div class="header">
+          <h2 class="title">Mettre ma carte sur un autre téléphone</h2>
+          <p class="subtitle">Affichez le QR sur le 1er téléphone, puis scannez-le avec le 2ᵉ.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel5.jpg" alt="Partager carte — étape 1"></div>
+          <div class="k">Étape 1/2</div>
+          <ul class="list">
+            <li>Sur le <strong>téléphone 1</strong>, affichez le <strong>QR de votre carte</strong>.</li>
+            <li>Sur le <strong>téléphone 2</strong>, installez l’application <strong>Apéro de Nuit 66</strong> (si besoin).</li>
+            <li>Sur le téléphone 2, ouvrez <strong>Restaurer ma carte</strong>.</li>
+          </ul>
+          <div class="note"><strong>Important :</strong> gardez le QR affiché sur le téléphone 1 pendant toute l’opération.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>1/2</span><div class="dots"><div class="dot on"></div><div class="dot"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_home">Précédent</label>
+            <label class="btn primary" for="tab_share2">Suivant</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card view" id="view_share2">
+        <div class="header">
+          <h2 class="title">Mettre ma carte sur un autre téléphone</h2>
+          <p class="subtitle">La carte sera enregistrée sur les deux appareils.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel6.jpg" alt="Partager carte — étape 2"></div>
+          <div class="k">Étape 2/2</div>
+          <ul class="list">
+            <li>Sur le téléphone 2, appuyez sur <strong>Scanner</strong> puis scannez le QR affiché sur le téléphone 1.</li>
+            <li>La carte sera enregistrée sur <strong>les deux téléphones</strong>.</li>
+          </ul>
+          <div class="note"><strong>OK :</strong> vous pouvez utiliser votre carte depuis les deux appareils.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>2/2</span><div class="dots"><div class="dot"></div><div class="dot on"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_share1">Précédent</label>
+            <label class="btn primary" for="tab_home">Terminer</label>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOST -->
+      <section class="card view" id="view_lost1">
+        <div class="header">
+          <h2 class="title">Récupérer ma carte (QR perdu)</h2>
+          <p class="subtitle">Le livreur retrouve votre QR via l’outil interne, puis vous le scannez pour restaurer votre carte.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel1.jpg" alt="QR perdu — étape 1"></div>
+          <div class="k">Étape 1/2</div>
+          <ul class="list">
+            <li>Expliquez au livreur que vous avez <strong>perdu votre QR</strong>.</li>
+            <li>Le livreur ouvre l’<strong>outil interne de gestion</strong>.</li>
+            <li>Il recherche votre carte avec votre <strong>numéro de téléphone</strong> et affiche votre <strong>QR de récupération</strong>.</li>
+          </ul>
+          <div class="note"><strong>Sécurité :</strong> seul le livreur a accès à cet outil. Il sert uniquement à vous redonner votre QR.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>1/2</span><div class="dots"><div class="dot on"></div><div class="dot"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_home">Précédent</label>
+            <label class="btn primary" for="tab_lost2">Suivant</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card view" id="view_lost2">
+        <div class="header">
+          <h2 class="title">Récupérer ma carte (QR perdu)</h2>
+          <p class="subtitle">Scannez le QR de récupération affiché par le livreur.</p>
+        </div>
+        <div class="content">
+          <div class="img"><img src="./img_tutoriel/tutoriel2.jpg" alt="QR perdu — étape 2"></div>
+          <div class="k">Étape 2/2</div>
+          <ul class="list">
+            <li>Sur votre téléphone, ouvrez <strong>Restaurer ma carte</strong>.</li>
+            <li>Appuyez sur <strong>Scanner</strong> puis scannez le QR affiché par le livreur.</li>
+            <li>Votre carte est restaurée immédiatement.</li>
+          </ul>
+          <div class="note"><strong>OK :</strong> votre carte est de nouveau enregistrée sur ce téléphone.</div>
+        </div>
+        <div class="stepper">
+          <div class="progress"><span>2/2</span><div class="dots"><div class="dot"></div><div class="dot on"></div></div></div>
+          <div class="row">
+            <label class="btn secondary" for="tab_lost1">Précédent</label>
+            <label class="btn primary" for="tab_home">Terminer</label>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="footer">Outils internes. L’entreprise Apéro de Nuit 66®</div>
+  </div>
+</body>
+</html>
