@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Animatopia • Boutique</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./css/styles.css" />
+  <meta name="theme-color" content="#54b4ff">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Animatopia • Boutique</h1>
+          <p>Crédits → Achats (objets / montures / familiers)</p>
+        </div>
+      </div>
+      <nav class="nav">
+        <a class="pill" href="./index.html">Accueil</a>
+        <a class="pill active" href="./shop.html">Boutique</a>
+        <a class="pill" href="./game.html">Jeu</a>
+      </nav>
+    </header>
+
+    <div class="grid cols-2" style="margin-top:14px">
+      <section class="card">
+        <h2>Mon portefeuille</h2>
+        <p id="who" class="muted">—</p>
+        <div class="row">
+          <span class="badge">Solde</span>
+          <strong id="credits">0 crédits</strong>
+        </div>
+
+        <div class="hr"></div>
+
+        <h2 style="font-size:16px;margin-top:0">Acheter des crédits (stub)</h2>
+        <p class="small">Ici, on simule un achat. Tu remplaceras ensuite par une vraie redirection paiement.</p>
+
+        <label for="creditPack">Pack</label>
+        <select id="creditPack">
+          <option value="0">Choisir…</option>
+          <option value="100">100 crédits</option>
+          <option value="250">250 crédits</option>
+          <option value="600">600 crédits</option>
+        </select>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn ok" id="btnBuyCredits" type="button">💳 Acheter</button>
+          <button class="btn" id="btnGame" type="button">🎮 Retour au jeu</button>
+          <button class="btn" id="btnBack" type="button">🏠 Retour accueil</button>
+        </div>
+      </section>
+
+      <aside id="catalog" class="grid" style="gap:14px"></aside>
+    </div>
+
+    <div class="footer">Animatopia • Boutique (Starter)</div>
+  </div>
+
+  <script type="module" src="./js/shop_page.js"></script>
+</body>
+</html>

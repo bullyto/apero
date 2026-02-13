@@ -1,0 +1,36 @@
+{
+  "female": [
+    {
+      "id": "f_01",
+      "name": "Lina",
+      "sprite": "assets/characters/f_01.png"
+    },
+    {
+      "id": "f_02",
+      "name": "Maya",
+      "sprite": "assets/characters/f_02.png"
+    },
+    {
+      "id": "f_03",
+      "name": "Nora",
+      "sprite": "assets/characters/f_03.png"
+    }
+  ],
+  "male": [
+    {
+      "id": "m_01",
+      "name": "Noé",
+      "sprite": "assets/characters/m_01.png"
+    },
+    {
+      "id": "m_02",
+      "name": "Eliot",
+      "sprite": "assets/characters/m_02.png"
+    },
+    {
+      "id": "m_03",
+      "name": "Tao",
+      "sprite": "assets/characters/m_03.png"
+    }
+  ]
+}
