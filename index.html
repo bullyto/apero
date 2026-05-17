@@ -759,48 +759,19 @@
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
   <link rel="dns-prefetch" href="https://bullyto.github.io">
 
-  <link rel="preload" as="script" href="./status-popup.js?v=20260101a">
+  <!-- ✅ STATUS POPUP ADN66
+       Source officielle commune : /outil/apps/status/status.json
+       L'ancien script externe ./status-popup.js est remplacé par une intégration locale robuste
+       pour éviter le mauvais chemin /outil/s/status/status.json. -->
   <script>
-    // ✅ démarre en "boot" : on cache toute popup status tant que status-popup.js n'a pas décidé
-    document.documentElement.setAttribute("data-status-boot","1");
+    window.AD_STATUS_URL = "https://bullyto.github.io/outil/apps/status/status.json";
+    window.AD_STATUS_JSON_URL = window.AD_STATUS_URL;
+    window.STATUS_URL = window.AD_STATUS_URL;
+    window.STATUS_JSON_URL = window.AD_STATUS_URL;
+    window.statusJsonUrl = window.AD_STATUS_URL;
+    try { document.documentElement.setAttribute("data-status-url", window.AD_STATUS_URL); } catch(e) {}
   </script>
-  <script>
-  // ✅ PATCH STATUS: force la PWA à lire /outil/s/status/status.json (et plus l'ancien repo /status)
-  (function(){
-    var NEW_STATUS_URL = "https://bullyto.github.io/outil/s/status/status.json";
-    // Expose/compat
-    window.AD_STATUS_URL = NEW_STATUS_URL;
-    window.AD_STATUS_JSON_URL = NEW_STATUS_URL;
-    window.STATUS_URL = NEW_STATUS_URL;
-    window.STATUS_JSON_URL = NEW_STATUS_URL;
-    window.statusJsonUrl = NEW_STATUS_URL;
-    try { document.documentElement.setAttribute('data-status-url', NEW_STATUS_URL); } catch(e) {}
 
-    // Interception fetch() pour réécrire toute requête vers l'ancien status.json
-    var _fetch = window.fetch ? window.fetch.bind(window) : null;
-    if (_fetch) {
-      window.fetch = function(input, init){
-        try {
-          var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
-          if (url) {
-            var u = url;
-            // Remplace plusieurs variantes connues de l'ancien status
-            if (u.indexOf('bullyto.github.io/status/status.json') !== -1) u = NEW_STATUS_URL;
-            if (u.indexOf('raw.githubusercontent.com/bullyto/status') !== -1) u = NEW_STATUS_URL;
-            // Si quelqu’un elle /status.json en relatif, on le force aussi
-            if (/\/status\.json(\?|$)/i.test(u) && u.indexOf('/outil/s/status/status.json') === -1) u = NEW_STATUS_URL;
-            if (u !== url) {
-              if (typeof input === 'string') input = u;
-              else if (input && input.url) input = new Request(u, input);
-            }
-          }
-        } catch(e) {}
-        return _fetch(input, init);
-      };
-    }
-  })();
-</script>
-<script defer src="./status-popup.js?v=20260101a"></script>
 </head>
 
 <body>
@@ -1878,6 +1849,440 @@
   document.addEventListener("keydown", function(e){
     if(e.key === "Escape" && modal && modal.classList.contains("open")) closeAlcohol();
   });
+})();
+</script>
+
+
+<!-- ===== GLOBAL STATUS POPUP ADN66 (commun aux sites) ===== -->
+<style id="global-status-popup-css">
+  #globalStatusOverlay{
+    position:fixed;
+    inset:0;
+    z-index:999997;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(0,0,0,.70);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+  }
+  #globalStatusOverlay.open{ display:flex; }
+  #globalStatusOverlay *{ box-sizing:border-box; }
+  .globalStatusCard{
+    width:min(560px,94vw);
+    overflow:hidden;
+    border-radius:28px;
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:0 30px 90px rgba(0,0,0,.58);
+    color:#fff;
+    background:
+      radial-gradient(900px 650px at 50% 18%, rgba(255,211,107,.18), transparent 58%),
+      radial-gradient(900px 650px at 20% 70%, rgba(198,25,16,.22), transparent 62%),
+      radial-gradient(900px 650px at 80% 70%, rgba(255,184,28,.14), transparent 62%),
+      linear-gradient(180deg, #5a1217, #2a0a0c 55%, #120406);
+  }
+  .globalStatusTop{
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.05);
+  }
+  .globalStatusBrand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+  }
+  .globalStatusBang{
+    width:36px;
+    height:36px;
+    border-radius:16px;
+    display:grid;
+    place-items:center;
+    font-weight:950;
+    letter-spacing:.08em;
+    color:#fff;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(198,25,16,.20);
+    flex:0 0 auto;
+  }
+  .globalStatusKicker{
+    font-size:12px;
+    letter-spacing:.18em;
+    font-weight:950;
+    color:rgba(255,255,255,.90);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .globalStatusSub{
+    margin-top:-2px;
+    font-size:12px;
+    color:rgba(255,255,255,.70);
+  }
+  #globalStatusCloseX{
+    width:40px;
+    height:40px;
+    border-radius:16px;
+    display:grid;
+    place-items:center;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.04);
+    color:rgba(255,255,255,.82);
+    cursor:pointer;
+    font-size:22px;
+    line-height:1;
+  }
+  #globalStatusCloseX:hover{ background:rgba(255,255,255,.10); color:#fff; }
+  #globalStatusImg{
+    width:100%;
+    height:auto;
+    max-height:42vh;
+    object-fit:cover;
+    display:block;
+    background:rgba(0,0,0,.20);
+  }
+  .globalStatusBody{ padding:20px; }
+  #globalStatusTitle{
+    margin:0 0 8px;
+    color:#fff;
+    font-size:24px;
+    font-weight:950;
+    line-height:1.12;
+  }
+  #globalStatusMsg{
+    margin:0;
+    color:rgba(255,255,255,.82);
+    font-size:15px;
+    line-height:1.5;
+    white-space:pre-line;
+  }
+  .globalStatusActions{ margin-top:16px; display:grid; gap:8px; }
+  #globalStatusOk{
+    width:100%;
+    border:0;
+    border-radius:14px;
+    padding:15px 14px;
+    cursor:pointer;
+    font-weight:950;
+    letter-spacing:.2px;
+    color:#fff;
+    background:linear-gradient(180deg, #C61910, #8a0b0b);
+    box-shadow:0 16px 44px rgba(198,25,16,.25);
+  }
+  #globalStatusOk:disabled{ cursor:not-allowed; }
+  #globalStatusSecondary{
+    margin-top:12px;
+    color:rgba(255,255,255,.86);
+    text-align:center;
+    font-size:13px;
+    font-weight:800;
+    line-height:1.35;
+    display:none;
+  }
+  .globalStatusFine{
+    margin-top:12px;
+    color:rgba(255,255,255,.60);
+    text-align:center;
+    font-size:12px;
+    line-height:1.35;
+  }
+  .statusBlockedUi{
+    pointer-events:none !important;
+    opacity:.50 !important;
+    filter:grayscale(.15);
+  }
+  @media (max-width:390px){
+    #globalStatusTitle{ font-size:21px; }
+    .globalStatusBody{ padding:16px; }
+  }
+</style>
+
+<div id="globalStatusOverlay" role="dialog" aria-modal="true" aria-labelledby="globalStatusTitle" aria-hidden="true">
+  <div class="globalStatusCard">
+    <div class="globalStatusTop">
+      <div class="globalStatusBrand">
+        <div class="globalStatusBang">!</div>
+        <div style="min-width:0">
+          <div class="globalStatusKicker">INFORMATION SERVICE</div>
+          <div class="globalStatusSub">Mise à jour officielle</div>
+        </div>
+      </div>
+      <button id="globalStatusCloseX" type="button" aria-label="Fermer">×</button>
+    </div>
+
+    <img id="globalStatusImg" alt="" loading="eager">
+
+    <div class="globalStatusBody">
+      <h2 id="globalStatusTitle">Service temporairement suspendu</h2>
+      <p id="globalStatusMsg">Une information importante est en cours.</p>
+
+      <div class="globalStatusActions">
+        <button id="globalStatusOk" type="button">OK, j'ai compris</button>
+      </div>
+
+      <div id="globalStatusSecondary"></div>
+      <div class="globalStatusFine">L’abus d’alcool est dangereux pour la santé, à consommer avec modération.</div>
+    </div>
+  </div>
+</div>
+
+<script id="global-status-popup-js">
+/* ===== Lecture du statut commun ADN66 : /outil/apps/status/status.json ===== */
+(function(){
+  const STATUS_URL_GHP = "https://bullyto.github.io/outil/apps/status/status.json";
+  const STATUS_URL_RAW = "https://raw.githubusercontent.com/bullyto/outil/main/apps/status/status.json";
+  const STATUS_URL = STATUS_URL_GHP;
+
+  window.AD_STATUS_URL = STATUS_URL_GHP;
+  window.AD_STATUS_JSON_URL = STATUS_URL_GHP;
+  window.STATUS_URL = STATUS_URL_GHP;
+  window.STATUS_JSON_URL = STATUS_URL_GHP;
+  window.statusJsonUrl = STATUS_URL_GHP;
+  try { document.documentElement.setAttribute("data-status-url", STATUS_URL_GHP); } catch(e) {}
+
+  async function fetchJsonWithFallback(urlPrimary, urlFallback, opts){
+    try{
+      const r = await fetch(urlPrimary, opts);
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return await r.json();
+    }catch(e){
+      const r2 = await fetch(urlFallback, opts);
+      if(!r2.ok) throw new Error("HTTP " + r2.status);
+      return await r2.json();
+    }
+  }
+
+  const overlay = document.getElementById("globalStatusOverlay");
+  const imgEl   = document.getElementById("globalStatusImg");
+  const titleEl = document.getElementById("globalStatusTitle");
+  const msgEl   = document.getElementById("globalStatusMsg");
+  const btnOk   = document.getElementById("globalStatusOk");
+  const btnX    = document.getElementById("globalStatusCloseX");
+  const secondary = document.getElementById("globalStatusSecondary");
+
+  if(!overlay || !imgEl || !titleEl || !msgEl || !btnOk) return;
+
+  let canClose = true;
+  let currentMode = "none";
+  let warningClickMsg = "Ce n'est actuellement pas possible de commander.";
+
+  function setCloseEnabled(on){
+    canClose = !!on;
+
+    if(btnX){
+      btnX.disabled = !canClose;
+      btnX.style.opacity = canClose ? "" : "0.5";
+      btnX.style.cursor = canClose ? "" : "not-allowed";
+      btnX.setAttribute("aria-disabled", canClose ? "false" : "true");
+    }
+
+    if(currentMode === "info"){
+      btnOk.disabled = !canClose;
+      btnOk.style.opacity = canClose ? "" : "0.7";
+      btnOk.style.cursor = canClose ? "pointer" : "not-allowed";
+    }else{
+      btnOk.disabled = false;
+      btnOk.style.opacity = "";
+      btnOk.style.cursor = "pointer";
+    }
+  }
+
+  function close(){
+    if(!canClose) return;
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+  }
+
+  function open(){
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+  }
+
+  overlay.addEventListener("click", function(e){
+    if(e.target === overlay){
+      if(canClose) close();
+      else if(currentMode === "warning" && secondary){
+        secondary.style.display = "block";
+        secondary.textContent = warningClickMsg;
+      }
+    }
+  });
+
+  document.addEventListener("keydown", function(e){
+    if(overlay.classList.contains("open") && e.key === "Escape"){
+      if(!canClose){
+        e.preventDefault();
+        e.stopPropagation();
+      }else{
+        close();
+      }
+    }
+  }, true);
+
+  btnOk.addEventListener("click", function(){
+    if(currentMode === "warning"){
+      if(secondary){
+        secondary.style.display = "block";
+        secondary.textContent = warningClickMsg;
+        secondary.style.opacity = "1";
+        setTimeout(function(){ secondary.style.opacity = "0.85"; }, 250);
+      }
+      return;
+    }
+    close();
+  });
+
+  if(btnX) btnX.addEventListener("click", close);
+
+  function withinSchedule(schedule, now){
+    now = now || new Date();
+    if(!schedule || !schedule.enabled) return true;
+
+    const days = Array.isArray(schedule.days) ? schedule.days : [];
+    const day = now.getDay();
+    if(days.length && !days.includes(day)) return false;
+
+    const startParts = String(schedule.start || "00:00").split(":").map(function(n){ return parseInt(n,10); });
+    const endParts = String(schedule.end || "00:00").split(":").map(function(n){ return parseInt(n,10); });
+    const sh = startParts[0], sm = startParts[1], eh = endParts[0], em = endParts[1];
+    if(!Number.isFinite(sh) || !Number.isFinite(sm) || !Number.isFinite(eh) || !Number.isFinite(em)) return true;
+
+    const startMin = sh * 60 + sm;
+    const endMin = eh * 60 + em;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    if(startMin === endMin) return true;
+    if(startMin < endMin) return nowMin >= startMin && nowMin < endMin;
+    return (nowMin >= startMin) || (nowMin < endMin);
+  }
+
+  function getOrderTargets(){
+    const selectors = [
+      "#orderBtn",
+      "#adnMenuOrder",
+      "#adnMenuCall",
+      "#installBtn",
+      "[data-order]",
+      "[data-call]",
+      "a[href^='tel:']"
+    ];
+    const set = new Set();
+    selectors.forEach(function(sel){
+      try { document.querySelectorAll(sel).forEach(function(el){ set.add(el); }); } catch(e) {}
+    });
+    return Array.from(set).filter(Boolean);
+  }
+
+  function setOrderEnabled(enabled){
+    getOrderTargets().forEach(function(el){
+      if(enabled){
+        el.classList.remove("statusBlockedUi");
+        el.removeAttribute("aria-disabled");
+        el.dataset.statusBlocked = "0";
+      }else{
+        el.classList.add("statusBlockedUi");
+        el.setAttribute("aria-disabled", "true");
+        el.dataset.statusBlocked = "1";
+      }
+    });
+  }
+
+  document.addEventListener("click", function(e){
+    const target = e.target && e.target.closest ? e.target.closest("#orderBtn,#adnMenuOrder,#adnMenuCall,#installBtn,[data-order],[data-call],a[href^='tel:']") : null;
+    if(!target) return;
+    if(target.dataset.statusBlocked === "1"){
+      e.preventDefault();
+      e.stopPropagation();
+      if(currentMode === "warning" && secondary){
+        secondary.style.display = "block";
+        secondary.textContent = warningClickMsg;
+      }
+      open();
+    }
+  }, true);
+
+  fetchJsonWithFallback(STATUS_URL_GHP, STATUS_URL_RAW, { cache:"no-store" })
+    .then(function(data){
+      if(!data || !data.active){ setOrderEnabled(true); return; }
+
+      const mode = data.mode || "none";
+      const cfg = data.modes && data.modes[mode];
+      if(!cfg){ setOrderEnabled(true); return; }
+
+      currentMode = mode;
+
+      const base = STATUS_URL.replace(/\/status\.json$/, "/");
+      const rawImage = cfg.image || "";
+      const imgUrl = String(rawImage).startsWith("http") ? rawImage : (base + rawImage);
+
+      if(rawImage){
+        imgEl.src = imgUrl;
+        imgEl.style.display = "block";
+      }else{
+        imgEl.removeAttribute("src");
+        imgEl.style.display = "none";
+      }
+
+      titleEl.textContent = cfg.title || "Information";
+      msgEl.textContent = cfg.message || "";
+
+      if(mode === "info"){
+        const delay = Number.isFinite(cfg.ok_delay_seconds) ? cfg.ok_delay_seconds : 5;
+        btnOk.textContent = "OK, j'ai compris (dans " + delay + "s)";
+        if(secondary) secondary.style.display = "none";
+
+        setCloseEnabled(false);
+        setOrderEnabled(true);
+        open();
+
+        let left = delay;
+        const t = setInterval(function(){
+          left -= 1;
+          if(left <= 0){
+            clearInterval(t);
+            btnOk.textContent = "OK, j'ai compris";
+            setCloseEnabled(true);
+          }else{
+            btnOk.textContent = "OK, j'ai compris (dans " + left + "s)";
+          }
+        }, 1000);
+        return;
+      }
+
+      if(mode === "warning"){
+        warningClickMsg = cfg.warning_click_message || warningClickMsg;
+        if(secondary){
+          secondary.style.display = "none";
+          secondary.textContent = warningClickMsg;
+        }
+
+        const schedule = cfg.block_schedule || { enabled:false };
+        const blockedNow = withinSchedule(schedule, new Date());
+
+        if(!blockedNow){
+          setOrderEnabled(true);
+          close();
+          return;
+        }
+
+        setCloseEnabled(false);
+        setOrderEnabled(false);
+        open();
+        return;
+      }
+
+      setOrderEnabled(true);
+    })
+    .catch(function(){ setOrderEnabled(true); });
 })();
 </script>
 
