@@ -2055,11 +2055,7 @@
   async function fetchJsonWithFallback(urlPrimary, urlFallback, opts){
     const requestOptions = Object.assign({}, opts || {}, {
       cache: "no-store",
-      credentials: "omit",
-      headers: Object.assign({}, (opts && opts.headers) || {}, {
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache"
-      })
+      credentials: "omit"
     });
 
     try{
