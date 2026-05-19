@@ -2032,7 +2032,7 @@
 </div>
 
 <script id="global-status-popup-js">
-/* ===== Lecture du statut commun ADN66 : /outil/apps/status/status.json ===== */
+/* ===== Lecture du statut commun ADN66 : /outil/apps/status/status.json — anti-cache renforcé ===== */
 (function(){
   const STATUS_URL_GHP = "https://bullyto.github.io/outil/apps/status/status.json";
   const STATUS_URL_RAW = "https://raw.githubusercontent.com/bullyto/outil/main/apps/status/status.json";
@@ -2045,13 +2045,29 @@
   window.statusJsonUrl = STATUS_URL_GHP;
   try { document.documentElement.setAttribute("data-status-url", STATUS_URL_GHP); } catch(e) {}
 
+  // ✅ Anti-cache statut ADN66
+  // Le statut doit toujours être relu en direct : jamais depuis le cache navigateur/PWA/CDN.
+  function statusFreshUrl(url){
+    const sep = String(url).includes("?") ? "&" : "?";
+    return String(url) + sep + "adn_status_t=" + Date.now();
+  }
+
   async function fetchJsonWithFallback(urlPrimary, urlFallback, opts){
+    const requestOptions = Object.assign({}, opts || {}, {
+      cache: "no-store",
+      credentials: "omit",
+      headers: Object.assign({}, (opts && opts.headers) || {}, {
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
+      })
+    });
+
     try{
-      const r = await fetch(urlPrimary, opts);
+      const r = await fetch(statusFreshUrl(urlPrimary), requestOptions);
       if(!r.ok) throw new Error("HTTP " + r.status);
       return await r.json();
     }catch(e){
-      const r2 = await fetch(urlFallback, opts);
+      const r2 = await fetch(statusFreshUrl(urlFallback), requestOptions);
       if(!r2.ok) throw new Error("HTTP " + r2.status);
       return await r2.json();
     }
