@@ -1,13 +1,11 @@
 <!doctype html>
-<!-- ADN66 BUILD 20260526-status-inline-v4-force -->
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- ADN66 FORCE MAJ 20260526-status-inline-v4-force -->
+  <!-- ADN66 FORCE MAJ 20260526-inline-stylecss-v5 -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Suivi livraison — Apéro de Nuit 66</title>
   <!-- ✅ SEO / Référencement (sans impact visuel) -->
@@ -67,6 +65,7 @@
 
 
   <link rel="icon" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./style.css?v=20260526-inline-stylecss-v5">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -439,115 +438,10 @@
       background:#fff;
     }
 
-
-
-    /* ===== ADN66 STATUS INLINE FORCE MAJ 20260526-status-inline-v4-force ===== */
-    .clientTopStatePill,
-    #clientTopStatePill{
-      display:none !important;
-      visibility:hidden !important;
-      width:0 !important;
-      max-width:0 !important;
-      overflow:hidden !important;
-      padding:0 !important;
-      margin:0 !important;
-      border:0 !important;
-    }
-
-    .clientInlineStatus{
-      display:flex !important;
-      align-items:flex-start;
-      gap:10px;
-      padding:12px 12px;
-      margin:0 0 12px;
-      border-radius:14px;
-      background:rgba(93,183,238,.10);
-      border:1px solid rgba(93,183,238,.25);
-      color:var(--adn-text);
-      font-weight:800;
-      font-size:13px;
-      line-height:1.35;
-      box-sizing:border-box;
-    }
-
-    .clientInlineStatusIcon{
-      width:28px;
-      height:28px;
-      border-radius:999px;
-      display:grid;
-      place-items:center;
-      background:rgba(93,183,238,.18);
-      border:1px solid rgba(93,183,238,.35);
-      box-shadow:0 0 0 3px rgba(93,183,238,.12);
-      flex:0 0 auto;
-      font-size:14px;
-      line-height:1;
-    }
-
-    .clientInlineStatusText{
-      flex:1;
-      min-width:0;
-      display:block;
-    }
-
-    .clientInlineStatusTitle{
-      display:block;
-      font-size:13px;
-      font-weight:950;
-      margin:0 0 3px;
-    }
-
-    .clientInlineStatusSub{
-      display:block;
-      font-size:12px;
-      font-weight:700;
-      opacity:.78;
-      margin:0;
-    }
-
-    .clientInlineStatus.ok{
-      background:rgba(33,208,122,.10);
-      border-color:rgba(33,208,122,.35);
-    }
-    .clientInlineStatus.ok .clientInlineStatusIcon{
-      background:rgba(33,208,122,.18);
-      border-color:rgba(33,208,122,.38);
-      box-shadow:0 0 0 3px rgba(33,208,122,.10);
-    }
-
-    .clientInlineStatus.warn{
-      background:rgba(255,204,51,.12);
-      border-color:rgba(255,204,51,.38);
-    }
-    .clientInlineStatus.warn .clientInlineStatusIcon{
-      background:rgba(255,204,51,.22);
-      border-color:rgba(255,204,51,.45);
-      box-shadow:0 0 0 3px rgba(255,204,51,.12);
-    }
-
-    .clientInlineStatus.bad{
-      background:rgba(255,77,77,.10);
-      border-color:rgba(255,77,77,.35);
-    }
-    .clientInlineStatus.bad .clientInlineStatusIcon{
-      background:rgba(255,77,77,.18);
-      border-color:rgba(255,77,77,.38);
-      box-shadow:0 0 0 3px rgba(255,77,77,.10);
-    }
-
-    .clientInlineVersion{
-      margin-top:6px;
-      text-align:center;
-      font-size:9px;
-      opacity:.22;
-      font-weight:700;
-      user-select:none;
-    }
-
 </style>
 </head>
 
-<body>
+<body class="client">
 
   <!-- MAP -->
   <div id="map"></div>
@@ -584,14 +478,14 @@
 
       
 
-      <div class="clientInlineStatus warn" id="clientInlineStatus" aria-live="polite" data-build="20260526-status-inline-v4-force">
+      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-inline-stylecss-v5">
         <span class="clientInlineStatusIcon" id="clientInlineStatusIcon" aria-hidden="true">ℹ️</span>
         <span class="clientInlineStatusText">
           <span class="clientInlineStatusTitle" id="clientInlineStatusTitle">Prêt à demander le suivi</span>
           <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez vos informations, puis appuyez sur « Activer le suivi ».</span>
         </span>
       </div>
-      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-status-inline-v4-force</div>
+      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-inline-stylecss-v5</div>
 <input
         id="name"
         class="clientInput"
@@ -677,7 +571,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260526-status-inline-v4-force"></script>
+  <script type="module" src="./client.js?v=20260526-inline-stylecss-v5"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {
@@ -690,36 +584,29 @@
 
 
 <script>
-/* ===== ADN66 UI SYNC FORCE MAJ 20260526-status-inline-v4-force =====
-   Statut dans la carte principale, sous Position partagée.
-   Le statut en haut à droite est masqué.
-*/
+/* ===== ADN66 UI SYNC STATUS INLINE 20260526-inline-stylecss-v5 ===== */
 (() => {
-  window.__ADN_SUIVI_BUILD__ = "20260526-status-inline-v4-force";
-
+  window.__ADN_SUIVI_BUILD__ = "20260526-inline-stylecss-v5";
   const elPopup = document.getElementById('clientPopup');
   const elStateText = document.getElementById('stateText');
   const elStateDot = document.getElementById('stateDot');
   const elCountdown = document.getElementById('countdown');
   const elGeoText = document.getElementById('geoText');
   const btnRequest = document.getElementById('btnRequest');
-
   const inlineBox = document.getElementById('clientInlineStatus');
   const inlineIcon = document.getElementById('clientInlineStatusIcon');
   const inlineTitle = document.getElementById('clientInlineStatusTitle');
   const inlineSub = document.getElementById('clientInlineStatusSub');
-
   const LS_KEY = 'adn_client_track_phase_v1';
   const getPhase = () => localStorage.getItem(LS_KEY) || 'idle';
   const setPhase = (p) => localStorage.setItem(LS_KEY, p);
-
   const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
   const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
 
   const setInlineStatus = (mode, icon, title, sub) => {
     if (!inlineBox) return;
-    inlineBox.classList.remove('ok', 'bad', 'warn');
-    inlineBox.classList.add(mode || 'warn');
+    inlineBox.classList.remove('ok', 'bad');
+    if (mode === 'ok' || mode === 'bad') inlineBox.classList.add(mode);
     if (inlineIcon) inlineIcon.textContent = icon || 'ℹ️';
     if (inlineTitle) inlineTitle.textContent = title || '';
     if (inlineSub) inlineSub.textContent = sub || '';
@@ -768,18 +655,12 @@
     btnRequest.addEventListener('click', () => {
       setPhase('waiting');
       setTopState('En attente de décision', 'warn');
-      setInlineStatus(
-        'warn',
-        '⏳',
-        'Demande envoyée au livreur',
-        'Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.'
-      );
+      setInlineStatus('', '⏳', 'Demande envoyée au livreur', 'Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.');
       showPopup();
     }, true);
   }
 
   let last = { phase: null, sec: null, geo: null };
-
   const tick = () => {
     const phase = getPhase();
     const geo = (elGeoText ? (elGeoText.textContent || '') : '');
@@ -797,58 +678,33 @@
     const phase2 = getPhase();
     if (sec > 0) {
       if (phase2 !== 'active') setPhase('active');
-    } else {
-      if (phase2 === 'active') setPhase('ended');
+    } else if (phase2 === 'active') {
+      setPhase('ended');
     }
 
     const p = getPhase();
     if (p !== last.phase || sec !== last.sec || geo !== last.geo) {
       if (p === 'active') {
         setTopState('Suivi actif', 'ok');
-        setInlineStatus(
-          'ok',
-          '✅',
-          'Suivi accepté',
-          'Le suivi est actif. Vous pouvez voir le livreur tant que l’accès est autorisé.'
-        );
+        setInlineStatus('ok', '✅', 'Suivi accepté', 'Le suivi est actif. Vous pouvez voir le livreur tant que l’accès est autorisé.');
         hidePopup();
       } else if (p === 'waiting') {
         setTopState('En attente de décision', 'warn');
-        setInlineStatus(
-          'warn',
-          '⏳',
-          'En attente d’acceptation du livreur',
-          'Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.'
-        );
+        setInlineStatus('', '⏳', 'En attente d’acceptation du livreur', 'Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.');
         showPopup();
       } else if (p === 'refused') {
         setTopState('Accès refusé', 'bad');
-        setInlineStatus(
-          'bad',
-          '❌',
-          'Demande refusée par le livreur',
-          'Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.'
-        );
+        setInlineStatus('bad', '❌', 'Demande refusée par le livreur', 'Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.');
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       } else if (p === 'ended') {
         setTopState('Suivi terminé', 'warn');
-        setInlineStatus(
-          'warn',
-          '⏱️',
-          'Suivi terminé',
-          'La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.'
-        );
+        setInlineStatus('', '⏱️', 'Suivi terminé', 'La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.');
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       } else {
         setTopState('En attente', 'warn');
-        setInlineStatus(
-          'warn',
-          'ℹ️',
-          'Prêt à demander le suivi',
-          'Entrez vos informations, puis appuyez sur « Activer le suivi ».'
-        );
+        setInlineStatus('', 'ℹ️', 'Prêt à demander le suivi', 'Entrez vos informations, puis appuyez sur « Activer le suivi ».');
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       }
