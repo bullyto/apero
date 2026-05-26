@@ -433,6 +433,87 @@
       background:#fff;
     }
 
+
+    /* ===== ADN66 STATUS INLINE (SOUS POSITION PARTAGÉE) ===== */
+    .clientTopStatePill{ display:none !important; }
+
+    .clientInlineStatus{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:12px 12px;
+      margin:0 0 12px;
+      border-radius:14px;
+      background:rgba(255,204,51,.12);
+      border:1px solid rgba(255,204,51,.38);
+      color:var(--adn-text);
+      font-weight:800;
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .clientInlineStatusIcon{
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:rgba(255,204,51,.22);
+      border:1px solid rgba(255,204,51,.45);
+      box-shadow:0 0 0 3px rgba(255,204,51,.12);
+      flex:0 0 auto;
+      font-size:14px;
+      line-height:1;
+    }
+
+    .clientInlineStatusText{
+      flex:1;
+      min-width:0;
+    }
+
+    .clientInlineStatusTitle{
+      font-size:13px;
+      font-weight:950;
+      margin:0 0 3px;
+    }
+
+    .clientInlineStatusSub{
+      font-size:12px;
+      font-weight:700;
+      opacity:.78;
+      margin:0;
+    }
+
+    .clientInlineStatus.ok{
+      background:rgba(33,208,122,.10);
+      border-color:rgba(33,208,122,.35);
+    }
+    .clientInlineStatus.ok .clientInlineStatusIcon{
+      background:rgba(33,208,122,.18);
+      border-color:rgba(33,208,122,.38);
+      box-shadow:0 0 0 3px rgba(33,208,122,.10);
+    }
+
+    .clientInlineStatus.bad{
+      background:rgba(255,77,77,.10);
+      border-color:rgba(255,77,77,.35);
+    }
+    .clientInlineStatus.bad .clientInlineStatusIcon{
+      background:rgba(255,77,77,.18);
+      border-color:rgba(255,77,77,.38);
+      box-shadow:0 0 0 3px rgba(255,77,77,.10);
+    }
+
+    .clientInlineStatus.neutral{
+      background:rgba(93,183,238,.10);
+      border-color:rgba(93,183,238,.25);
+    }
+    .clientInlineStatus.neutral .clientInlineStatusIcon{
+      background:rgba(93,183,238,.18);
+      border-color:rgba(93,183,238,.35);
+      box-shadow:0 0 0 3px rgba(93,183,238,.12);
+    }
+
 </style>
 </head>
 
@@ -452,7 +533,7 @@
       <span id="countdown">0:00</span>
     </div>
 
-    <div class="topPill" aria-label="État du suivi">
+    <div class="topPill clientTopStatePill" aria-label="État du suivi">
       <span class="topDot" id="stateDot" aria-hidden="true"></span>
       <span id="stateText">En attente</span>
     </div>
@@ -471,7 +552,16 @@
       </div>
 
 
-      <input
+      
+
+      <div class="clientInlineStatus neutral" id="clientInlineStatus" aria-live="polite">
+        <span class="clientInlineStatusIcon" id="clientInlineStatusIcon" aria-hidden="true">ℹ️</span>
+        <span class="clientInlineStatusText">
+          <span class="clientInlineStatusTitle" id="clientInlineStatusTitle">Prêt à demander le suivi</span>
+          <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez vos informations, puis appuyez sur « Activer le suivi ».</span>
+        </span>
+      </div>
+<input
         id="name"
         class="clientInput"
         maxlength="24"
@@ -569,11 +659,11 @@
 
 
 <script>
-/* ===== ADN66 UI SYNC (SAFE, NO OBSERVER, NO FETCH OVERRIDE) =====
-   - Empêche le clignotement "en attente de décision" -> "en attente"
-   - Ferme la popup quand le suivi devient actif (chrono > 0)
-   - Ré-ouvre la popup quand le suivi se termine/refusé
-   - Ne gèle pas la page (aucun MutationObserver / aucun override global)
+/* ===== ADN66 UI SYNC (STATUS DANS LA CARTE, PAS EN HAUT À DROITE) =====
+   - Déplace l'information de statut sous "Position partagée"
+   - Masque le statut haut droite via CSS
+   - Pas de popup intrusive pour pending/refused/ended
+   - Le client peut quitter/revenir : la session localStorage reste conservée
 */
 (() => {
   const elPopup = document.getElementById('clientPopup');
@@ -583,12 +673,28 @@
   const elGeoText = document.getElementById('geoText');
   const btnRequest = document.getElementById('btnRequest');
 
+  const inlineBox = document.getElementById('clientInlineStatus');
+  const inlineIcon = document.getElementById('clientInlineStatusIcon');
+  const inlineTitle = document.getElementById('clientInlineStatusTitle');
+  const inlineSub = document.getElementById('clientInlineStatusSub');
+
   const LS_KEY = 'adn_client_track_phase_v1'; // idle|waiting|active|ended|refused
   const getPhase = () => localStorage.getItem(LS_KEY) || 'idle';
   const setPhase = (p) => localStorage.setItem(LS_KEY, p);
 
   const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
   const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
+
+  const setInlineStatus = (mode, icon, title, sub) => {
+    if (!inlineBox) return;
+
+    inlineBox.classList.remove('ok', 'bad', 'neutral');
+    if (mode) inlineBox.classList.add(mode);
+
+    if (inlineIcon) inlineIcon.textContent = icon || 'ℹ️';
+    if (inlineTitle) inlineTitle.textContent = title || '';
+    if (inlineSub) inlineSub.textContent = sub || '';
+  };
 
   const setDot = (mode) => {
     if (!elStateDot) return;
@@ -613,6 +719,7 @@
 
   const parseToSeconds = (txt) => {
     const t = (txt || '').trim();
+    if (!t || t === '—') return 0;
     const parts = t.split(':').map(p => p.trim());
     if (parts.length === 2) {
       const m = parseInt(parts[0], 10);
@@ -628,16 +735,20 @@
     return 0;
   };
 
-  // Clic: on fixe l'état "waiting" immédiatement (anti-flicker)
   if (btnRequest) {
     btnRequest.addEventListener('click', () => {
       setPhase('waiting');
       setTopState('En attente de décision', 'warn');
+      setInlineStatus(
+        'neutral',
+        '⏳',
+        'Demande envoyée au livreur',
+        'Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.'
+      );
       showPopup();
     }, true);
   }
 
-  // Boucle légère (lecture -> décision -> écriture minimale)
   let last = { phase: null, sec: null, geo: null };
 
   const tick = () => {
@@ -646,7 +757,6 @@
     const geoL = geo.toLowerCase();
     const sec = elCountdown ? parseToSeconds(elCountdown.textContent) : 0;
 
-    // 1) Signaux forts depuis geoText (si ton client.js les affiche)
     if (geoL.includes('refus')) {
       if (phase !== 'refused') setPhase('refused');
     } else if (geoL.includes('stop') || geoL.includes('termin') || geoL.includes('expir') || geoL.includes('fin')) {
@@ -655,35 +765,61 @@
       if (phase !== 'active') setPhase('waiting');
     }
 
-    // 2) Chrono = actif si >0 (et l'accès se coupe quand il retombe à 0)
     const phase2 = getPhase();
     if (sec > 0) {
       if (phase2 !== 'active') setPhase('active');
     } else {
-      // si on était actif et qu'on tombe à 0 => fin
       if (phase2 === 'active') setPhase('ended');
     }
 
-    // 3) Appliquer UI selon phase (écriture minimale)
     const p = getPhase();
     if (p !== last.phase || sec !== last.sec || geo !== last.geo) {
       if (p === 'active') {
         setTopState('Suivi actif', 'ok');
+        setInlineStatus(
+          'ok',
+          '✅',
+          'Suivi accepté',
+          'Le suivi est actif. Vous pouvez voir le livreur tant que l’accès est autorisé.'
+        );
         hidePopup();
       } else if (p === 'waiting') {
         setTopState('En attente de décision', 'warn');
+        setInlineStatus(
+          'neutral',
+          '⏳',
+          'En attente d’acceptation du livreur',
+          'Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.'
+        );
         showPopup();
       } else if (p === 'refused') {
         setTopState('Accès refusé', 'bad');
+        setInlineStatus(
+          'bad',
+          '❌',
+          'Demande refusée par le livreur',
+          'Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.'
+        );
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       } else if (p === 'ended') {
         setTopState('Suivi terminé', 'warn');
+        setInlineStatus(
+          'neutral',
+          '⏱️',
+          'Suivi terminé',
+          'La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.'
+        );
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       } else {
-        // idle
         setTopState('En attente', 'warn');
+        setInlineStatus(
+          'neutral',
+          'ℹ️',
+          'Prêt à demander le suivi',
+          'Entrez vos informations, puis appuyez sur « Activer le suivi ».'
+        );
         showPopup();
         if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
       }
@@ -691,7 +827,6 @@
     }
   };
 
-  // Init: on n'écrase pas un suivi actif déjà en cours
   tick();
   setInterval(tick, 350);
 })();
