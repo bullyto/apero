@@ -33,6 +33,7 @@ const LS = {
   requestId: (CONFIG.LS_PREFIX || "adn66_track_") + "requestId",
   clientId: (CONFIG.LS_PREFIX || "adn66_track_") + "clientId",
   lastRequestMs: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRequestMs",
+  publicPhase: "adn_client_track_phase_v1",
 };
 
 const STATE = {
@@ -194,18 +195,54 @@ function adnOverlayPhoneMissing() {
 }
 
 function adnOverlayRequestSent() {
+  adnOverlayWaitingDriver();
+}
+
+function adnOverlayWaitingDriver() {
   adnOverlayShow({
-    title: "🔐 Information — Suivi de livraison",
+    title: "Demande envoyée au livreur",
     html:
-      "<b>Votre demande de suivi de livraison a bien été transmise.</b><br><br>" +
-      "Dans le cadre de ce service, le livreur peut avoir accès à :<br><br>" +
-      "• votre <b>position GPS</b>,<br>" +
-      "• votre <b>nom</b>,<br>" +
-      "• votre <b>numéro de téléphone</b>.<br><br>" +
-      "Le livreur reste libre d’accepter ou de refuser le partage de sa position.<br><br>" +
-      "Les données sont utilisées uniquement pour la gestion de la livraison en cours et sont définitivement supprimées du serveur sous 24 heures.",
+      "<b>Votre demande de suivi a bien été transmise.</b><br><br>" +
+      "Le livreur doit maintenant <b>accepter le partage de sa position</b> depuis son application.<br><br>" +
+      "Cela peut prendre <b>plusieurs minutes</b> selon la livraison en cours, la conduite ou le réseau.<br><br>" +
+      "Vous pouvez <b>quitter cette page et revenir plus tard</b> : cela <b>n’annule pas</b> votre demande de suivi.",
+    primaryLabel: "J’ai compris",
+  });
+}
+
+function adnOverlayDriverRefused() {
+  adnOverlayShow({
+    title: "Suivi refusé par le livreur",
+    html:
+      "Le livreur n’a pas validé le partage de sa position pour cette demande.<br><br>" +
+      "Cela peut arriver si la livraison ne permet pas le suivi en direct, si la demande est trop ancienne ou si le livreur ne peut pas l’activer pour le moment.<br><br>" +
+      "Vous pouvez relancer une demande si nécessaire.",
     primaryLabel: "OK",
   });
+}
+
+function adnOverlayTrackingEnded() {
+  adnOverlayShow({
+    title: "Suivi terminé",
+    html:
+      "La session de suivi est terminée.<br><br>" +
+      "Le livreur a mis fin au partage de position ou le temps d’accès est arrivé à expiration.<br><br>" +
+      "Si vous avez encore besoin du suivi, vous pouvez relancer une nouvelle demande.",
+    primaryLabel: "OK",
+  });
+}
+
+function setPublicPhase(phase) {
+  try { localStorage.setItem(LS.publicPhase, phase); } catch {}
+}
+
+function showStatusOverlayOnce(key, showFn) {
+  const k = `adn_status_overlay_seen_${key}_${STATE.requestId || STATE.clientId || "none"}`;
+  try {
+    if (sessionStorage.getItem(k) === "1") return;
+    sessionStorage.setItem(k, "1");
+  } catch {}
+  showFn();
 }
 
 function fmtRemaining(ms) {
@@ -790,6 +827,7 @@ function loadSession() {
     STATE.requestId = requestId;
     STATE.clientId = clientId;
     STATE.status = "pending";
+    setPublicPhase("waiting");
     return true;
   }
   return false;
@@ -835,6 +873,7 @@ function resetFlow({ keepName = true } = {}) {
   stopAllLoops();
   clearSession();
   STATE.status = "idle";
+  setPublicPhase("idle");
   STATE.accessRemainingMs = null;
 
   setBadge("Prêt : demande de suivi");
@@ -921,18 +960,22 @@ async function pollStatus() {
     STATE.status = status || "pending";
 
     if (status === "pending") {
+      setPublicPhase("waiting");
       setBadge("Demande envoyée • en attente");
       setState("En attente de décision");
       setCountdown("—");
+      showStatusOverlayOnce("waiting", adnOverlayWaitingDriver);
 
       STATE.tPollStatus = setTimeout(pollStatus, CONFIG.POLL_STATUS_MS || 3000);
       return;
     }
 
     if (status === "refused") {
+      setPublicPhase("refused");
       setBadge("Refusé");
       setState("Refusé par le livreur");
       setCountdown("—");
+      showStatusOverlayOnce("refused", adnOverlayDriverRefused);
 
       disableRequest(false);
       showReset(true);
@@ -940,9 +983,11 @@ async function pollStatus() {
     }
 
     if (status === "expired") {
+      setPublicPhase("ended");
       setBadge("Expiré");
       setState("Demande expirée");
       setCountdown("—");
+      showStatusOverlayOnce("ended", adnOverlayTrackingEnded);
 
       disableRequest(false);
       showReset(true);
@@ -950,8 +995,13 @@ async function pollStatus() {
     }
 
     if (status === "accepted") {
+      setPublicPhase("active");
       setBadge("Autorisé ✅");
       setState("Suivi actif");
+      try {
+        const overlay = document.getElementById("adnOverlay");
+        if (overlay) overlay.style.display = "none";
+      } catch {}
 
       if (typeof access?.remainingMs === "number") {
         STATE.accessRemainingMs = access.remainingMs;
@@ -1000,6 +1050,8 @@ function startAcceptedLoops() {
     setCountdown(fmtRemaining(STATE.accessRemainingMs));
     if (STATE.accessRemainingMs <= 0) {
       STATE.status = "expired";
+      setPublicPhase("ended");
+      showStatusOverlayOnce("ended", adnOverlayTrackingEnded);
 
       setBadge("Accès terminé");
       setState("Accès terminé");
@@ -1042,7 +1094,7 @@ async function handleRequestClick() {
   if (!STATE.clientPos) {
     const ok = await requestGeolocationOnceInteractive();
     if (!ok || !STATE.clientPos) {
-      toast("Tu dois accepter de partager ta position pour voir le livreur.");
+      toast("Vous devez accepter de partager votre position pour voir le livreur.");
       return;
     }
   }
@@ -1051,7 +1103,7 @@ async function handleRequestClick() {
     const last = Number(lsGet(LS.lastRequestMs, "0")) || 0;
     const cooldown = CONFIG.REQUEST_COOLDOWN_MS || 30000;
     const remain = Math.ceil((cooldown - (Date.now() - last)) / 1000);
-    toast(`Attends ${remain}s avant de redemander.`);
+    toast(`Veuillez attendre ${remain}s avant de redemander.`);
     return;
   }
 
@@ -1076,6 +1128,7 @@ async function handleRequestClick() {
     STATE.requestId = String(data.requestId || "");
     STATE.clientId = String(data.clientId || "");
     STATE.status = "pending";
+    setPublicPhase("waiting");
 
     if (!STATE.requestId || !STATE.clientId) {
       throw new Error("missing_request_or_client_id");
