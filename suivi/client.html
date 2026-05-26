@@ -2,10 +2,6 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- ADN66 FORCE MAJ 20260526-validation-v8-topbar-full -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Suivi livraison — Apéro de Nuit 66</title>
   <!-- ✅ SEO / Référencement (sans impact visuel) -->
@@ -65,7 +61,6 @@
 
 
   <link rel="icon" href="./assets/icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=20260526-validation-v8-topbar-full">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -438,10 +433,77 @@
       background:#fff;
     }
 
+
+    /* ===== ADN66 STATUT CLIENT SOUS POSITION — 20260526-original-plus-securites-v1 ===== */
+    .clientTopStatePill{
+      display:none !important;
+    }
+
+    .clientInlineStatus{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      padding:10px 12px;
+      margin:0 0 12px;
+      border-radius:14px;
+      background:rgba(93,183,238,.10);
+      border:1px solid rgba(93,183,238,.25);
+      color:var(--adn-text);
+      font-weight:800;
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .clientInlineStatusIcon{
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:rgba(93,183,238,.18);
+      border:1px solid rgba(93,183,238,.35);
+      box-shadow:0 0 0 3px rgba(93,183,238,.12);
+      flex:0 0 auto;
+    }
+
+    .clientInlineStatusText{
+      flex:1;
+      min-width:0;
+    }
+
+    .clientInlineStatusTitle{
+      display:block;
+      font-size:13px;
+      font-weight:950;
+      margin:0 0 3px;
+    }
+
+    .clientInlineStatusSub{
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      opacity:.78;
+    }
+
+    .clientInlineStatus.waiting{
+      background:rgba(255,204,51,.12);
+      border-color:rgba(255,204,51,.40);
+    }
+
+    .clientInlineStatus.ok{
+      background:rgba(33,208,122,.10);
+      border-color:rgba(33,208,122,.35);
+    }
+
+    .clientInlineStatus.bad{
+      background:rgba(255,77,77,.10);
+      border-color:rgba(255,77,77,.35);
+    }
+
 </style>
 </head>
 
-<body class="client">
+<body>
 
   <!-- MAP -->
   <div id="map"></div>
@@ -457,7 +519,7 @@
       <span id="countdown">0:00</span>
     </div>
 
-    <div class="topPill clientTopStatePill" id="clientTopStatePill" aria-label="État du suivi">
+    <div class="topPill clientTopStatePill" aria-label="État du suivi">
       <span class="topDot" id="stateDot" aria-hidden="true"></span>
       <span id="stateText">En attente</span>
     </div>
@@ -476,21 +538,21 @@
       </div>
 
 
-      
-
-      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-validation-v8-topbar-full">
+      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-original-plus-securites-v1">
         <span class="clientInlineStatusIcon" id="clientInlineStatusIcon" aria-hidden="true">ℹ️</span>
         <span class="clientInlineStatusText">
           <span class="clientInlineStatusTitle" id="clientInlineStatusTitle">Prêt à demander le suivi</span>
-          <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez vos informations, puis appuyez sur « Activer le suivi ».</span>
+          <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez votre nom, prénom et téléphone pour activer le suivi.</span>
         </span>
       </div>
-      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-validation-v8-topbar-full</div>
-<input
+
+
+
+      <input
         id="name"
         class="clientInput"
         maxlength="40"
-        autocomplete="given-name"
+        autocomplete="name"
         placeholder="Nom et prénom"
       >
 
@@ -571,7 +633,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260526-validation-v8-topbar-full"></script>
+  <script type="module" src="./client.js?v=20260526-original-plus-securites-v1"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {
@@ -584,9 +646,8 @@
 
 
 <script>
-/* ADN66 UI SYNC disabled 20260526-inline-status-v6-fix
-   Le statut est maintenant piloté par client.js uniquement.
-   Cela évite les anciens états localStorage qui forçaient "en attente" avant demande.
+/* ADN66 UI SYNC désactivé — 20260526-original-plus-securites-v1
+   Le statut sous la position est maintenant piloté par client.js.
 */
 (() => {
   try { localStorage.removeItem('adn_client_track_phase_v1'); } catch(e) {}
