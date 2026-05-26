@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260526-original-plus-securites-v3-nom-ou-prenom
+// ADN66 BUILD 20260526-original-plus-securites-v4-accepted-hide
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -58,6 +58,7 @@ const STATE = {
   tSendClientPos: null,
   tCountdown: null,
   accessRemainingMs: null,
+  acceptedPopupHideTimer: null,
 
   // ✅ fit throttle
   lastFitMs: 0,
@@ -1028,6 +1029,10 @@ function stopAllLoops() {
 }
 
 function resetFlow({ keepName = true } = {}) {
+  if (STATE.acceptedPopupHideTimer) {
+    clearTimeout(STATE.acceptedPopupHideTimer);
+    STATE.acceptedPopupHideTimer = null;
+  }
   stopAllLoops();
   clearSession();
   STATE.status = "idle";
@@ -1151,7 +1156,16 @@ async function pollStatus() {
     if (status === "accepted") {
       setBadge("Autorisé ✅");
       setState("Suivi actif");
-      setInlineStatus("ok", "✅", "Suivi accepté", "Le suivi est actif. Vous pouvez voir le livreur tant que l’accès est autorisé.");
+      setInlineStatus(
+        "ok",
+        "✅",
+        "Suivi accepté",
+        "Le suivi est actif. La carte va s’afficher automatiquement."
+      );
+
+      // On garde la popup 3 secondes, sans afficher le compteur immédiatement.
+      // Ensuite la popup disparaît et le compteur démarre normalement.
+      setCountdown("—");
 
       if (typeof access?.remainingMs === "number") {
         STATE.accessRemainingMs = access.remainingMs;
@@ -1160,7 +1174,17 @@ async function pollStatus() {
       stopTimeout(STATE.tPollStatus);
       STATE.tPollStatus = null;
 
-      startAcceptedLoops();
+      if (STATE.acceptedPopupHideTimer) {
+        clearTimeout(STATE.acceptedPopupHideTimer);
+        STATE.acceptedPopupHideTimer = null;
+      }
+
+      STATE.acceptedPopupHideTimer = setTimeout(() => {
+        STATE.acceptedPopupHideTimer = null;
+        setPopupVisible(false);
+        startAcceptedLoops();
+      }, 3000);
+
       return;
     }
 
@@ -1203,7 +1227,7 @@ function startAcceptedLoops() {
 
       setBadge("Accès terminé");
       setState("Accès terminé");
-      setInlineStatus("waiting", "⏱️", "Suivi terminé", "La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.");
+      setInlineStatus("waiting", "⏱️", "Suivi terminé", "La session de suivi est terminée. La page va revenir au départ.");
       setCountdown("0:00");
 
       stopTimer(STATE.tSendClientPos);
@@ -1215,8 +1239,10 @@ function startAcceptedLoops() {
 
       driverStopLoop();
 
-      disableRequest(false);
-      showReset(true);
+      // Après expiration, on revient proprement au départ.
+      setTimeout(() => {
+        resetFlow({ keepName: true });
+      }, 1800);
     }
   }, 1000);
 }
