@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260526-original-plus-securites-v4-accepted-hide
+// ADN66 BUILD 20260526-original-plus-securites-v5-accepted-hide-force-display
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -324,10 +324,28 @@ function showValidationPopup(title, message) {
 
 function setPopupVisible(visible) {
   if (!els.popup) return;
+
+  // ADN66 FIX:
+  // Le panneau .clientPopup est visible par défaut dans le CSS.
+  // Retirer seulement la classe "isVisible" ne suffit donc pas toujours
+  // à le fermer après acceptation du suivi.
+  // On force l'affichage/masquage directement pour garantir le comportement :
+  // - visible au départ / refus / expiration
+  // - masqué 3 secondes après "Suivi accepté"
   if (visible) {
     els.popup.classList.add("isVisible");
+    els.popup.hidden = false;
+    els.popup.removeAttribute("aria-hidden");
+    els.popup.style.display = "";
+    els.popup.style.pointerEvents = "";
+    els.popup.style.opacity = "";
   } else {
     els.popup.classList.remove("isVisible");
+    els.popup.hidden = true;
+    els.popup.setAttribute("aria-hidden", "true");
+    els.popup.style.display = "none";
+    els.popup.style.pointerEvents = "none";
+    els.popup.style.opacity = "0";
   }
 }
 
