@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260526-original-plus-securites-v1
+// ADN66 BUILD 20260526-original-plus-securites-v3-nom-ou-prenom
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -162,11 +162,17 @@ function cleanHumanName(raw) {
 
 function isSuspiciousNamePart(part) {
   const p = String(part || "").toLowerCase();
+
+  // Filtre anti-troll volontairement léger pour éviter de bloquer de vrais noms.
   if (p.length < 2) return true;
-  if (p.length > 22) return true;
+  if (p.length > 28) return true;
+
+  // Refuse aaa, bbbb, etc.
   if (/([a-zà-ÿ])\1\1/i.test(p)) return true;
+
+  // Refuse les mots troll évidents.
   if (ADN_BAD_NAME_WORDS.includes(p)) return true;
-  if (/^[bcdfghjklmnpqrstvwxz]{5,}$/i.test(p)) return true;
+
   return false;
 }
 
@@ -174,20 +180,24 @@ function validateFullName(raw) {
   const name = cleanHumanName(raw);
 
   if (!name) {
-    return { ok: false, value: "", title: "Nom et prénom requis", message: "Veuillez indiquer votre nom et prénom." };
+    return { ok: false, value: "", title: "Nom ou prénom requis", message: "Veuillez indiquer votre nom ou prénom." };
   }
 
   if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(name)) {
-    return { ok: false, value: name, title: "Nom invalide", message: "Le nom et prénom doivent contenir uniquement des lettres." };
+    return { ok: false, value: name, title: "Nom invalide", message: "Le nom ou prénom doit contenir uniquement des lettres." };
   }
 
   const parts = name.split(" ").filter(Boolean);
-  if (parts.length < 2) {
-    return { ok: false, value: name, title: "Nom et prénom requis", message: "Veuillez indiquer votre nom et votre prénom, pas seulement un prénom." };
-  }
 
+  // On accepte un seul mot : nom OU prénom.
+  // On garde seulement les filtres anti-troll évidents.
   if (parts.some(isSuspiciousNamePart)) {
-    return { ok: false, value: name, title: "Informations invalides", message: "Le nom ou prénom indiqué semble invalide. Merci d’indiquer de vraies informations." };
+    return {
+      ok: false,
+      value: name,
+      title: "Information invalide",
+      message: "Le nom ou prénom indiqué semble invalide. Merci d’indiquer une vraie information."
+    };
   }
 
   return { ok: true, value: name, title: "", message: "" };
@@ -220,11 +230,22 @@ function validatePhoneMobile(raw) {
     return { ok: false, value: "", title: "Téléphone requis", message: "Veuillez indiquer un numéro de téléphone mobile valide." };
   }
 
+  // Accepte uniquement les mobiles français convertis en +336 / +337.
   if (!/^(\+336|\+337)\d{8}$/.test(phone)) {
     return { ok: false, value: phone, title: "Téléphone invalide", message: "Le suivi accepte uniquement les numéros mobiles français en 06 ou 07." };
   }
 
-  if (isBadPhonePattern(phone)) {
+  // Filtre léger : on bloque seulement les faux évidents.
+  const local = "0" + phone.replace("+33", "");
+  const fakeNumbers = new Set([
+    "0600000000", "0611111111", "0622222222", "0633333333", "0644444444",
+    "0655555555", "0666666666", "0677777777", "0688888888", "0699999999",
+    "0700000000", "0711111111", "0722222222", "0733333333", "0744444444",
+    "0755555555", "0766666666", "0777777777", "0788888888", "0799999999",
+    "0612345678", "0712345678"
+  ]);
+
+  if (fakeNumbers.has(local)) {
     return { ok: false, value: phone, title: "Téléphone invalide", message: "Ce numéro semble faux ou invalide. Merci d’indiquer un vrai numéro mobile." };
   }
 
@@ -283,10 +304,15 @@ function clearBadAttempts() {
 
 function showValidationPopup(title, message) {
   const abuse = registerBadAttempt();
-  const warning =
-    abuse.blockedSeconds > 0
-      ? `<br><br><b>Accès temporairement bloqué.</b><br>Merci de patienter ${abuse.blockedSeconds}s avant de réessayer.`
-      : `<br><br><b>Attention :</b> en cas de récidive, l’accès au suivi peut être temporairement bloqué.`;
+
+  let warning = "";
+  if (abuse.blockedSeconds > 0) {
+    warning = `<br><br><b>Accès temporairement bloqué.</b><br>Trop de tentatives incorrectes. Merci de patienter ${abuse.blockedSeconds}s avant de réessayer.`;
+  } else if (abuse.count >= 3) {
+    warning = `<br><br><b>Attention :</b> plusieurs erreurs ont été détectées. En cas de nouvelle récidive, l’accès au suivi sera temporairement bloqué.`;
+  } else {
+    warning = `<br><br><b>Attention :</b> en cas d’abus ou de récidive, l’accès au suivi peut être temporairement bloqué.`;
+  }
 
   adnOverlayShow({
     title,
@@ -294,7 +320,6 @@ function showValidationPopup(title, message) {
     primaryLabel: "OK",
   });
 }
-
 
 function setPopupVisible(visible) {
   if (!els.popup) return;
@@ -352,8 +377,8 @@ function adnOverlayShow({ title = "Information", html = "", primaryLabel = "OK" 
 
 function adnOverlayNameMissing() {
   showValidationPopup(
-    "Nom et prénom requis",
-    "Veuillez indiquer votre <b>nom et prénom</b>.<br><br>Ces informations permettent au livreur de vous identifier rapidement lors de la livraison."
+    "Nom ou prénom requis",
+    "Veuillez indiquer votre <b>nom ou prénom</b>.<br><br>Ces informations permettent au livreur de vous identifier rapidement lors de la livraison."
   );
 }
 
@@ -1332,7 +1357,7 @@ function boot() {
 
   setBadge("Prêt : demande de suivi");
   setState("—");
-  setInlineStatus("", "ℹ️", "Prêt à demander le suivi", "Entrez votre nom, prénom et téléphone pour activer le suivi.");
+  setInlineStatus("", "ℹ️", "Prêt à demander le suivi", "Entrez votre nom ou prénom et votre téléphone pour activer le suivi.");
   setCountdown("—");
   setGeo("—");
 
