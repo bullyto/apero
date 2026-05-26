@@ -748,3 +748,99 @@ body.client .legalBar{
   font-weight:700;
   user-select:none;
 }
+
+
+/* =========================================================
+   ADN66 VALIDATION UI 20260526-validation-v7
+   - champs lisibles
+   - statut initial plus clair
+   ========================================================= */
+
+.clientPopupCard .clientInput,
+.clientPopupCard input#name,
+.clientPopupCard input#phone,
+#name.clientInput,
+#phone.clientInput{
+  background:#eef7ff !important;
+  color:#0b1c2d !important;
+  border:2px solid rgba(93,183,238,.45) !important;
+  opacity:1 !important;
+  -webkit-text-fill-color:#0b1c2d !important;
+}
+
+.clientPopupCard .clientInput::placeholder,
+.clientPopupCard input#name::placeholder,
+.clientPopupCard input#phone::placeholder{
+  color:rgba(11,28,45,.46) !important;
+  -webkit-text-fill-color:rgba(11,28,45,.46) !important;
+}
+
+.clientPopupCard .clientInput:focus,
+.clientPopupCard input#name:focus,
+.clientPopupCard input#phone:focus{
+  background:#f8fcff !important;
+  border-color:#5db7ee !important;
+  box-shadow:0 0 0 4px rgba(93,183,238,.20) !important;
+}
+
+.clientPopupCard .clientInput:disabled,
+.clientPopupCard input#name:disabled,
+.clientPopupCard input#phone:disabled{
+  background:#e2eaf3 !important;
+  color:rgba(11,28,45,.70) !important;
+  -webkit-text-fill-color:rgba(11,28,45,.70) !important;
+  opacity:1 !important;
+}
+
+.clientInlineStatus{
+  background:rgba(93,183,238,.10) !important;
+  border-color:rgba(93,183,238,.28) !important;
+}
+
+.clientInlineStatus.waiting{
+  background:rgba(255,204,51,.12) !important;
+  border-color:rgba(255,204,51,.38) !important;
+}
+
+.clientInlineStatus.ok{
+  background:rgba(33,208,122,.10) !important;
+  border-color:rgba(33,208,122,.35) !important;
+}
+
+.clientInlineStatus.bad{
+  background:rgba(255,77,77,.10) !important;
+  border-color:rgba(255,77,77,.35) !important;
+}
+
+
+/* =========================================================
+   ADN66 TOP BAR FULL WIDTH 20260526-validation-v8-topbar-full
+   La barre noire du haut reprend toute la largeur de l'écran
+   ========================================================= */
+
+body.client .clientTopbar,
+.clientTopbar{
+  position:fixed !important;
+  top:0 !important;
+  left:0 !important;
+  right:0 !important;
+  width:100vw !important;
+  z-index:10020 !important;
+  border-radius:0 !important;
+  margin:0 !important;
+  padding:calc(12px + env(safe-area-inset-top)) 12px 12px !important;
+  background:rgba(11,28,45,.94) !important;
+  box-shadow:0 12px 28px rgba(0,0,0,.35) !important;
+  box-sizing:border-box !important;
+}
+
+/* La carte commence sous la barre pleine largeur */
+body.client .clientMapWrap{
+  padding-top:calc(76px + env(safe-area-inset-top)) !important;
+}
+
+/* Si la carte avait un arrondi visible en haut, on le garde proprement sous la barre */
+body.client #map,
+.clientMap{
+  border-radius:0 0 24px 24px !important;
+}

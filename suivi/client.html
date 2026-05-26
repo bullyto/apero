@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- ADN66 FORCE MAJ 20260526-inline-status-v6-fix -->
+  <!-- ADN66 FORCE MAJ 20260526-validation-v8-topbar-full -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -65,7 +65,7 @@
 
 
   <link rel="icon" href="./assets/icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=20260526-inline-status-v6-fix">
+  <link rel="stylesheet" href="./style.css?v=20260526-validation-v8-topbar-full">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -478,20 +478,20 @@
 
       
 
-      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-inline-status-v6-fix">
+      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-validation-v8-topbar-full">
         <span class="clientInlineStatusIcon" id="clientInlineStatusIcon" aria-hidden="true">ℹ️</span>
         <span class="clientInlineStatusText">
           <span class="clientInlineStatusTitle" id="clientInlineStatusTitle">Prêt à demander le suivi</span>
           <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez vos informations, puis appuyez sur « Activer le suivi ».</span>
         </span>
       </div>
-      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-inline-status-v6-fix</div>
+      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-validation-v8-topbar-full</div>
 <input
         id="name"
         class="clientInput"
-        maxlength="24"
+        maxlength="40"
         autocomplete="given-name"
-        placeholder="Entrer votre nom"
+        placeholder="Nom et prénom"
       >
 
 
@@ -502,7 +502,7 @@
   maxlength="20"
   autocomplete="tel"
   inputmode="tel"
-  placeholder="Votre téléphone (ex: 0652336461)"
+  placeholder="Téléphone mobile (06 ou 07)"
 >
       <div class="clientBtnRow">
         <button id="btnRequest" class="clientBtn">Activer le suivi</button>
@@ -571,7 +571,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260526-inline-status-v6-fix"></script>
+  <script type="module" src="./client.js?v=20260526-validation-v8-topbar-full"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {

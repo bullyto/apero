@@ -1,4 +1,4 @@
-// ADN66 JS BUILD 20260526-inline-status-v6-fix
+// ADN66 JS BUILD 20260526-validation-v8-topbar-full
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -198,16 +198,16 @@ function adnOverlayShow({ title = "Information", html = "", primaryLabel = "OK" 
 
 function adnOverlayNameMissing() {
   adnOverlayShow({
-    title: "Information",
-    html: "Entrez vôtre <b>prénom</b>.<br><br>Il permet au livreur<br>de vous identifier rapidement<br>lors de la livraison.",
+    title: "Nom et prénom requis",
+    html: "Entrez votre <b>nom et prénom</b>.<br><br>Il permet au livreur<br>de vous identifier rapidement<br>lors de la livraison.",
     primaryLabel: "OK",
   });
 }
 
 function adnOverlayPhoneMissing() {
   adnOverlayShow({
-    title: "Information",
-    html: "Entrez vôtre <b>numéro de téléphone</b>.<br><br>Il est utilisé uniquement<br>si le livreur doit vous contacter<br>pendant la livraison.",
+    title: "Téléphone requis",
+    html: "Entrez votre <b>numéro de téléphone mobile</b>.<br><br>Il est utilisé uniquement<br>si le livreur doit vous contacter<br>pendant la livraison.",
     primaryLabel: "OK",
   });
 }
@@ -1045,29 +1045,216 @@ function startAcceptedLoops() {
   }, 1000);
 }
 
+
+// ----------------------------
+// ADN66 validation helpers
+// ----------------------------
+const ADN_BAD_NAME_WORDS = [
+  "test", "toto", "tata", "titi", "admin", "root", "null", "undefined",
+  "pute", "fdp", "connard", "con", "bite", "couille", "merde", "spam",
+  "fake", "faux", "aaaa", "azerty", "qwerty"
+];
+
+function cleanHumanName(raw) {
+  return String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[’`]/g, "'");
+}
+
+function isSuspiciousNamePart(part) {
+  const p = String(part || "").toLowerCase();
+  if (p.length < 2) return true;
+  if (p.length > 22) return true;
+  if (/([a-zà-ÿ])\1\1/i.test(p)) return true; // aaa, bbb
+  if (ADN_BAD_NAME_WORDS.includes(p)) return true;
+  if (/^[bcdfghjklmnpqrstvwxz]{5,}$/i.test(p)) return true; // consonnes sans voyelles
+  return false;
+}
+
+function validateFullName(raw) {
+  const name = cleanHumanName(raw);
+
+  if (!name) {
+    return { ok: false, value: "", message: "Entrez votre nom et prénom." };
+  }
+
+  if (!/^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/.test(name)) {
+    return {
+      ok: false,
+      value: name,
+      message: "Le nom et prénom doivent contenir uniquement des lettres."
+    };
+  }
+
+  const parts = name.split(" ").filter(Boolean);
+
+  if (parts.length < 2) {
+    return {
+      ok: false,
+      value: name,
+      message: "Entrez votre nom et votre prénom, pas seulement un prénom."
+    };
+  }
+
+  if (parts.some(isSuspiciousNamePart)) {
+    return {
+      ok: false,
+      value: name,
+      message: "Nom ou prénom invalide. Merci d’indiquer de vraies informations."
+    };
+  }
+
+  return { ok: true, value: name, message: "" };
+}
+
+function isBadPhonePattern(e164) {
+  const local = "0" + String(e164 || "").replace("+33", "");
+  const digits = local.replace(/\D/g, "");
+
+  if (!/^0[67]\d{8}$/.test(digits)) return true;
+
+  const fakeNumbers = new Set([
+    "0600000000", "0611111111", "0622222222", "0633333333", "0644444444",
+    "0655555555", "0666666666", "0677777777", "0688888888", "0699999999",
+    "0700000000", "0711111111", "0722222222", "0733333333", "0744444444",
+    "0755555555", "0766666666", "0777777777", "0788888888", "0799999999",
+    "0601020304", "0612345678", "0712345678"
+  ]);
+
+  if (fakeNumbers.has(digits)) return true;
+  if (/(\d)\1{5,}/.test(digits)) return true; // 6 chiffres identiques
+  if (digits.includes("123456") || digits.includes("654321")) return true;
+
+  return false;
+}
+
+function validatePhoneMobile(raw) {
+  const phone = normalizePhoneFR(raw);
+  if (!phone) {
+    return { ok: false, value: "", message: "Entrez un numéro de téléphone mobile valide." };
+  }
+
+  if (!/^(\+336|\+337)\d{8}$/.test(phone)) {
+    return {
+      ok: false,
+      value: phone,
+      message: "Le suivi accepte uniquement les mobiles français en 06 ou 07."
+    };
+  }
+
+  if (isBadPhonePattern(phone)) {
+    return {
+      ok: false,
+      value: phone,
+      message: "Ce numéro semble invalide. Merci d’indiquer un vrai numéro mobile."
+    };
+  }
+
+  return { ok: true, value: phone, message: "" };
+}
+
+const ADN_ANTI_SPAM_KEY = "adn66_track_antispam_v1";
+
+function getAntiSpamState() {
+  try {
+    return JSON.parse(localStorage.getItem(ADN_ANTI_SPAM_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveAntiSpamState(state) {
+  try {
+    localStorage.setItem(ADN_ANTI_SPAM_KEY, JSON.stringify(state || {}));
+  } catch {}
+}
+
+function registerInvalidAttempt() {
+  const now = Date.now();
+  const state = getAntiSpamState();
+  const attempts = Array.isArray(state.invalidAttempts) ? state.invalidAttempts : [];
+  const recent = attempts.filter((ts) => now - Number(ts) < 10 * 60 * 1000);
+  recent.push(now);
+
+  state.invalidAttempts = recent;
+  if (recent.length >= 5) {
+    state.blockUntil = now + 2 * 60 * 1000;
+  }
+
+  saveAntiSpamState(state);
+}
+
+function getAntiSpamBlockRemainingSec() {
+  const state = getAntiSpamState();
+  const blockUntil = Number(state.blockUntil || 0);
+  const now = Date.now();
+  if (blockUntil > now) {
+    return Math.ceil((blockUntil - now) / 1000);
+  }
+  return 0;
+}
+
+function clearInvalidAttempts() {
+  const state = getAntiSpamState();
+  state.invalidAttempts = [];
+  state.blockUntil = 0;
+  saveAntiSpamState(state);
+}
+
 // ----------------------------
 // Actions
 // ----------------------------
 async function handleRequestClick() {
-  const name = (els.name?.value || "").trim().slice(0, 40);
-  if (!name) {
-    adnOverlayNameMissing();
+  const spamRemain = getAntiSpamBlockRemainingSec();
+  if (spamRemain > 0) {
+    adnOverlayShow({
+      title: "Trop de tentatives",
+      html: `Par sécurité, merci de patienter <b>${spamRemain}s</b> avant de refaire une demande.`,
+      primaryLabel: "OK",
+    });
     return;
   }
 
-  const phone = persistPhoneIfValid();
-  if (!phone) {
-    adnOverlayPhoneMissing();
+  const nameCheck = validateFullName(els.name?.value || "");
+  if (!nameCheck.ok) {
+    registerInvalidAttempt();
+    adnOverlayShow({
+      title: "Nom et prénom requis",
+      html: `${nameCheck.message}<br><br>Exemple : <b>Jean Dupont</b>.`,
+      primaryLabel: "OK",
+    });
     return;
   }
+
+  if (els.name) els.name.value = nameCheck.value;
+
+  const phoneCheck = validatePhoneMobile(els.phone?.value || lsGet(LS.phone, "") || "");
+  if (!phoneCheck.ok) {
+    registerInvalidAttempt();
+    adnOverlayShow({
+      title: "Téléphone invalide",
+      html: `${phoneCheck.message}<br><br>Utilisez un numéro mobile français en <b>06</b> ou <b>07</b>.`,
+      primaryLabel: "OK",
+    });
+    return;
+  }
+
+  if (els.phone) els.phone.value = phoneCheck.value;
+
+  const name = nameCheck.value.slice(0, 40);
+  const phone = phoneCheck.value;
+
+  clearInvalidAttempts();
 
   lsSet(LS.name, name);
+  lsSet(LS.phone, phone);
 
-  // ✅ IMPORTANT: assure la demande GPS AU CLIC (user-gesture)
+  // IMPORTANT: assure la demande GPS AU CLIC (user-gesture)
   if (!STATE.clientPos) {
     const ok = await requestGeolocationOnceInteractive();
     if (!ok || !STATE.clientPos) {
-      toast("Tu dois accepter de partager ta position pour voir le livreur.");
+      toast("Vous devez accepter de partager votre position pour voir le livreur.");
       return;
     }
   }
@@ -1076,7 +1263,11 @@ async function handleRequestClick() {
     const last = Number(lsGet(LS.lastRequestMs, "0")) || 0;
     const cooldown = CONFIG.REQUEST_COOLDOWN_MS || 30000;
     const remain = Math.ceil((cooldown - (Date.now() - last)) / 1000);
-    toast(`Attends ${remain}s avant de redemander.`);
+    adnOverlayShow({
+      title: "Demande déjà envoyée",
+      html: `Merci de patienter <b>${remain}s</b> avant de refaire une demande.`,
+      primaryLabel: "OK",
+    });
     return;
   }
 
@@ -1112,26 +1303,26 @@ async function handleRequestClick() {
 
     setBadge("Demande envoyée • en attente");
     setState("En attente de décision");
-    setInlineStatus("waiting", "⏳", "Demande envoyée au livreur", "Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.");
+    setInlineStatus(
+      "waiting",
+      "⏳",
+      "Demande envoyée au livreur",
+      "Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande."
+    );
 
     disableRequest(true);
     showReset(false);
 
     stopTimeout(STATE.tPollStatus);
-    STATE.tPollStatus = setTimeout(pollStatus, 400);
-
+    STATE.tPollStatus = setTimeout(pollStatus, 600);
   } catch (e) {
-    console.error(e);
-    setBadge("Erreur");
-    setState("Impossible d'envoyer la demande");
+    console.log("[request]", e?.message || e);
+    setBadge("Erreur demande");
+    setState("Erreur");
+    setInlineStatus("bad", "⚠️", "Erreur d’envoi", "La demande n’a pas pu être envoyée. Vérifiez votre connexion puis réessayez.");
     disableRequest(false);
     showReset(true);
-    toast(`❌ Erreur: ${e?.message || e}`);
   }
-}
-
-function handleResetClick() {
-  resetFlow({ keepName: true });
 }
 
 // ----------------------------
