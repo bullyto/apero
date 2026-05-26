@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <!-- ADN66 FORCE MAJ 20260526-inline-stylecss-v5 -->
+  <!-- ADN66 FORCE MAJ 20260526-inline-status-v6-fix -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -65,7 +65,7 @@
 
 
   <link rel="icon" href="./assets/icon-192.png">
-  <link rel="stylesheet" href="./style.css?v=20260526-inline-stylecss-v5">
+  <link rel="stylesheet" href="./style.css?v=20260526-inline-status-v6-fix">
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -478,14 +478,14 @@
 
       
 
-      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-inline-stylecss-v5">
+      <div class="clientInlineStatus" id="clientInlineStatus" aria-live="polite" data-build="20260526-inline-status-v6-fix">
         <span class="clientInlineStatusIcon" id="clientInlineStatusIcon" aria-hidden="true">ℹ️</span>
         <span class="clientInlineStatusText">
           <span class="clientInlineStatusTitle" id="clientInlineStatusTitle">Prêt à demander le suivi</span>
           <span class="clientInlineStatusSub" id="clientInlineStatusSub">Entrez vos informations, puis appuyez sur « Activer le suivi ».</span>
         </span>
       </div>
-      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-inline-stylecss-v5</div>
+      <div class="clientInlineVersion" id="clientInlineVersion">maj 20260526-inline-status-v6-fix</div>
 <input
         id="name"
         class="clientInput"
@@ -571,7 +571,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260526-inline-stylecss-v5"></script>
+  <script type="module" src="./client.js?v=20260526-inline-status-v6-fix"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {
@@ -584,136 +584,12 @@
 
 
 <script>
-/* ===== ADN66 UI SYNC STATUS INLINE 20260526-inline-stylecss-v5 ===== */
+/* ADN66 UI SYNC disabled 20260526-inline-status-v6-fix
+   Le statut est maintenant piloté par client.js uniquement.
+   Cela évite les anciens états localStorage qui forçaient "en attente" avant demande.
+*/
 (() => {
-  window.__ADN_SUIVI_BUILD__ = "20260526-inline-stylecss-v5";
-  const elPopup = document.getElementById('clientPopup');
-  const elStateText = document.getElementById('stateText');
-  const elStateDot = document.getElementById('stateDot');
-  const elCountdown = document.getElementById('countdown');
-  const elGeoText = document.getElementById('geoText');
-  const btnRequest = document.getElementById('btnRequest');
-  const inlineBox = document.getElementById('clientInlineStatus');
-  const inlineIcon = document.getElementById('clientInlineStatusIcon');
-  const inlineTitle = document.getElementById('clientInlineStatusTitle');
-  const inlineSub = document.getElementById('clientInlineStatusSub');
-  const LS_KEY = 'adn_client_track_phase_v1';
-  const getPhase = () => localStorage.getItem(LS_KEY) || 'idle';
-  const setPhase = (p) => localStorage.setItem(LS_KEY, p);
-  const showPopup = () => { if (elPopup) elPopup.style.display = ''; };
-  const hidePopup = () => { if (elPopup) elPopup.style.display = 'none'; };
-
-  const setInlineStatus = (mode, icon, title, sub) => {
-    if (!inlineBox) return;
-    inlineBox.classList.remove('ok', 'bad');
-    if (mode === 'ok' || mode === 'bad') inlineBox.classList.add(mode);
-    if (inlineIcon) inlineIcon.textContent = icon || 'ℹ️';
-    if (inlineTitle) inlineTitle.textContent = title || '';
-    if (inlineSub) inlineSub.textContent = sub || '';
-  };
-
-  const setDot = (mode) => {
-    if (!elStateDot) return;
-    elStateDot.style.background = '#9aa8b6';
-    elStateDot.style.boxShadow = '0 0 0 4px rgba(154,168,182,.18)';
-    if (mode === 'ok') {
-      elStateDot.style.background = '#21d07a';
-      elStateDot.style.boxShadow = '0 0 0 4px rgba(33,208,122,.18)';
-    } else if (mode === 'warn') {
-      elStateDot.style.background = '#ffcc33';
-      elStateDot.style.boxShadow = '0 0 0 4px rgba(255,204,51,.18)';
-    } else if (mode === 'bad') {
-      elStateDot.style.background = '#ff4d4d';
-      elStateDot.style.boxShadow = '0 0 0 4px rgba(255,77,77,.18)';
-    }
-  };
-
-  const setTopState = (label, mode) => {
-    if (elStateText && elStateText.textContent !== label) elStateText.textContent = label;
-    setDot(mode);
-  };
-
-  const parseToSeconds = (txt) => {
-    const t = (txt || '').trim();
-    if (!t || t === '—') return 0;
-    const parts = t.split(':').map(p => p.trim());
-    if (parts.length === 2) {
-      const m = parseInt(parts[0], 10);
-      const s = parseInt(parts[1], 10);
-      if (Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, m * 60 + s);
-    }
-    if (parts.length === 3) {
-      const h = parseInt(parts[0], 10);
-      const m = parseInt(parts[1], 10);
-      const s = parseInt(parts[2], 10);
-      if (Number.isFinite(h) && Number.isFinite(m) && Number.isFinite(s)) return Math.max(0, h * 3600 + m * 60 + s);
-    }
-    return 0;
-  };
-
-  if (btnRequest) {
-    btnRequest.addEventListener('click', () => {
-      setPhase('waiting');
-      setTopState('En attente de décision', 'warn');
-      setInlineStatus('', '⏳', 'Demande envoyée au livreur', 'Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.');
-      showPopup();
-    }, true);
-  }
-
-  let last = { phase: null, sec: null, geo: null };
-  const tick = () => {
-    const phase = getPhase();
-    const geo = (elGeoText ? (elGeoText.textContent || '') : '');
-    const geoL = geo.toLowerCase();
-    const sec = elCountdown ? parseToSeconds(elCountdown.textContent) : 0;
-
-    if (geoL.includes('refus')) {
-      if (phase !== 'refused') setPhase('refused');
-    } else if (geoL.includes('stop') || geoL.includes('termin') || geoL.includes('expir') || geoL.includes('fin')) {
-      if (phase !== 'ended') setPhase('ended');
-    } else if (geoL.includes('décision') || geoL.includes('demande') || geoL.includes('envoy')) {
-      if (phase !== 'active') setPhase('waiting');
-    }
-
-    const phase2 = getPhase();
-    if (sec > 0) {
-      if (phase2 !== 'active') setPhase('active');
-    } else if (phase2 === 'active') {
-      setPhase('ended');
-    }
-
-    const p = getPhase();
-    if (p !== last.phase || sec !== last.sec || geo !== last.geo) {
-      if (p === 'active') {
-        setTopState('Suivi actif', 'ok');
-        setInlineStatus('ok', '✅', 'Suivi accepté', 'Le suivi est actif. Vous pouvez voir le livreur tant que l’accès est autorisé.');
-        hidePopup();
-      } else if (p === 'waiting') {
-        setTopState('En attente de décision', 'warn');
-        setInlineStatus('', '⏳', 'En attente d’acceptation du livreur', 'Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.');
-        showPopup();
-      } else if (p === 'refused') {
-        setTopState('Accès refusé', 'bad');
-        setInlineStatus('bad', '❌', 'Demande refusée par le livreur', 'Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.');
-        showPopup();
-        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
-      } else if (p === 'ended') {
-        setTopState('Suivi terminé', 'warn');
-        setInlineStatus('', '⏱️', 'Suivi terminé', 'La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.');
-        showPopup();
-        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
-      } else {
-        setTopState('En attente', 'warn');
-        setInlineStatus('', 'ℹ️', 'Prêt à demander le suivi', 'Entrez vos informations, puis appuyez sur « Activer le suivi ».');
-        showPopup();
-        if (elCountdown && elCountdown.textContent !== '0:00') elCountdown.textContent = '0:00';
-      }
-      last = { phase: p, sec, geo };
-    }
-  };
-
-  tick();
-  setInterval(tick, 350);
+  try { localStorage.removeItem('adn_client_track_phase_v1'); } catch(e) {}
 })();
 </script>
 

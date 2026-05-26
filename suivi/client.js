@@ -1,7 +1,8 @@
-// ADN66 JS BUILD 20260526-inline-stylecss-v5
+// ADN66 JS BUILD 20260526-inline-status-v6-fix
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
+try { localStorage.removeItem("adn_client_track_phase_v1"); } catch {}
 
 // ------------------------------------------------------------
 // Client web (Suivi)
@@ -131,8 +132,10 @@ function setGeo(text) {
 
 function setInlineStatus(mode, icon, title, sub) {
   if (!els.inlineStatus) return;
-  els.inlineStatus.classList.remove("ok", "bad");
-  if (mode === "ok" || mode === "bad") els.inlineStatus.classList.add(mode);
+  els.inlineStatus.classList.remove("waiting", "ok", "bad");
+  if (mode === "waiting" || mode === "ok" || mode === "bad") {
+    els.inlineStatus.classList.add(mode);
+  }
   if (els.inlineStatusIcon) els.inlineStatusIcon.textContent = icon || "ℹ️";
   if (els.inlineStatusTitle) els.inlineStatusTitle.textContent = title || "";
   if (els.inlineStatusSub) els.inlineStatusSub.textContent = sub || "";
@@ -855,6 +858,7 @@ function resetFlow({ keepName = true } = {}) {
 
   setBadge("Prêt : demande de suivi");
   setState("—");
+  setInlineStatus("", "ℹ️", "Prêt à demander le suivi", "Entrez vos informations, puis appuyez sur « Activer le suivi ».");
   setCountdown("—");
 
   disableRequest(!STATE.clientPos);
@@ -939,7 +943,7 @@ async function pollStatus() {
     if (status === "pending") {
       setBadge("Demande envoyée • en attente");
       setState("En attente de décision");
-      setInlineStatus("", "⏳", "En attente d’acceptation du livreur", "Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.");
+      setInlineStatus("waiting", "⏳", "En attente d’acceptation du livreur", "Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.");
       setCountdown("—");
 
       STATE.tPollStatus = setTimeout(pollStatus, CONFIG.POLL_STATUS_MS || 3000);
@@ -960,7 +964,7 @@ async function pollStatus() {
     if (status === "expired") {
       setBadge("Expiré");
       setState("Demande expirée");
-      setInlineStatus("", "⏱️", "Demande expirée", "La demande n’a pas été acceptée à temps. Vous pouvez relancer une demande si nécessaire.");
+      setInlineStatus("waiting", "⏱️", "Demande expirée", "La demande n’a pas été acceptée à temps. Vous pouvez relancer une demande si nécessaire.");
       setCountdown("—");
 
       disableRequest(false);
@@ -1023,7 +1027,7 @@ function startAcceptedLoops() {
 
       setBadge("Accès terminé");
       setState("Accès terminé");
-      setInlineStatus("", "⏱️", "Suivi terminé", "La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.");
+      setInlineStatus("waiting", "⏱️", "Suivi terminé", "La session de suivi est terminée : le temps est écoulé ou le livreur a mis fin au partage.");
       setCountdown("0:00");
 
       stopTimer(STATE.tSendClientPos);
@@ -1081,7 +1085,7 @@ async function handleRequestClick() {
     showReset(false);
     setBadge("Envoi de la demande…");
     setState("Envoi en cours");
-    setInlineStatus("", "📨", "Envoi de votre demande", "Votre demande est en cours d’envoi au livreur.");
+    setInlineStatus("waiting", "📨", "Envoi de votre demande", "Votre demande est en cours d’envoi au livreur.");
     setCountdown("—");
 
     const data = await apiFetchJson("/client/request", {
@@ -1108,7 +1112,7 @@ async function handleRequestClick() {
 
     setBadge("Demande envoyée • en attente");
     setState("En attente de décision");
-    setInlineStatus("", "⏳", "Demande envoyée au livreur", "Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.");
+    setInlineStatus("waiting", "⏳", "Demande envoyée au livreur", "Le livreur peut mettre plusieurs minutes à accepter. Vous pouvez quitter cette page et revenir : cela n’annule pas votre demande.");
 
     disableRequest(true);
     showReset(false);

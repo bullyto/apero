@@ -648,8 +648,19 @@ body.client .legalBar{
 
 
 /* =========================================================
-   ADN66 STATUS INLINE 20260526-inline-stylecss-v5
+   ADN66 STATUS INLINE 20260526-inline-status-v6-fix
+   Correctif:
+   - plus de filtre noir sur la carte
+   - statut haut droite masqué
+   - statut client dans la carte uniquement
    ========================================================= */
+
+.clientPopup{
+  background:transparent !important;
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+}
+
 .pillState,
 .clientTopStatePill,
 #clientTopStatePill,
@@ -671,8 +682,8 @@ body.client .legalBar{
   padding:12px 12px;
   margin:0 0 12px;
   border-radius:14px;
-  background:rgba(255,204,51,.12);
-  border:1px solid rgba(255,204,51,.38);
+  background:rgba(93,183,238,.10);
+  border:1px solid rgba(93,183,238,.28);
   color:var(--adn-text, #0b1c2d);
   font-weight:800;
   font-size:13px;
@@ -686,9 +697,9 @@ body.client .legalBar{
   border-radius:999px;
   display:grid;
   place-items:center;
-  background:rgba(255,204,51,.22);
-  border:1px solid rgba(255,204,51,.45);
-  box-shadow:0 0 0 3px rgba(255,204,51,.12);
+  background:rgba(93,183,238,.18);
+  border:1px solid rgba(93,183,238,.35);
+  box-shadow:0 0 0 3px rgba(93,183,238,.12);
   flex:0 0 auto;
   font-size:14px;
   line-height:1;
@@ -698,18 +709,42 @@ body.client .legalBar{
 .clientInlineStatusTitle{ display:block; font-size:13px; font-weight:950; margin:0 0 3px; }
 .clientInlineStatusSub{ display:block; font-size:12px; font-weight:700; opacity:.78; margin:0; }
 
-.clientInlineStatus.ok{ background:rgba(33,208,122,.10); border-color:rgba(33,208,122,.35); }
-.clientInlineStatus.ok .clientInlineStatusIcon{ background:rgba(33,208,122,.18); border-color:rgba(33,208,122,.38); box-shadow:0 0 0 3px rgba(33,208,122,.10); }
+.clientInlineStatus.waiting{
+  background:rgba(255,204,51,.12);
+  border-color:rgba(255,204,51,.38);
+}
+.clientInlineStatus.waiting .clientInlineStatusIcon{
+  background:rgba(255,204,51,.22);
+  border-color:rgba(255,204,51,.45);
+  box-shadow:0 0 0 3px rgba(255,204,51,.12);
+}
 
-.clientInlineStatus.bad{ background:rgba(255,77,77,.10); border-color:rgba(255,77,77,.35); }
-.clientInlineStatus.bad .clientInlineStatusIcon{ background:rgba(255,77,77,.18); border-color:rgba(255,77,77,.38); box-shadow:0 0 0 3px rgba(255,77,77,.10); }
+.clientInlineStatus.ok{
+  background:rgba(33,208,122,.10);
+  border-color:rgba(33,208,122,.35);
+}
+.clientInlineStatus.ok .clientInlineStatusIcon{
+  background:rgba(33,208,122,.18);
+  border-color:rgba(33,208,122,.38);
+  box-shadow:0 0 0 3px rgba(33,208,122,.10);
+}
+
+.clientInlineStatus.bad{
+  background:rgba(255,77,77,.10);
+  border-color:rgba(255,77,77,.35);
+}
+.clientInlineStatus.bad .clientInlineStatusIcon{
+  background:rgba(255,77,77,.18);
+  border-color:rgba(255,77,77,.38);
+  box-shadow:0 0 0 3px rgba(255,77,77,.10);
+}
 
 .clientInlineVersion{
   margin-top:-6px;
   margin-bottom:8px;
   text-align:center;
   font-size:9px;
-  opacity:.24;
+  opacity:.18;
   font-weight:700;
   user-select:none;
 }
