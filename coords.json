@@ -4,7 +4,7 @@
     "lng": 2.9824
   },
   "argeles-sur-mer|66700": {
-    "lat": 42.53,
+    "lat": 42.5362,
     "lng": 3.0234
   },
   "bages|66670": {
@@ -32,7 +32,7 @@
     "lng": 2.9507
   },
   "canet-en-roussillon|66140": {
-    "lat": 42.6809,
+    "lat": 42.7068,
     "lng": 3.002
   },
   "canohes|66680": {
@@ -60,7 +60,7 @@
     "lng": 2.978
   },
   "espira-de-l-agly|66600": {
-    "lat": 42.7987,
+    "lat": 42.7927,
     "lng": 2.8231
   },
   "fitou|11510": {
@@ -148,11 +148,11 @@
     "lng": 2.7498
   },
   "saint-hippolyte|66510": {
-    "lat": 42.8104,
+    "lat": 42.7895,
     "lng": 2.9754
   },
   "saint-laurent-de-la-salanque|66250": {
-    "lat": 42.8073,
+    "lat": 42.7855,
     "lng": 2.9993
   },
   "saint-nazaire|66570": {
@@ -208,8 +208,8 @@
     "lng": 2.8646
   },
   "tresserre|66300": {
-    "lat": 42.5559,
-    "lng": 2.842
+    "lat": 42.5625,
+    "lng": 2.836
   },
   "banyuls-dels-aspres|66300": {
     "lat": 42.5653,
@@ -222,5 +222,29 @@
   "villeneuve-la-riviere|66610": {
     "lat": 42.7046,
     "lng": 2.7964
+  },
+  "palau-del-vidre|66690": {
+    "lat": 42.5719,
+    "lng": 2.9613
+  },
+  "saint-andre|66690": {
+    "lat": 42.5504,
+    "lng": 2.9718
+  },
+  "sorede|66690": {
+    "lat": 42.5306,
+    "lng": 2.9563
+  },
+  "brouilla|66620": {
+    "lat": 42.5656,
+    "lng": 2.9026
+  },
+  "passa|66300": {
+    "lat": 42.577,
+    "lng": 2.8119
+  },
+  "cases-de-pene|66600": {
+    "lat": 42.7789,
+    "lng": 2.7838
   }
 }

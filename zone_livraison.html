@@ -384,8 +384,23 @@
 
     { name: "Villelongue-de-la-Salanque", cp: "66410", price: "4 €", delay: "15 à 20 min" },
     { name: "Villeneuve-de-la-Raho", cp: "66180", price: "9 €", delay: "20 à 25 min" },
-    { name: "Villemolaque", cp: "66300", price: "9 €", delay: "20 à 30 min" }
+    { name: "Villeneuve-la-Rivière", cp: "66610", price: "9 €", delay: "20 à 25 min" },
+    { name: "Villemolaque", cp: "66300", price: "9 €", delay: "20 à 30 min" },
+
+    // Communes saisonnières — visibles uniquement d’octobre à avril
+    { name: "Palau-del-Vidre", cp: "66690", price: "9 €", delay: "25 à 35 min", seasonal: true },
+    { name: "Saint-André", cp: "66690", price: "11 €", delay: "25 à 35 min", seasonal: true },
+    { name: "Sorède", cp: "66690", price: "13 €", delay: "30 à 40 min", seasonal: true },
+    { name: "Brouilla", cp: "66620", price: "11 €", delay: "25 à 35 min", seasonal: true },
+    { name: "Banyuls-dels-Aspres", cp: "66300", price: "11 €", delay: "25 à 35 min", seasonal: true },
+    { name: "Passa", cp: "66300", price: "11 €", delay: "25 à 35 min", seasonal: true },
+    { name: "Cases-de-Pène", cp: "66600", price: "11 €", delay: "25 à 35 min", seasonal: true }
   ];
+
+  function isSeasonalPeriod(){
+    const month = new Date().getMonth(); // 0=janvier, 9=octobre
+    return month >= 9 || month <= 3;     // octobre à avril inclus
+  }
 
   // ========= STATE =========
   let map = null;
@@ -484,7 +499,8 @@
       const line1 = `${c.name} (${c.cp})`;
       const p = (c.price && c.price.trim()) ? c.price : "—";
       const d = (c.delay && c.delay.trim()) ? c.delay : "—";
-      const line2 = `${p} • ${d}`;
+      const s = c.seasonal ? " • Octobre à avril" : "";
+      const line2 = `${p} • ${d}${s}`;
       o.textContent = `${line1}\n${line2}`;
 
       sel.appendChild(o);
@@ -686,6 +702,7 @@
         <div style="font-weight:900; font-size:14px; margin-bottom:6px;">${name} (${cp})</div>
         <div style="margin-bottom:4px;">⏱️ <strong>Délai :</strong> ${delay}</div>
         <div style="margin-bottom:4px;">🚚 <strong>Tarif :</strong> ${price}</div>
+        ${c.seasonal ? '<div style="margin-bottom:4px;">🗓️ <strong>Période :</strong> octobre à avril</div>' : ''}
         <div style="color:#6b7280; font-size:12px; margin-top:6px;">Indicatif selon trafic/charge.</div>
       </div>
     `;
@@ -752,9 +769,11 @@
         lat: (x.lat === undefined || x.lat === null || x.lat === "") ? undefined : (typeof x.lat === "number" ? x.lat : Number(x.lat)),
         lng: (x.lng === undefined || x.lng === null || x.lng === "") ? undefined : (typeof x.lng === "number" ? x.lng : Number(x.lng)),
         delay: String(x.delay || "—").trim(),
-        price: String(x.price || "—").trim()
+        price: String(x.price || "—").trim(),
+        seasonal: x.seasonal === true
       }))
-      .filter(x => x.name && x.cp);
+      .filter(x => x.name && x.cp)
+      .filter(x => !x.seasonal || isSeasonalPeriod());
 
     cleaned.sort((a,b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
     return cleaned;
