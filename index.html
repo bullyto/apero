@@ -832,8 +832,102 @@
   </div>
 
   <header class="top">
-    <img src="assets/logo-header.png" alt="">
+    <img id="adnSeasonLogo" src="assets/logo-header.png" alt="Apéro de Nuit 66">
   </header>
+
+  <script>
+    /*
+      ADN66 — Logo saisonnier automatique
+      - Logo normal par défaut : assets/logo-header.png
+      - Si un logo saisonnier ne charge pas, retour automatique au logo normal
+      - Pâques est calculé automatiquement chaque année
+    */
+    (function(){
+      const logo = document.getElementById("adnSeasonLogo");
+      if (!logo) return;
+
+      const LOGOS = {
+        normal: "assets/logo-header.png",
+        nouvelAn: "assets/adn-nouvel-an.png",
+        galette: "assets/adn-galette.png",
+        saintValentin: "assets/adn-saint-valentin.png",
+        saintPatrick: "assets/adn-saint-patrick.png",
+        paques: "assets/adn-paque.png",
+        quatorzeJuillet: "assets/adn-14-juillet.png",
+        halloween: "assets/adn-halloween.png",
+        noel: "assets/adn-noel.png"
+      };
+
+      function dayValue(date){
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      }
+
+      function between(date, startMonth, startDay, endMonth, endDay){
+        const y = date.getFullYear();
+        const d = dayValue(date);
+        const start = new Date(y, startMonth - 1, startDay).getTime();
+        const end = new Date(y, endMonth - 1, endDay).getTime();
+        return d >= start && d <= end;
+      }
+
+      function getEasterDate(year){
+        // Calcul de Pâques grégorien (valable pour les années modernes)
+        const a = year % 19;
+        const b = Math.floor(year / 100);
+        const c = year % 100;
+        const d = Math.floor(b / 4);
+        const e = b % 4;
+        const f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3);
+        const h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4);
+        const k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const month = Math.floor((h + l - 7 * m + 114) / 31);
+        const day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month - 1, day);
+      }
+
+      function inEasterWindow(date){
+        const easter = getEasterDate(date.getFullYear());
+        const start = new Date(easter);
+        start.setDate(easter.getDate() - 2); // vendredi avant Pâques
+        const end = new Date(easter);
+        end.setDate(easter.getDate() + 1);   // lundi de Pâques
+        const d = dayValue(date);
+        return d >= dayValue(start) && d <= dayValue(end);
+      }
+
+      function pickLogo(date){
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+
+        // Priorités importantes : le 31/12 doit rester Nouvel An, pas Noël
+        if ((month === 12 && day === 31) || (month === 1 && day === 1)) return LOGOS.nouvelAn;
+        if (between(date, 1, 3, 1, 8)) return LOGOS.galette;
+        if (between(date, 2, 12, 2, 15)) return LOGOS.saintValentin;
+        if (between(date, 3, 13, 3, 18)) return LOGOS.saintPatrick;
+        if (inEasterWindow(date)) return LOGOS.paques;
+        if (between(date, 7, 12, 7, 15)) return LOGOS.quatorzeJuillet;
+        if (between(date, 10, 24, 10, 31) || (month === 11 && day === 1)) return LOGOS.halloween;
+        if (month === 12 && day >= 1 && day <= 30) return LOGOS.noel;
+
+        return LOGOS.normal;
+      }
+
+      const selectedLogo = pickLogo(new Date());
+      if (selectedLogo && logo.getAttribute("src") !== selectedLogo) {
+        logo.src = selectedLogo;
+      }
+
+      logo.addEventListener("error", function(){
+        if (logo.getAttribute("src") !== LOGOS.normal) {
+          logo.src = LOGOS.normal;
+        }
+      }, { once:true });
+    })();
+  </script>
 
   <section class="mid">
     <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
