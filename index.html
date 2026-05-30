@@ -426,7 +426,7 @@
     .legal-footer a:active{ opacity:.8; }
     .legal-footer .sep{ margin: 0 8px; opacity:.6; }
 
-    /* ADN66 — Menu top-right + footer legal (discret) */
+    /* ADN66 — Menu client marketing + footer legal (discret) */
     .adn-menu-btn{
       position:fixed;
       top: calc(19vh + 10px); /* ✅ sous le logo (max-height:26vh), n’empiète jamais */
@@ -437,20 +437,17 @@
       border:1px solid rgba(255,255,255,.22);
       background:rgba(10,18,30,.55);
       color:#fff;
-      font-weight:800;
+      font-weight:900;
       letter-spacing:.2px;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       box-shadow:0 10px 30px rgba(0,0,0,.25);
       cursor:pointer;
       overflow:hidden;
-      isolation:isolate; /* garantit les z-index internes */
+      isolation:isolate;
     }
 
-    .adn-menu-label{
-      position:relative;
-      z-index:3;
-    }
+    .adn-menu-label{position:relative;z-index:3;}
 
     /* ✨ Reflet lumineux blanc (toutes les 2s) */
     .adn-menu-btn::before{
@@ -458,19 +455,13 @@
       position:absolute;
       inset:-3px;
       border-radius:inherit;
-      background:conic-gradient(
-        from 0deg,
-        transparent 0deg,
-        rgba(255,255,255,0.95) 55deg,
-        transparent 120deg
-      );
+      background:conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.95) 55deg, transparent 120deg);
       opacity:0;
       pointer-events:none;
       animation:adnGlowSpin 2s infinite;
       z-index:1;
     }
 
-    /* masque intérieur pour ne garder que l’effet sur les bords */
     .adn-menu-btn::after{
       content:"";
       position:absolute;
@@ -482,131 +473,187 @@
     }
 
     @keyframes adnGlowSpin{
-      0%   {opacity:0; transform:rotate(0deg);}
-      8%   {opacity:1;}
-      45%  {opacity:1; transform:rotate(360deg);}
-      60%  {opacity:0;}
-      100% {opacity:0; transform:rotate(360deg);}
+      0%{opacity:0;transform:rotate(0deg)}
+      8%{opacity:1}
+      45%{opacity:1;transform:rotate(360deg)}
+      60%{opacity:0}
+      100%{opacity:0;transform:rotate(360deg)}
     }
-    .adn-menu-btn:active{ transform:translateY(1px); }
+    .adn-menu-btn:active{transform:translateY(1px)}
 
     .adn-menu-backdrop{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.28);
+      position:fixed;
+      inset:0;
+      background:rgba(11,28,45,.34);
       z-index:9998;
-      opacity:0; pointer-events:none;
+      opacity:0;
+      pointer-events:none;
       transition:opacity .18s ease;
     }
-    .adn-menu-backdrop.open{ opacity:1; pointer-events:auto; }
+    .adn-menu-backdrop.open{opacity:1;pointer-events:auto;}
 
     .adn-menu-sheet{
       position:fixed;
-      top:56px; right:14px;
-      width:min(290px, calc(100vw - 28px));
+      top:56px;
+      right:14px;
+      width:min(360px, calc(100vw - 28px));
+      max-height:min(78vh, 620px);
+      overflow:auto;
       z-index:9999;
-      background:rgba(9,14,22,.94);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:18px;
-      box-shadow:0 18px 55px rgba(0,0,0,.45);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      padding:6px;
-      transform:translateY(-8px);
+      background:#fff;
+      color:#0b1c2d;
+      border:1px solid rgba(11,28,45,.10);
+      border-radius:22px;
+      box-shadow:0 20px 60px rgba(11,28,45,.28);
+      padding:0 8px 8px;
+      transform:translateY(-8px) scale(.98);
       opacity:0;
       pointer-events:none;
       transition:opacity .18s ease, transform .18s ease;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
     }
     .adn-menu-sheet.open{
       opacity:1;
-      transform:translateY(0);
+      transform:translateY(0) scale(1);
       pointer-events:auto;
     }
 
-    /* Item layout */
-    .adn-menu-item{
+    .adn-menu-head{
+      position:sticky;
+      top:0;
+      z-index:2;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:14px;
-      padding:11px 12px;
-      border-radius:14px;
-      font-weight:800;
-      user-select:none;
+      gap:12px;
+      margin:0 -8px 6px;
+      padding:12px 12px;
+      border-radius:22px 22px 16px 16px;
+      background:#0b1c2d;
+      color:#fff;
+      box-shadow:0 8px 22px rgba(11,28,45,.18);
     }
-    /* ✅ delimitation between each button */
-    .adn-menu-item + .adn-menu-item{
-      border-top:1px solid rgba(255,255,255,.10);
+    .adn-menu-brand{min-width:0;}
+    .adn-menu-brand b{
+      display:block;
+      font-size:13px;
+      font-weight:950;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .adn-menu-brand span{
+      display:block;
       margin-top:2px;
-      padding-top:13px;
+      font-size:11px;
+      font-weight:800;
+      color:rgba(255,255,255,.70);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
-    .adn-menu-item:hover{ background:rgba(255,255,255,.06); }
-    .adn-menu-item:active{ background:rgba(255,255,255,.10); }
+    .adn-menu-close{
+      flex:0 0 auto;
+      width:38px;
+      height:38px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-size:19px;
+      font-weight:950;
+      line-height:1;
+      cursor:pointer;
+    }
+    .adn-menu-close:active{transform:translateY(1px)}
 
-    .adn-menu-left{ min-width:0; display:flex; flex-direction:column; gap:2px; }
-    .adn-menu-title{ font-size:15px; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.adn-menu-sub{
-  font-size:10px;          /* légèrement plus petit */
-  font-weight:750;
-  color:rgba(255,255,255,.72);
-  line-height:1;        /* texte plus compact */
-  margin-top:-9px;         /* remonte le sous-texte vers le titre */
-  white-space:nowrap; 
-  overflow:hidden; 
-  text-overflow:ellipsis;
-}
-
-    /* ADN66 — Icônes image menu (remplace les emojis) */
     .adn-menu-item{
-      --adn-icon:48px;
-      --adn-gap:14px;
+      --adn-icon:46px;
+      --adn-gap:12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      width:100%;
+      min-width:0;
+      padding:10px 8px;
+      border-radius:16px;
+      color:#0b1c2d;
+      font-weight:900;
+      user-select:none;
+      cursor:pointer;
+      overflow:hidden;
+    }
+    .adn-menu-item + .adn-menu-item{
+      border-top:1px solid rgba(11,28,45,.08);
+      margin-top:1px;
+      padding-top:11px;
+    }
+    .adn-menu-item:hover{background:rgba(93,183,238,.10)}
+    .adn-menu-item:active{background:rgba(93,183,238,.16)}
+
+    .adn-menu-left{
+      min-width:0;
+      max-width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:1px;
     }
     .adn-menu-title{
+      min-width:0;
       display:flex;
       align-items:center;
       gap:var(--adn-gap);
-      line-height:1.15;
+      font-size:14px;
+      line-height:1.12;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
+    .adn-menu-title span{
+      min-width:0;
+      display:block;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .adn-menu-sub{
+      margin-left:calc(var(--adn-icon) + var(--adn-gap));
+      margin-top:-2px;
+      max-width:calc(100% - var(--adn-icon) - var(--adn-gap));
+      font-size:10px;
+      line-height:1.05;
+      font-weight:800;
+      color:rgba(11,28,45,.58);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
     .adn-menu-icon{
       width:var(--adn-icon);
       height:var(--adn-icon);
       object-fit:contain;
-      flex:0 0 auto;
+      flex:0 0 var(--adn-icon);
       background:transparent;
       box-shadow:none;
       filter:none;
     }
-    /* Sous-texte aligné sous le libellé (pas sous l’icône) */
-    .adn-menu-sub{
-      margin-left: calc(var(--adn-icon) + var(--adn-gap));
-    }
-    /* Icônes spécifiques */
-    .adn-menu-icon.cadeaux{ width:calc(var(--adn-icon) + 6px); height:calc(var(--adn-icon) + 6px); }
-    .adn-menu-icon.caddie{ width:calc(var(--adn-icon) + 2px); height:calc(var(--adn-icon) + 2px); }
+    .adn-menu-icon.cadeaux{width:calc(var(--adn-icon) + 6px);height:calc(var(--adn-icon) + 6px);}
+    .adn-menu-icon.caddie{width:calc(var(--adn-icon) + 2px);height:calc(var(--adn-icon) + 2px);}
 
-    /* icône cadeaux un peu plus grande */
-    .adn-menu-icon.cadeaux{
-      width:54px;
-      height:54px;
-    }
+    /* Badges supprimés du menu client validé */
+    .adn-tag{display:none!important;}
 
-    /* icône caddie légèrement plus grande */
-    .adn-menu-icon.caddie{
-      width:50px;
-      height:50px;
+    @media (max-width:380px){
+      .adn-menu-sheet{width:calc(100vw - 20px);right:10px;}
+      .adn-menu-title{font-size:13px;}
+      .adn-menu-sub{font-size:9.5px;}
+      .adn-menu-item{--adn-icon:42px;--adn-gap:10px;padding-left:7px;padding-right:7px;}
     }
-
-    .adn-tag{
-      font-size:6px;
-      font-weight:950;
-      padding:2px 5px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.20);
-      color:rgba(255,255,255,.95);
-      background:rgba(93,183,238,.22);
-      flex:0 0 auto;
-      letter-spacing:.1px;
-     position:relative; top:-6px;}
 
     .adn-legal-footer{
       position:fixed;
@@ -619,13 +666,9 @@
       z-index:55;
       pointer-events:auto;
     }
-    .adn-legal-footer a{
-      color:inherit;
-      text-decoration:none;
-      border-bottom:1px dotted rgba(0,0,0,.0);
-    }
-    .adn-legal-footer a:active{ opacity:.8; }
-    .adn-legal-footer .dot{ margin:0 6px; opacity:.6; }
+    .adn-legal-footer a{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(0,0,0,.0);}
+    .adn-legal-footer a:active{opacity:.8;}
+    .adn-legal-footer .dot{margin:0 6px;opacity:.6;}
 
 /* 🎟️ Carte de fidélité — Modal marketing [v7] */
 .sheet{position:relative}
@@ -1504,69 +1547,68 @@
     }
   </script>
 
-    <!-- ADN66: Menu (top-right) + footer legal links -->
+    <!-- ADN66: Menu client marketing + footer legal links -->
   <button class="adn-menu-btn" id="adnMenuBtn" type="button" aria-haspopup="dialog" aria-controls="adnMenuSheet" aria-expanded="false" data-push-menu-subscribe="apero"><span class="adn-menu-label">Menus</span></button>
 
   <div class="adn-menu-backdrop" id="adnMenuBackdrop" aria-hidden="true"></div>
 
-  <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu">
-    <div class="adn-menu-item" id="adnMenuCall" data-call style="--adn-icon:62px">
+  <div class="adn-menu-sheet" id="adnMenuSheet" role="dialog" aria-modal="true" aria-label="Menu Apéro de Nuit 66">
+    <div class="adn-menu-head">
+      <div class="adn-menu-brand">
+        <b>APÉRO DE NUIT 66®</b>
+        <span>Livraison nocturne dans les Pyrénées-Orientales</span>
+      </div>
+      <button class="adn-menu-close" id="adnMenuClose" type="button" aria-label="Fermer le menu">×</button>
+    </div>
+
+    <div class="adn-menu-item" id="adnMenuCall" data-call style="--adn-icon:54px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt="">Commandez en direct</div>
+        <div class="adn-menu-title"><img src="assets/appel.png" class="adn-menu-icon" alt=""><span>Commander par téléphone</span></div>
         <div class="adn-menu-sub">Appel immédiat au livreur</div>
       </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:50px">
+    <div class="adn-menu-item" id="adnMenuOrder" style="--adn-icon:48px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/commande.png" class="adn-menu-icon caddie" alt="">Paiement en ligne</div>
+        <div class="adn-menu-title"><img src="assets/commande.png" class="adn-menu-icon caddie" alt=""><span>Commander en ligne</span></div>
         <div class="adn-menu-sub">Commande rapide et sécurisée</div>
       </div>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuTrack" style="display:none; --adn-icon:62px">
+    <div class="adn-menu-item" id="adnMenuTrack" style="--adn-icon:54px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt="">Suivi livreur</div>
+        <div class="adn-menu-title"><img src="assets/suivi.png" class="adn-menu-icon" alt=""><span>Suivi de livraison</span></div>
         <div class="adn-menu-sub">Suivez votre livraison en direct</div>
       </div>
-      <span class="adn-tag">Nouveau</span>
     </div>
 
-    <div class="adn-menu-item" id="adnMenuGame" style="display:none; --adn-icon:52px">
+    <div class="adn-menu-item" id="adnMenuZone" style="--adn-icon:54px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/game.png" class="adn-menu-icon cadeaux" alt="">Jeux</div>
-        <div class="adn-menu-sub">Des défis &amp; des surprises.</div>
-      </div>
-      <span class="adn-tag">Nouveau</span>
-    </div>
-
-    
-    <div class="adn-menu-item" id="adnMenuLoyalty" style="--adn-icon:84px">
-      <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt="">Carte de fidélité</div>
-        <div class="adn-menu-sub">Avantages & récompenses</div>
-      </div>
-    <span class="adn-tag">Nouveau</span>
-
-    </div>
-    <div class="adn-menu-item" id="adnMenuZone" style="--adn-icon:62px">
-      <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt="">Zone de livraison</div>
+        <div class="adn-menu-title"><img src="assets/zone.png" class="adn-menu-icon" alt=""><span>Zones desservies</span></div>
         <div class="adn-menu-sub">Zones, tarifs &amp; délais</div>
       </div>
     </div>
 
-
-
-    <div class="adn-menu-item" id="adnMenuAlcohol" style="--adn-icon:62px">
+    <div class="adn-menu-item" id="adnMenuLoyalty" style="--adn-icon:58px">
       <div class="adn-menu-left">
-        <div class="adn-menu-title"><img src="assets/calculateur.png" class="adn-menu-icon" alt="Calculateur">Indicateur d’alcoolémie</div>
-        <div class="adn-menu-sub">Prévention &amp; sécurité</div>
+        <div class="adn-menu-title"><img src="assets/cadeaux.png" class="adn-menu-icon cadeaux" alt=""><span>Carte de fidélité</span></div>
+        <div class="adn-menu-sub">Avantages &amp; récompenses</div>
       </div>
     </div>
 
-</div>
+    <div class="adn-menu-item" id="adnMenuGame" style="--adn-icon:50px">
+      <div class="adn-menu-left">
+        <div class="adn-menu-title"><img src="assets/game.png" class="adn-menu-icon cadeaux" alt=""><span>Jeux &amp; surprises</span></div>
+        <div class="adn-menu-sub">Des défis &amp; des surprises</div>
+      </div>
+    </div>
 
+    <div class="adn-menu-item" id="adnMenuAlcohol" style="--adn-icon:54px">
+      <div class="adn-menu-left">
+        <div class="adn-menu-title"><img src="assets/calculateur.png" class="adn-menu-icon" alt=""><span>Prévention alcoolémie</span></div>
+        <div class="adn-menu-sub">Prévention &amp; sécurité</div>
+      </div>
+    </div>
   </div>
 
   <footer class="adn-legal-footer" aria-label="Informations légales">
@@ -1691,15 +1733,10 @@
 
 <script id="adn66-menu-js">
     (function(){
-      function isStandalone(){
-        try{
-          return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-        }catch(e){ return false; }
-      }
-
       const btn = document.getElementById("adnMenuBtn");
       const sheet = document.getElementById("adnMenuSheet");
       const back = document.getElementById("adnMenuBackdrop");
+      const closeBtn = document.getElementById("adnMenuClose");
 
       function openMenu(){
         if(!sheet || !back || !btn) return;
@@ -1721,6 +1758,13 @@
           window.adn66PushRequestOnMenuOpen();
         }
       });
+
+      if(closeBtn) closeBtn.addEventListener("click", closeMenu);
+      if(back) back.addEventListener("click", closeMenu);
+      document.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape" && sheet && sheet.classList.contains("open")) closeMenu();
+      });
+
       const zoneEl = document.getElementById("adnMenuZone");
       if(zoneEl){
         zoneEl.addEventListener("click", () => {
@@ -1733,16 +1777,6 @@
         });
       }
 
-      if(back) back.addEventListener("click", closeMenu);
-
-      // Visibility rules
-      const track = document.getElementById("adnMenuTrack");
-      const game = document.getElementById("adnMenuGame");
-      const standalone = isStandalone();
-
-      if(track) track.style.display = standalone ? "flex" : "none";
-      if(game) game.style.display = standalone ? "flex" : "none";
-      // Actions
       const call = document.getElementById("adnMenuCall");
       if(call){
         call.addEventListener("click", ()=>{
@@ -1759,7 +1793,6 @@
       if(order){
         order.addEventListener("click", ()=>{
           closeMenu();
-          // ✅ Commander en ligne
           if (typeof openOrder === "function") {
             openOrder();
           } else {
@@ -1773,10 +1806,10 @@
         });
       }
 
+      const game = document.getElementById("adnMenuGame");
       if(game){
         game.addEventListener("click", ()=>{
           closeMenu();
-          // ✅ Onglet visible uniquement en PWA
           if(typeof requireMajorThen === "function"){
             requireMajorThen(()=>{ window.location.href = "./game/"; });
           }else{
@@ -1785,6 +1818,7 @@
         });
       }
 
+      const track = document.getElementById("adnMenuTrack");
       if(track){
         track.addEventListener("click", ()=>{
           closeMenu();
@@ -1795,7 +1829,13 @@
           }
         });
       }
-})();
+
+      const loyalty = document.getElementById("adnMenuLoyalty");
+      if(loyalty) loyalty.addEventListener("click", closeMenu);
+
+      const alcohol = document.getElementById("adnMenuAlcohol");
+      if(alcohol) alcohol.addEventListener("click", closeMenu);
+    })();
   </script>
 <footer class="legal-footer">
     <a href="./mentions.html">Mentions légales</a>
