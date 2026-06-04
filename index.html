@@ -815,6 +815,17 @@
     try { document.documentElement.setAttribute("data-status-url", window.AD_STATUS_URL); } catch(e) {}
   </script>
 
+  <!-- ✅ Google tag (gtag.js) — Google Ads / Analytics
+       Ajout sécurisé : uniquement le suivi Google, aucun élément existant supprimé. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-EFQJBTBSC2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-EFQJBTBSC2');
+  </script>
+
 </head>
 
 <body>
