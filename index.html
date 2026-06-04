@@ -1644,10 +1644,37 @@
       }
     });
 // ✅ ACTION PRINCIPALE: COMMANDE EN LIGNE
+    async function requestPushBeforeOrder(){
+      try{
+        if (
+          typeof window.adn66PushRequestOnMenuOpen === "function" &&
+          "Notification" in window &&
+          Notification.permission === "default"
+        ){
+          // Attend que le client accepte, refuse ou ferme la demande avant de continuer.
+          await window.adn66PushRequestOnMenuOpen({ ignoreCooldown:true });
+        }
+      }catch(e){
+        console.warn("ADN66 push before order:", e);
+      }
+    }
+
     const orderBtn = document.getElementById("orderBtn");
     if (orderBtn){
-      orderBtn.addEventListener("click", () => {
-        openOrder();
+      orderBtn.addEventListener("click", async () => {
+        if (orderBtn.dataset.busy === "1") return;
+        const oldText = orderBtn.textContent;
+        orderBtn.dataset.busy = "1";
+        orderBtn.disabled = true;
+        orderBtn.textContent = "Préparation...";
+        try{
+          await requestPushBeforeOrder();
+          openOrder();
+        }finally{
+          orderBtn.dataset.busy = "0";
+          orderBtn.disabled = false;
+          orderBtn.textContent = oldText;
+        }
       });
     }
   </script>
@@ -1804,18 +1831,21 @@
       await saveSubscription(subscription);
     }
 
-    window.adn66PushRequestOnMenuOpen = async function(){
+    window.adn66PushRequestOnMenuOpen = async function(options){
+      const opts = options || {};
       if(pushBusy || !isPushSupported()) return;
       if(Notification.permission === "denied") return;
 
       pushBusy = true;
       try{
         if(Notification.permission === "default"){
-          if(getCooldownRemaining() > 0) return;
+          if(getCooldownRemaining() > 0 && !opts.ignoreCooldown) return;
 
           /*
             Important : requestPermission est appelé directement suite au clic menu.
             Si le client refuse/ferme, on évite de le relancer à chaque ouverture du menu.
+            Sur le bouton Commander, ignoreCooldown permet d'attendre une vraie réponse
+            avant de lancer la commande.
           */
           const permission = await Notification.requestPermission();
           if(permission !== "granted"){
