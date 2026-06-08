@@ -723,6 +723,71 @@ async function loadCard(){
   }
 }
 
+
+/* ---------- Récompense jeu en attente (GAME_25) ---------- */
+const LS_PENDING_GAME_REWARD = "adn66_pending_game_reward_v1";
+
+function getGameRewardFromUrl(){
+  try{
+    const u = new URL(location.href);
+    const reward = u.searchParams.get("game_reward") || "";
+    return String(reward || "").trim();
+  }catch(_){ return ""; }
+}
+
+function savePendingGameRewardFromUrl(){
+  const reward = getGameRewardFromUrl();
+  if(!reward) return;
+
+  // Sécurité simple : on n'accepte que le palier prévu.
+  if(reward !== "GAME_25") return;
+
+  localStorage.setItem(LS_PENDING_GAME_REWARD, reward);
+
+  // Nettoyage de l'URL pour éviter de relancer plusieurs fois le traitement.
+  try{
+    const u = new URL(location.href);
+    u.searchParams.delete("game_reward");
+    history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+  }catch(_){}
+}
+
+async function applyPendingGameReward(clientId){
+  const reward = localStorage.getItem(LS_PENDING_GAME_REWARD);
+  if(!reward || !clientId) return;
+
+  try{
+    const r = await api("/game/reward/request", {
+      method: "POST",
+      body: JSON.stringify({
+        client_id: clientId,
+        milestone: reward
+      })
+    });
+
+    if(r && r.token){
+      await consumeRewardToken(r.token);
+      localStorage.removeItem(LS_PENDING_GAME_REWARD);
+      return;
+    }
+
+    const code = String((r && (r.code || r.status || r.error_code || r.message || r.error)) || "").trim();
+    if(code === "already_claimed"){
+      localStorage.removeItem(LS_PENDING_GAME_REWARD);
+      showInfoPopup("Récompense", "Votre récompense a déjà été utilisée.");
+      return;
+    }
+
+    localStorage.removeItem(LS_PENDING_GAME_REWARD);
+  }catch(e){
+    // On garde la récompense en attente si erreur réseau.
+    showInfoPopup(
+      "Récompense en attente",
+      "Votre carte est créée. Le tampon du jeu sera ajouté dès que possible. Rafraîchissez la page dans quelques instants si besoin."
+    );
+  }
+}
+
 /* ---------- Create ---------- */
 async function createCard(){
   // Block check (6 days) with live countdown
@@ -841,6 +906,7 @@ async function createCard(){
 
     closeModal();
     await loadCard();
+    await applyPendingGameReward(r.client_id);
   }catch(e){
     const code = String((e && e.message) ? e.message : "").trim();
 
@@ -1079,6 +1145,8 @@ function tryAutoRestoreFromUrl(){
 /* ---------- Bind events ---------- */
 function bind(){
   tryAutoRestoreFromUrl();
+  savePendingGameRewardFromUrl();
+
   const rewardToken = getRewardTokenFromUrl();
   if(rewardToken){
     consumeRewardToken(rewardToken);
