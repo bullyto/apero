@@ -1322,10 +1322,10 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
       const clientId = getLoyaltyClientId();
       if (!clientId) {
         reward25Msg.style.display = 'block';
-        reward25Msg.textContent = "Active d’abord ta carte de fidélité pour recevoir ta récompense.";
-        // Redirection utile
+        reward25Msg.textContent = "Activez votre carte, votre tampon sera ajouté automatiquement.";
+        // On transmet le palier gagné à la page fidélité. Après création, elle réclame et consomme le tampon automatiquement.
         setTimeout(() => {
-          window.location.href = "https://www.aperos.net/fidel/client.html";
+          window.location.href = "https://www.aperos.net/fidel/client.html?game_reward=GAME_25";
         }, 900);
         return;
       }
