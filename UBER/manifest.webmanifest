@@ -1,0 +1,9 @@
+{
+  "name": "ADN66 Enregistrement partenaire Uber",
+  "short_name": "ADN66 Uber",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#5db7ee",
+  "icons": []
+}
