@@ -731,6 +731,14 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
   button{ padding:7px 9px !important; font-size:13px !important; }
 }
 
+
+
+/* ✅ Correctif affichage tampons : les 8 tampons doivent rester au-dessus de l'image */
+.visual{position:relative !important; overflow:hidden !important;}
+.visualInner{position:relative !important; width:100% !important; transform:scale(1.08); transform-origin:center center;}
+.stamp{z-index:7 !important; opacity:0; visibility:hidden;}
+.stamp.filled{opacity:1 !important; visibility:visible !important; display:block !important;}
+
 </style>
 
 </head>

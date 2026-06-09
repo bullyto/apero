@@ -368,11 +368,48 @@ function setStateText(points, completedAt){
 }
 
 function renderVisualStamps(points){
-  const safe = Math.max(0, Math.min(GOAL, Number(points||0)));
-  document.querySelectorAll(".stamp").forEach(el=>{
+  // Correction robuste ADN66 : l'affichage doit suivre STRICTEMENT card.points reçu par /loyalty/me.
+  // Avant : certains téléphones ne montraient qu'un seul tampon visuellement.
+  // Maintenant : on force les 8 emplacements, la classe, l'opacité et le z-index.
+  const safe = Math.max(0, Math.min(GOAL, Math.floor(Number(points || 0))));
+  const visual = document.getElementById("visual") || document.querySelector(".visual");
+
+  // Si le HTML ancien n'a pas les 8 emplacements, on les recrée proprement.
+  if(visual){
+    const existing = visual.querySelectorAll(".stamp[data-slot]");
+    if(existing.length < GOAL){
+      const positions = [
+        {c:"s1", r:"-12deg"}, {c:"s2", r:"7deg"}, {c:"s3", r:"-3deg"}, {c:"s4", r:"11deg"},
+        {c:"s5", r:"-9deg"}, {c:"s6", r:"5deg"}, {c:"s7", r:"-14deg"}, {c:"s8", r:"8deg"}
+      ];
+      for(let i=existing.length; i<GOAL; i++){
+        const el = document.createElement("div");
+        el.className = "stamp " + positions[i].c;
+        el.dataset.slot = String(i+1);
+        el.style.setProperty("--rot", positions[i].r);
+        visual.appendChild(el);
+      }
+    }
+  }
+
+  const stamps = document.querySelectorAll(".stamp[data-slot]");
+  stamps.forEach(el=>{
     const slot = Number(el.dataset.slot || "0");
-    el.classList.toggle("filled", slot > 0 && slot <= safe);
+    const filled = slot > 0 && slot <= safe;
+    el.classList.toggle("filled", filled);
+    // Force visuelle, même si une ancienne CSS/cache mobile garde une mauvaise valeur.
+    el.style.opacity = filled ? "1" : "0";
+    el.style.visibility = filled ? "visible" : "hidden";
+    el.style.display = "block";
+    el.style.zIndex = "7";
+    el.style.pointerEvents = "none";
   });
+
+  // Petit garde-fou : on garde les compteurs texte synchronisés avec les points API.
+  const pts = document.getElementById("points");
+  const goal = document.getElementById("goal");
+  if(pts) pts.textContent = String(safe);
+  if(goal) goal.textContent = String(GOAL);
 }
 
 
@@ -468,7 +505,7 @@ function renderCta(points){
 
   if(!showFb && !showGg && !msg){
     setCtaVisible(false);
-    renderFreeDeliveryBenefit(null);
+    // Ne pas effacer ici le bandeau livraison gratuite : il est indépendant des CTA.
     return;
   }
 
@@ -769,6 +806,19 @@ function renderFreeDeliveryBenefit(freeDelivery){
   adn66FreeDeliveryTimer = setInterval(update, 1000);
 }
 
+
+async function loadFreeDeliveryFallback(clientId){
+  // Sécurité : si une ancienne réponse /loyalty/me ne contient pas encore free_delivery,
+  // on tente la route dédiée /loyalty/benefits sans casser l'affichage des tampons.
+  if(!clientId) return null;
+  try{
+    const b = await api("/loyalty/benefits?client_id=" + encodeURIComponent(clientId) + "&t=" + Date.now(), {method:"GET"});
+    return b.free_delivery || b.benefit || b.active_benefit || null;
+  }catch(_){
+    return null;
+  }
+}
+
 /* ---------- Load card ---------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
@@ -790,9 +840,10 @@ async function loadCard(){
   try{
     const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid) + "&t=" + Date.now(), {method:"GET"});
     const card = res.card || res;
-    renderFreeDeliveryBenefit(card.free_delivery || res.free_delivery || null);
 
     const points = Number(card.points || 0);
+    const freeDelivery = card.free_delivery || res.free_delivery || await loadFreeDeliveryFallback(cid);
+    renderFreeDeliveryBenefit(freeDelivery || null);
     const goal = Number(card.goal || GOAL);
 
     const pts = $("points");
