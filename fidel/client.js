@@ -468,6 +468,7 @@ function renderCta(points){
 
   if(!showFb && !showGg && !msg){
     setCtaVisible(false);
+    renderFreeDeliveryBenefit(null);
     return;
   }
 
@@ -682,6 +683,121 @@ function closeQrModal(){
   modal.setAttribute("aria-hidden","true");
 }
 
+
+let adn66FreeDeliveryTimer = null;
+
+function ensureFreeDeliveryStyles(){
+  if(document.getElementById("adn66FreeDeliveryStyles")) return;
+  const style = document.createElement("style");
+  style.id = "adn66FreeDeliveryStyles";
+  style.textContent = `
+  .adn66-free-delivery-banner{
+    width:100%;
+    margin:0 0 10px 0;
+    padding:12px 12px;
+    border-radius:16px;
+    background:linear-gradient(135deg, rgba(93,183,238,.24), rgba(22,163,74,.18));
+    border:1px solid rgba(93,183,238,.62);
+    box-shadow:0 10px 24px rgba(0,0,0,.14), 0 0 0 1px rgba(93,183,238,.12) inset;
+    color:#0b1c2d;
+    text-align:left;
+  }
+  .adn66-free-delivery-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:950;
+    font-size:14px;
+    line-height:1.15;
+  }
+  .adn66-free-delivery-chip{
+    white-space:nowrap;
+    border-radius:999px;
+    padding:6px 9px;
+    background:#5db7ee;
+    color:#fff;
+    font-size:11px;
+    font-weight:950;
+  }
+  .adn66-free-delivery-msg{
+    margin-top:6px;
+    color:rgba(11,28,45,.78);
+    font-weight:850;
+    font-size:12.5px;
+    line-height:1.25;
+  }
+  .adn66-free-delivery-count{
+    margin-top:8px;
+    font-weight:950;
+    font-size:13px;
+    color:#0b1c2d;
+  }
+  @media (max-width:420px){
+    .adn66-free-delivery-banner{padding:10px 10px;border-radius:14px;}
+    .adn66-free-delivery-title{font-size:13px;}
+    .adn66-free-delivery-msg{font-size:12px;}
+  }`;
+  document.head.appendChild(style);
+}
+
+function formatCountdownLong(ms){
+  ms = Math.max(0, Number(ms||0));
+  const total = Math.floor(ms/1000);
+  const d = Math.floor(total/86400);
+  const h = Math.floor((total%86400)/3600);
+  const m = Math.floor((total%3600)/60);
+  const s = total%60;
+  if(d > 0) return `${d}j ${h}h ${m}min`;
+  if(h > 0) return `${h}h ${m}min ${s}s`;
+  if(m > 0) return `${m}min ${s}s`;
+  return `${s}s`;
+}
+
+function renderFreeDeliveryBenefit(freeDelivery){
+  ensureFreeDeliveryStyles();
+  if(adn66FreeDeliveryTimer){ clearInterval(adn66FreeDeliveryTimer); adn66FreeDeliveryTimer = null; }
+
+  const cardBlock = $("cardBlock");
+  if(!cardBlock) return;
+
+  let banner = document.getElementById("adn66FreeDeliveryBanner");
+  const active = !!(freeDelivery && freeDelivery.active && freeDelivery.expires_at);
+
+  if(!active){
+    if(banner) banner.remove();
+    return;
+  }
+
+  if(!banner){
+    banner = document.createElement("div");
+    banner.id = "adn66FreeDeliveryBanner";
+    banner.className = "adn66-free-delivery-banner";
+    cardBlock.insertBefore(banner, cardBlock.firstChild);
+  }
+
+  const expiresAt = String(freeDelivery.expires_at || "");
+  const update = ()=>{
+    const expMs = Date.parse(expiresAt);
+    const left = Number.isFinite(expMs) ? Math.max(0, expMs - Date.now()) : 0;
+    if(left <= 0){
+      if(adn66FreeDeliveryTimer){ clearInterval(adn66FreeDeliveryTimer); adn66FreeDeliveryTimer = null; }
+      banner.remove();
+      return;
+    }
+    banner.innerHTML = `
+      <div class="adn66-free-delivery-title">
+        <span>🚚 Livraison gratuite active</span>
+        <span class="adn66-free-delivery-chip">7 jours</span>
+      </div>
+      <div class="adn66-free-delivery-msg">Profitez de la livraison gratuite à chaque commande pendant 1 semaine.</div>
+      <div class="adn66-free-delivery-count">⏳ Temps restant : <span>${formatCountdownLong(left)}</span></div>
+    `;
+  };
+  update();
+  adn66FreeDeliveryTimer = setInterval(update, 1000);
+}
+
 /* ---------- Load card ---------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
@@ -703,6 +819,7 @@ async function loadCard(){
   try{
     const res = await api("/loyalty/me?client_id=" + encodeURIComponent(cid) + "&t=" + Date.now(), {method:"GET"});
     const card = res.card || res;
+    renderFreeDeliveryBenefit(card.free_delivery || res.free_delivery || null);
 
     const points = Number(card.points || 0);
     const goal = Number(card.goal || GOAL);
@@ -739,8 +856,8 @@ function savePendingGameRewardFromUrl(){
   const reward = getGameRewardFromUrl();
   if(!reward) return;
 
-  // Sécurité simple : on n'accepte que le palier prévu.
-  if(reward !== "GAME_25") return;
+  // Sécurité simple : paliers acceptés depuis le jeu.
+  if(!["GAME_25", "GAME_35"].includes(reward)) return;
 
   localStorage.setItem(LS_PENDING_GAME_REWARD, reward);
 
@@ -783,7 +900,7 @@ async function applyPendingGameReward(clientId){
     // On garde la récompense en attente si erreur réseau.
     showInfoPopup(
       "Récompense en attente",
-      "Votre carte est créée. Le tampon du jeu sera ajouté dès que possible. Rafraîchissez la page dans quelques instants si besoin."
+      "Votre carte est créée. La récompense du jeu sera ajoutée dès que possible. Rafraîchissez la page dans quelques instants si besoin."
     );
   }
 }
@@ -1261,10 +1378,19 @@ async function consumeRewardToken(token){
       method: "POST",
       body: JSON.stringify({ token })
     });
-    showInfoPopup(
-      "Récompense validée 🎉",
-      "Un tampon a été ajouté à votre carte de fidélité."
-    );
+
+    if(res && res.milestone === "GAME_35"){
+      showInfoPopup(
+        "Livraison offerte activée 🚚",
+        "Profitez de la livraison gratuite à chaque commande pendant 1 semaine. Le compte à rebours apparaît en haut de votre carte."
+      );
+    }else{
+      showInfoPopup(
+        "Récompense validée 🎉",
+        "Un tampon a été ajouté à votre carte de fidélité."
+      );
+    }
+
     await loadCard();
   }catch(e){
     showInfoPopup(
