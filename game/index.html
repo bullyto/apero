@@ -154,7 +154,7 @@
 /* Overlays */
     .overlay {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:rgba(0,0,0,0.7); padding:2.7vh 2.7vw; border-radius:2vh;
+      background:rgba(0,0,0,0.78); padding:2.7vh 2.7vw; border-radius:2vh;
       color:#fff; text-align:center; z-index:20; pointer-events:auto;
       width:78vw; max-width:380px;
     }
@@ -452,8 +452,8 @@
   text-align:left;
 }
 .player-card{
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.18);
   border-radius:1.6vh;
   padding:1.1vh 1.2vh;
   box-shadow:0 8px 22px rgba(0,0,0,.18);
@@ -490,8 +490,8 @@
   gap:.75vh;
   padding:.8vh .8vh;
   border-radius:1.2vh;
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.13);
 }
 .reward-row.unlocked{
   border-color:rgba(255,215,0,.45);
@@ -565,7 +565,7 @@
   max-height:84vh;
   overflow:hidden;
   border-radius:22px;
-  background:rgba(8,13,22,.96);
+  background:rgba(8,13,22,.98);
   color:#fff;
   border:1px solid rgba(255,255,255,.16);
   box-shadow:0 24px 70px rgba(0,0,0,.65);
@@ -660,7 +660,7 @@ body.adn66-modal-clean .top50-modal.open{
   background:rgba(2,6,12,.82);
 }
 body.adn66-modal-clean .top50-card{
-  background:#080d16;
+  background:rgba(8,13,22,.985);
   border-color:rgba(93,183,238,.28);
 }
 
@@ -781,7 +781,7 @@ body.adn66-modal-clean .top50-card{
           <div id="top50Preview" class="top-preview">Votre score sera publié automatiquement sous un nom anonyme.</div>
           <div class="player-actions">
             <button id="top50Btn" type="button">Voir le Top 50</button>
-            <button id="refreshTop50Btn" type="button">Actualiser</button>
+            <button id="refreshTop50Btn" type="button">Mes scores</button>
           </div>
           <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">en savoir plus</a>
         </div>
@@ -801,6 +801,19 @@ body.adn66-modal-clean .top50-card{
           <div class="top-row"><span class="top-rank">—</span><span class="top-name">Chargement…</span><span class="top-score">—</span></div>
         </div>
         <div class="top50-foot">Votre ligne apparaît en bleu avec “Vous”. Aucun numéro ni prénom réel n’est affiché.</div>
+      </div>
+    </div>
+
+    <div id="myScoresModal" class="top50-modal" aria-hidden="true">
+      <div class="top50-card" role="dialog" aria-modal="true" aria-label="Mes 20 meilleurs scores">
+        <div class="top50-head">
+          <b>📊 Mes 20 meilleurs scores</b>
+          <button id="myScoresCloseBtn" class="top50-close" type="button">✕</button>
+        </div>
+        <div id="myScoresBody" class="top50-body">
+          <div class="top-row"><span class="top-rank">—</span><span class="top-name">Aucun score local.</span><span class="top-score">—</span></div>
+        </div>
+        <div class="top50-foot">Cette liste est enregistrée uniquement sur ce téléphone. Elle n’est pas partagée publiquement.</div>
       </div>
     </div>
 
@@ -1299,6 +1312,9 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     const top50CloseBtn = document.getElementById('top50CloseBtn');
     const top50Body = document.getElementById('top50Body');
     const top50Preview = document.getElementById('top50Preview');
+    const myScoresModal = document.getElementById('myScoresModal');
+    const myScoresCloseBtn = document.getElementById('myScoresCloseBtn');
+    const myScoresBody = document.getElementById('myScoresBody');
 
     function escapeHtml(str){
       return String(str ?? "")
@@ -1480,6 +1496,37 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       }).join("");
     }
 
+
+    function renderMyScoresRows(){
+      if(!myScoresBody) return;
+      const arr = loadHighScores()
+        .map((x, i)=>({ score: Math.max(0, Math.floor(Number(x.score)||0)), timestamp: Number(x.timestamp || 0), originalIndex:i }))
+        .filter(x => x.score > 0)
+        .sort((a,b)=> (b.score - a.score) || (b.timestamp - a.timestamp))
+        .slice(0,20);
+
+      if(!arr.length){
+        myScoresBody.innerHTML = `<div class="top-row"><span class="top-rank">—</span><span class="top-name">Aucun score local.</span><span class="top-score">—</span></div>`;
+        return;
+      }
+
+      myScoresBody.innerHTML = arr.map((r, idx)=>{
+        const d = r.timestamp ? new Date(r.timestamp) : null;
+        const dateTxt = d ? d.toLocaleDateString('fr-FR') : 'Score local';
+        return `
+          <div class="top-row ${idx === 0 ? 'me' : ''}">
+            <span class="top-rank">#${idx+1}</span>
+            <span class="top-name">${escapeHtml(dateTxt)}</span>
+            <span class="top-score">${r.score} pts</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openMyScoresModal(){
+      renderMyScoresRows();
+      openCleanModal(myScoresModal);
+    }
 
     function openCleanModal(modal){
       document.body.classList.add("adn66-modal-clean");
@@ -2005,7 +2052,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       top50Btn.onclick = clickAnd(() => { refreshTop50(true); });
     }
     if (refreshTop50Btn) {
-      refreshTop50Btn.onclick = clickAnd(() => { refreshTop50(false); });
+      refreshTop50Btn.onclick = clickAnd(() => { openMyScoresModal(); });
     }
     if (top50CloseBtn && top50Modal) {
       top50CloseBtn.onclick = clickAnd(() => {
@@ -2016,12 +2063,23 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           closeCleanModal(top50Modal);
         }
       });
-      document.addEventListener("keydown", (e)=>{
-        if(e.key === "Escape" && top50Modal.classList.contains("open")){
-          closeCleanModal(top50Modal);
+    }
+    if (myScoresCloseBtn && myScoresModal) {
+      myScoresCloseBtn.onclick = clickAnd(() => {
+        closeCleanModal(myScoresModal);
+      });
+      myScoresModal.addEventListener("click", (e)=>{
+        if(e.target === myScoresModal){
+          closeCleanModal(myScoresModal);
         }
       });
     }
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape"){
+        if(top50Modal && top50Modal.classList.contains("open")) closeCleanModal(top50Modal);
+        if(myScoresModal && myScoresModal.classList.contains("open")) closeCleanModal(myScoresModal);
+      }
+    });
 
 
     function clickAnd(fn){
