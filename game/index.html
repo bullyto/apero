@@ -154,7 +154,7 @@
 /* Overlays */
     .overlay {
       position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:rgba(0,0,0,0.78); padding:2.7vh 2.7vw; border-radius:2vh;
+      background:rgba(0,0,0,0.86); padding:2.7vh 2.7vw; border-radius:2vh;
       color:#fff; text-align:center; z-index:20; pointer-events:auto;
       width:78vw; max-width:380px;
     }
@@ -555,7 +555,7 @@
   align-items:center;
   justify-content:center;
   padding:16px;
-  background:rgba(0,0,0,.78);
+  background:rgba(0,0,0,.82);
   backdrop-filter: blur(2.5px) saturate(120%);
   -webkit-backdrop-filter: blur(2.5px) saturate(120%);
 }
@@ -657,10 +657,10 @@ body.adn66-modal-clean #cloud{
   opacity:1;
 }
 body.adn66-modal-clean .top50-modal.open{
-  background:rgba(2,6,12,.89);
+  background:rgba(2,6,12,.82);
 }
 body.adn66-modal-clean .top50-card{
-  background:rgba(8,13,22,.992);
+  background:rgba(8,13,22,.985);
   border-color:rgba(93,183,238,.28);
 }
 
@@ -1289,7 +1289,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     const LS_PLAYER_NAME = "adn66_game_public_name_v2";
     const LS_TOP_CACHE = "adn66_game_top50_cache_v1";
     const LS_REWARD_25 = "adn66_game_reward_25_claimed_v1";
-    const LS_REWARD_35 = "adn66_game_reward_35_claimed_v1";
+    const LS_REWARD_35 = "adn66_game_reward_35_claimed_v2";
     const LS_REWARD_50 = "adn66_game_reward_50_claimed_v1";
 
     const playerPublicNameEl = document.getElementById('playerPublicName');
@@ -1604,7 +1604,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       setRewardRow(rewardRow35, reward35Status, reward35Badge, {
         done: claimed35,
         ready: best >= SCORE_35 && !claimed35,
-        text: claimed35 ? "Livraison offerte activée sur votre carte." : (best >= SCORE_35 ? "Livraison offerte débloquée." : `Encore ${SCORE_35 - best} pts à obtenir.`)
+        text: claimed35 ? "Livraison offerte déjà utilisée." : (best >= SCORE_35 ? "Livraison offerte débloquée." : `Encore ${SCORE_35 - best} pts à obtenir.`)
       });
       setRewardRow(rewardRow50, reward50Status, reward50Badge, {
         done: claimed50,
@@ -1677,10 +1677,16 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
 
         if (!res.ok) {
           let msg = "Erreur. Réessayez plus tard.";
-          if (code === "already_claimed") { msg = "Livraison offerte déjà activée sur votre carte."; setClaimed(LS_REWARD_35); }
-          else if (code === "not_eligible") msg = "À débloquer.";
-          else if (data && data.error) msg = String(data.error);
-          else if (data && data.message) msg = String(data.message);
+          if (code === "already_claimed") {
+            msg = "Livraison offerte déjà activée sur votre carte.";
+            setClaimed(LS_REWARD_35);
+          } else if (code === "not_eligible") {
+            msg = "À débloquer.";
+          } else if (data && data.error) {
+            msg = String(data.error);
+          } else if (data && data.message) {
+            msg = String(data.message);
+          }
 
           reward25Msg.textContent = msg;
           reward35Btn.style.display = "none";
