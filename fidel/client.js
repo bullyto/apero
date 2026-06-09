@@ -684,6 +684,8 @@ function closeQrModal(){
 }
 
 
+
+/* ---------- Livraison gratuite active (GAME_35) ---------- */
 let adn66FreeDeliveryTimer = null;
 
 function ensureFreeDeliveryStyles(){
@@ -694,50 +696,19 @@ function ensureFreeDeliveryStyles(){
   .adn66-free-delivery-banner{
     width:100%;
     margin:0 0 10px 0;
-    padding:12px 12px;
-    border-radius:16px;
-    background:linear-gradient(135deg, rgba(93,183,238,.24), rgba(22,163,74,.18));
-    border:1px solid rgba(93,183,238,.62);
-    box-shadow:0 10px 24px rgba(0,0,0,.14), 0 0 0 1px rgba(93,183,238,.12) inset;
+    padding:10px 11px;
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(93,183,238,.22), rgba(22,163,74,.14));
+    border:1px solid rgba(93,183,238,.55);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
     color:#0b1c2d;
     text-align:left;
   }
-  .adn66-free-delivery-title{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    font-weight:950;
-    font-size:14px;
-    line-height:1.15;
-  }
-  .adn66-free-delivery-chip{
-    white-space:nowrap;
-    border-radius:999px;
-    padding:6px 9px;
-    background:#5db7ee;
-    color:#fff;
-    font-size:11px;
-    font-weight:950;
-  }
-  .adn66-free-delivery-msg{
-    margin-top:6px;
-    color:rgba(11,28,45,.78);
-    font-weight:850;
-    font-size:12.5px;
-    line-height:1.25;
-  }
-  .adn66-free-delivery-count{
-    margin-top:8px;
-    font-weight:950;
-    font-size:13px;
-    color:#0b1c2d;
-  }
-  @media (max-width:420px){
-    .adn66-free-delivery-banner{padding:10px 10px;border-radius:14px;}
-    .adn66-free-delivery-title{font-size:13px;}
-    .adn66-free-delivery-msg{font-size:12px;}
-  }`;
+  .adn66-free-delivery-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:950;font-size:13px;line-height:1.15;}
+  .adn66-free-delivery-chip{white-space:nowrap;border-radius:999px;padding:5px 8px;background:#5db7ee;color:#fff;font-size:10.5px;font-weight:950;}
+  .adn66-free-delivery-msg{margin-top:5px;color:rgba(11,28,45,.78);font-weight:850;font-size:12px;line-height:1.22;}
+  .adn66-free-delivery-count{margin-top:7px;font-weight:950;font-size:12.5px;color:#0b1c2d;}
+  `;
   document.head.appendChild(style);
 }
 
@@ -856,8 +827,8 @@ function savePendingGameRewardFromUrl(){
   const reward = getGameRewardFromUrl();
   if(!reward) return;
 
-  // Sécurité simple : paliers acceptés depuis le jeu.
-  if(!["GAME_25", "GAME_35"].includes(reward)) return;
+  // Sécurité simple : on n'accepte que le palier prévu.
+  if(reward !== "GAME_25") return;
 
   localStorage.setItem(LS_PENDING_GAME_REWARD, reward);
 
@@ -900,7 +871,7 @@ async function applyPendingGameReward(clientId){
     // On garde la récompense en attente si erreur réseau.
     showInfoPopup(
       "Récompense en attente",
-      "Votre carte est créée. La récompense du jeu sera ajoutée dès que possible. Rafraîchissez la page dans quelques instants si besoin."
+      "Votre carte est créée. Le tampon du jeu sera ajouté dès que possible. Rafraîchissez la page dans quelques instants si besoin."
     );
   }
 }
@@ -1399,3 +1370,4 @@ async function consumeRewardToken(token){
     );
   }
 }
+
