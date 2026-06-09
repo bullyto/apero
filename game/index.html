@@ -657,10 +657,10 @@ body.adn66-modal-clean #cloud{
   opacity:1;
 }
 body.adn66-modal-clean .top50-modal.open{
-  background:rgba(2,6,12,.82);
+  background:rgba(2,6,12,.89);
 }
 body.adn66-modal-clean .top50-card{
-  background:rgba(8,13,22,.985);
+  background:rgba(8,13,22,.992);
   border-color:rgba(93,183,238,.28);
 }
 
@@ -1604,7 +1604,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       setRewardRow(rewardRow35, reward35Status, reward35Badge, {
         done: claimed35,
         ready: best >= SCORE_35 && !claimed35,
-        text: claimed35 ? "Livraison offerte déjà utilisée." : (best >= SCORE_35 ? "Livraison offerte débloquée." : `Encore ${SCORE_35 - best} pts à obtenir.`)
+        text: claimed35 ? "Livraison offerte activée sur votre carte." : (best >= SCORE_35 ? "Livraison offerte débloquée." : `Encore ${SCORE_35 - best} pts à obtenir.`)
       });
       setRewardRow(rewardRow50, reward50Status, reward50Badge, {
         done: claimed50,
@@ -1643,13 +1643,63 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       submitSharedScore(safeScore);
     }
 
-    function claimLocalReward35(){
-      setClaimed(LS_REWARD_35);
-      if(reward25Msg){
-        reward25Msg.style.display = "block";
-        reward25Msg.textContent = "Livraison offerte débloquée. Présentez cet écran lors de votre commande.";
+    async function requestReward35(){
+      if (!reward35Btn || !reward25Msg) return;
+
+      const clientId = getLoyaltyClientId();
+      if (!clientId) {
+        reward25Msg.style.display = 'block';
+        reward25Msg.textContent = "Activez votre carte, votre livraison offerte sera ajoutée automatiquement.";
+        setTimeout(() => {
+          window.location.href = "https://www.aperos.net/fidel/client.html?game_reward=GAME_35";
+        }, 900);
+        return;
       }
-      displayHighScores();
+
+      reward35Btn.disabled = true;
+      reward25Msg.style.display = 'block';
+      reward25Msg.textContent = "Activation de votre livraison offerte…";
+
+      try{
+        const controller = new AbortController();
+        const tmr = setTimeout(()=>controller.abort(), 10000);
+
+        const res = await fetch(LOYALTY_WORKER_URL + "/game/reward/request", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=UTF-8" },
+          signal: controller.signal,
+          body: JSON.stringify({ client_id: clientId, milestone: "GAME_35" })
+        });
+        clearTimeout(tmr);
+        const data = await res.json().catch(()=> ({}));
+
+        const code = String((data && (data.code || data.status || data.error_code || data.message || data.error)) || "").trim();
+
+        if (!res.ok) {
+          let msg = "Erreur. Réessayez plus tard.";
+          if (code === "already_claimed") { msg = "Livraison offerte déjà activée sur votre carte."; setClaimed(LS_REWARD_35); }
+          else if (code === "not_eligible") msg = "À débloquer.";
+          else if (data && data.error) msg = String(data.error);
+          else if (data && data.message) msg = String(data.message);
+
+          reward25Msg.textContent = msg;
+          reward35Btn.style.display = "none";
+          displayHighScores();
+          return;
+        }
+
+        if (!data || !data.token) {
+          reward25Msg.textContent = "Réponse invalide. Réessayez plus tard.";
+          reward35Btn.disabled = false;
+          return;
+        }
+
+        window.location.href = "https://www.aperos.net/fidel/client.html?reward_token=" + encodeURIComponent(data.token);
+
+      } catch(e){
+        reward25Msg.textContent = "Erreur réseau. Réessayez plus tard.";
+        reward35Btn.disabled = false;
+      }
     }
 
     function claimLocalReward50(){
@@ -2043,7 +2093,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     }
 
     if (reward35Btn) {
-      reward35Btn.onclick = clickAnd(() => { claimLocalReward35(); });
+      reward35Btn.onclick = clickAnd(() => { requestReward35(); });
     }
     if (reward50Btn) {
       reward50Btn.onclick = clickAnd(() => { claimLocalReward50(); });
