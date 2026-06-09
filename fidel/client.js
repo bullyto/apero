@@ -807,71 +807,6 @@ function renderFreeDeliveryBenefit(freeDelivery){
 }
 
 
-/* ---------- Debug temporaire carte utilisée ----------
-   Objectif : vérifier que le téléphone interroge le même client_id que l'admin.
-   À retirer plus tard quand tout est validé. */
-function shortClientId(cid){
-  const s = String(cid || "").trim();
-  if(!s) return "—";
-  if(s.length <= 14) return s;
-  return s.slice(0,8) + "…" + s.slice(-6);
-}
-
-function ensureCardDebugStyles(){
-  if(document.getElementById("adn66CardDebugStyles")) return;
-  const style = document.createElement("style");
-  style.id = "adn66CardDebugStyles";
-  style.textContent = `
-  .adn66-card-debug{
-    width:100%;
-    margin:0 0 10px 0;
-    padding:9px 10px;
-    border-radius:14px;
-    background:rgba(255,255,255,.94);
-    border:1px dashed rgba(220,38,38,.40);
-    color:#0b1c2d;
-    font-size:11.5px;
-    font-weight:850;
-    line-height:1.25;
-    box-shadow:0 8px 18px rgba(0,0,0,.08);
-    overflow-wrap:anywhere;
-  }
-  .adn66-card-debug b{color:#dc2626;font-weight:950;}
-  .adn66-card-debug .ok{color:#16a34a;font-weight:950;}
-  .adn66-card-debug .bad{color:#dc2626;font-weight:950;}
-  `;
-  document.head.appendChild(style);
-}
-
-function renderCardDebug({clientId="", points="—", goal=GOAL, freeDelivery=null, error=""}={}){
-  ensureCardDebugStyles();
-  const cardBlock = $("cardBlock");
-  if(!cardBlock) return;
-  let el = document.getElementById("adn66CardDebug");
-  if(!el){
-    el = document.createElement("div");
-    el.id = "adn66CardDebug";
-    el.className = "adn66-card-debug";
-    cardBlock.insertBefore(el, cardBlock.firstChild);
-  }
-  const deliveryActive = !!(freeDelivery && freeDelivery.active && freeDelivery.expires_at);
-  const deliveryTxt = deliveryActive
-    ? `<span class="ok">oui</span> jusqu'au ${escapeHtml(String(freeDelivery.expires_at))}`
-    : `<span class="bad">non</span>`;
-  const err = error ? `<br><b>Erreur :</b> ${escapeHtml(error)}` : "";
-  el.innerHTML = `
-    <b>DEBUG TEMPORAIRE</b><br>
-    ID carte téléphone : <span class="mono">${escapeHtml(String(clientId || "—"))}</span><br>
-    Points reçus par /loyalty/me : <b>${escapeHtml(String(points))}/${escapeHtml(String(goal || GOAL))}</b><br>
-    Livraison active reçue : ${deliveryTxt}${err}
-  `;
-}
-
-function clearCardDebug(){
-  const el = document.getElementById("adn66CardDebug");
-  if(el) el.remove();
-}
-
 
 async function loadFreeDeliveryFallback(clientId){
   // Sécurité : si une ancienne réponse /loyalty/me ne contient pas encore free_delivery,
@@ -885,13 +820,30 @@ async function loadFreeDeliveryFallback(clientId){
   }
 }
 
+
+function hasBenefitFlagFromUrl(){
+  try{
+    const u = new URL(location.href);
+    return String(u.searchParams.get("benefit") || "") === "GAME_35";
+  }catch(_){ return false; }
+}
+function clearBenefitFlagFromUrl(){
+  try{
+    const u = new URL(location.href);
+    if(u.searchParams.has("benefit")){
+      u.searchParams.delete("benefit");
+      u.searchParams.delete("t");
+      history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+    }
+  }catch(_){}
+}
+
 /* ---------- Load card ---------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
 
   if(!cid){
     setScreen(false);
-    clearCardDebug();
     const pts = $("points");
     const goal = $("goal");
     if(pts) pts.textContent = "0";
@@ -912,7 +864,6 @@ async function loadCard(){
     const freeDelivery = card.free_delivery || res.free_delivery || await loadFreeDeliveryFallback(cid);
     renderFreeDeliveryBenefit(freeDelivery || null);
     const goal = Number(card.goal || GOAL);
-    renderCardDebug({clientId: cid, points, goal, freeDelivery});
 
     const pts = $("points");
     const g = $("goal");
@@ -928,7 +879,6 @@ async function loadCard(){
     setSyncText(false);
     setCtaVisible(false);
     renderFreeDeliveryBenefit(null);
-    renderCardDebug({clientId: cid, points:"erreur", goal:GOAL, freeDelivery:null, error: (e && e.message) ? e.message : "chargement impossible"});
   }
 }
 
