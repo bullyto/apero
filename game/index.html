@@ -1289,7 +1289,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     const LS_PLAYER_NAME = "adn66_game_public_name_v2";
     const LS_TOP_CACHE = "adn66_game_top50_cache_v1";
     const LS_REWARD_25 = "adn66_game_reward_25_claimed_v1";
-    const LS_REWARD_35 = "adn66_game_reward_35_claimed_v2";
+    const LS_REWARD_35 = "adn66_game_reward_35_claimed_v3_server";
     const LS_REWARD_50 = "adn66_game_reward_50_claimed_v1";
 
     const playerPublicNameEl = document.getElementById('playerPublicName');
@@ -1374,6 +1374,48 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     }
     function isClaimed(key){ return localStorage.getItem(key) === "1"; }
     function setClaimed(key){ localStorage.setItem(key, "1"); }
+
+    let reward35ServerSyncInFlight = false;
+
+    async function syncReward35FromServer(){
+      // Si la livraison est déjà active sur la carte fidélité, le jeu doit masquer le bouton 35 pts.
+      // Cela corrige le cas où l'activation a bien été faite côté Worker/D1, mais où le localStorage du jeu
+      // n'avait pas encore enregistré l'état "utilisé".
+      if (reward35ServerSyncInFlight || isClaimed(LS_REWARD_35)) return;
+      const clientId = getLoyaltyClientId();
+      if (!clientId) return;
+
+      reward35ServerSyncInFlight = true;
+      try{
+        const res = await fetch(LOYALTY_WORKER_URL + "/loyalty/benefits?client_id=" + encodeURIComponent(clientId) + "&t=" + Date.now(), {
+          method: "GET",
+          cache: "no-store"
+        });
+        const data = await res.json().catch(()=>({}));
+        const free = data && (data.free_delivery || data.benefit || data.active_benefit);
+        if(res.ok && free && free.active){
+          setClaimed(LS_REWARD_35);
+          if(reward35Btn){
+            reward35Btn.style.display = "none";
+            reward35Btn.disabled = true;
+          }
+          if(reward35Status) reward35Status.textContent = "Livraison offerte déjà activée sur votre carte.";
+          if(reward35Badge){
+            reward35Badge.className = "reward-badge done";
+            reward35Badge.textContent = "✅";
+          }
+          if(rewardRow35){
+            rewardRow35.classList.remove("unlocked");
+            rewardRow35.classList.add("done");
+          }
+          displayHighScores();
+        }
+      }catch(_){
+        // Ne bloque jamais le jeu si l'API ne répond pas.
+      }finally{
+        reward35ServerSyncInFlight = false;
+      }
+    }
 
     function setRewardRow(row, statusEl, badgeEl, opts){
       if(!row || !statusEl || !badgeEl) return;
@@ -1596,6 +1638,10 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       const claimed35 = isClaimed(LS_REWARD_35);
       const claimed50 = isClaimed(LS_REWARD_50) || hasUnlockedCode50();
 
+      if(best >= SCORE_35 && !claimed35){
+        syncReward35FromServer();
+      }
+
       setRewardRow(rewardRow25, reward25Status, reward25Badge, {
         done: claimed25,
         ready: best >= SCORE_25 && !claimed25,
@@ -1689,8 +1735,21 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           }
 
           reward25Msg.textContent = msg;
-          reward35Btn.style.display = "none";
+          if (code === "already_claimed") {
+            setTimeout(() => { window.location.href = "https://www.aperos.net/fidel/client.html?benefit=GAME_35&t=" + Date.now(); }, 900);
+          } else {
+            reward35Btn.disabled = false;
+          }
           displayHighScores();
+          return;
+        }
+
+        // Nouveau Worker : si GAME_35 était déjà réclamé localement/anciennement,
+        // il peut réparer directement le bénéfice D1 et répondre sans token.
+        if (data && (data.benefit || data.free_delivery || data.already_claimed)) {
+          setClaimed(LS_REWARD_35);
+          reward25Msg.textContent = "Livraison offerte activée sur votre carte.";
+          setTimeout(() => { window.location.href = "https://www.aperos.net/fidel/client.html?benefit=GAME_35&t=" + Date.now(); }, 900);
           return;
         }
 
@@ -1700,6 +1759,10 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           return;
         }
 
+        // Dès qu'un token GAME_35 est obtenu, on masque le bouton côté jeu.
+        // La carte fidélité consommera le token et affichera le bandeau livraison.
+        setClaimed(LS_REWARD_35);
+        displayHighScores();
         window.location.href = "https://www.aperos.net/fidel/client.html?reward_token=" + encodeURIComponent(data.token);
 
       } catch(e){
