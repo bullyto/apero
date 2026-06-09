@@ -66,7 +66,7 @@
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="APÉRO DE NUIT 66®"/>
   <meta property="og:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
-  <meta property="og:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
+  <meta property="og:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des lots 🎁 (25, 35 & 50 pts)"/>
   <meta property="og:url" content="https://game.aperos.net/"/>
   <meta property="og:image" content="share-1200x630.png"/>
   <meta property="og:image:width" content="1200"/>
@@ -74,7 +74,7 @@
 
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="Hib'air drink – APÉRO DE NUIT 66®"/>
-  <meta name="twitter:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des surprises 🎁 (25 & 50 pts)"/>
+  <meta name="twitter:description" content="🦉 Attrape des bouteilles, évite les avions… et débloque des lots 🎁 (25, 35 & 50 pts)"/>
   <meta name="twitter:image" content="share-1200x630.png"/>
 
 <link rel="manifest" href="manifest.webmanifest"/>
@@ -252,6 +252,12 @@
       left:50%;
       top:-8px;
       font-size: 22px;
+    }
+    /* 35 pts */
+    #gift35 {
+      left:70%;
+      top:-15px;
+      font-size: 25px;
     }
     /* 50 pts */
     #gift50 {
@@ -434,14 +440,197 @@
       100% { opacity:.75; transform:translate(-50%,-50%) scale(.95); }
     }
 
+
+/* =======================
+   ADN66 — Espace joueur V2
+   ======================= */
+.player-space{
+  margin-top:1.2vh;
+  display:flex;
+  flex-direction:column;
+  gap:1vh;
+  text-align:left;
+}
+.player-card{
+  background:rgba(255,255,255,.10);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:1.6vh;
+  padding:1.1vh 1.2vh;
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+.player-card-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  font-size:1.85vh;
+  font-weight:900;
+  margin-bottom:.65vh;
+}
+.player-mini{
+  font-size:1.45vh;
+  opacity:.82;
+  line-height:1.2;
+}
+.player-score-big{
+  font-size:3.2vh;
+  font-weight:900;
+  color:#add8e6;
+  line-height:1;
+}
+.reward-grid{
+  display:flex;
+  flex-direction:column;
+  gap:.65vh;
+}
+.reward-row{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:.75vh;
+  padding:.8vh .8vh;
+  border-radius:1.2vh;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.10);
+}
+.reward-row.unlocked{
+  border-color:rgba(255,215,0,.45);
+  background:rgba(255,215,0,.12);
+}
+.reward-row.done{
+  border-color:rgba(93,183,238,.55);
+  background:rgba(93,183,238,.16);
+}
+.reward-icon{font-size:2.2vh}
+.reward-main{min-width:0}
+.reward-name{
+  font-size:1.65vh;
+  font-weight:900;
+  line-height:1.05;
+}
+.reward-sub{
+  font-size:1.25vh;
+  opacity:.82;
+  line-height:1.15;
+  margin-top:.25vh;
+}
+.reward-badge{
+  white-space:nowrap;
+  font-size:1.25vh;
+  font-weight:900;
+  border-radius:999px;
+  padding:.45vh .7vh;
+  background:rgba(255,255,255,.14);
+}
+.reward-badge.locked{opacity:.66}
+.reward-badge.ready{background:linear-gradient(135deg,#ffd700,#ffb300);color:#111}
+.reward-badge.done{background:#5db7ee;color:#06121e}
+.reward-action{
+  margin-top:.8vh !important;
+  font-size:1.75vh !important;
+  padding:1vh 0 !important;
+}
+.player-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.8vh;
+  margin-top:.8vh;
+}
+.player-actions button{
+  margin:0 !important;
+  font-size:1.7vh !important;
+  padding:1vh .6vh !important;
+}
+.top-preview{
+  margin-top:.7vh;
+  font-size:1.35vh;
+  opacity:.86;
+  line-height:1.25;
+}
+.top50-modal{
+  position:fixed;
+  inset:0;
+  z-index:50000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.65);
+}
+.top50-modal.open{display:flex}
+.top50-card{
+  width:min(92vw,460px);
+  max-height:84vh;
+  overflow:hidden;
+  border-radius:22px;
+  background:rgba(8,13,22,.96);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 24px 70px rgba(0,0,0,.65);
+  display:flex;
+  flex-direction:column;
+}
+.top50-head{
+  padding:14px 14px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.top50-head b{font-size:18px}
+.top50-close{
+  width:auto !important;
+  min-width:44px !important;
+  margin:0 !important;
+  padding:8px 12px !important;
+  font-size:18px !important;
+  border-radius:14px !important;
+  background:rgba(255,255,255,.12) !important;
+  color:#fff !important;
+}
+.top50-body{
+  padding:12px;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.top-row{
+  display:grid;
+  grid-template-columns:46px 1fr auto;
+  gap:8px;
+  align-items:center;
+  padding:9px 10px;
+  border-radius:14px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08);
+  margin-bottom:7px;
+  font-size:14px;
+}
+.top-row.me{
+  background:rgba(93,183,238,.24);
+  border-color:#5db7ee;
+  box-shadow:0 0 0 1px rgba(93,183,238,.2), 0 0 22px rgba(93,183,238,.18);
+}
+.top-rank{font-weight:900;color:#add8e6}
+.top-name{font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-score{font-weight:900;color:#ffd76a}
+.top50-foot{
+  padding:0 12px 12px;
+  font-size:12px;
+  opacity:.72;
+  text-align:center;
+}
+@media (max-height:720px){
+  .overlay{padding:2vh 2.3vw}
+  .overlay h1{font-size:3.1vh;margin-bottom:1vh}
+  .player-card{padding:.85vh 1vh}
+  .reward-row{padding:.65vh .7vh}
+  .player-score-big{font-size:2.7vh}
+}
+
 </style>
 <script>
-      appId: "639b5a31-e09f-4d34-ad0f-d111d66a14ac",
-      serviceWorkerPath: "sw.js",
-      serviceWorkerUpdaterPath: "sw.js",
-      serviceWorkerParam: { scope: "/" }
-    });
-  });
+/* OneSignal désactivé ici : ancien bloc incomplet supprimé pour éviter une erreur JavaScript au chargement. */
 </script>
 </head>
 <body>
@@ -490,7 +679,8 @@
       <div id="brandStageBar">
         <div id="brandStageFill"></div>
         <div id="gift25" class="gift-marker">🎁</div>
-        <div id="gift50" class="gift-marker">🎁</div>
+        <div id="gift35" class="gift-marker">🚚</div>
+        <div id="gift50" class="gift-marker">🏆</div>
       </div>
     </div>
 
@@ -501,20 +691,80 @@
       <button id="installBtn">Ajouter le jeu à l’écran d’accueil</button>
       <button id="instructionsBtn">Instructions</button>
       <button id="useCodeBtn" style="display:none;">Utiliser mon code</button>
-      <div id="highScores">
-        <h2>Meilleurs scores</h2>
-        <div id="highScoresList"><p>Aucun score.</p></div>
-      </div>
-      <div id="promoCodes">
-        <h2 class="advTitle">🔓 AVANTAGE CLIENT</h2>
-        <div id="promoCodesList"><p class="advStatus">À débloquer.</p></div>
-        <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">en savoir plus</a>
 
-        <!-- Récompense fidélité (Lot 25 points) -->
-        <button id="reward25Btn" class="gold-button" style="display:none; margin-top:1vh;">
-          🎁 Tamponner ma carte
-        </button>
-        <p id="reward25Msg" style="display:none; margin-top:0.8vh; font-size:2vh; line-height:1.2;"></p>
+      <div id="playerSpace" class="player-space">
+        <div class="player-card">
+          <div class="player-card-title">
+            <span>🎮 Espace joueur</span>
+            <span id="playerPublicName" class="player-mini">Hibou —</span>
+          </div>
+          <div class="player-mini">Votre meilleur score</div>
+          <div class="player-score-big"><span id="playerBestScore">0</span> pts</div>
+          <div id="playerRankText" class="top-preview">Classement en attente.</div>
+        </div>
+
+        <div class="player-card">
+          <div class="player-card-title"><span>🎁 Récompenses</span><span class="player-mini">25 • 35 • 50 pts</span></div>
+          <div class="reward-grid">
+            <div class="reward-row" id="rewardRow25">
+              <div class="reward-icon">🎁</div>
+              <div class="reward-main">
+                <div class="reward-name">25 pts — Tampon fidélité</div>
+                <div class="reward-sub" id="reward25Status">À débloquer</div>
+              </div>
+              <div class="reward-badge locked" id="reward25Badge">🔒</div>
+            </div>
+
+            <div class="reward-row" id="rewardRow35">
+              <div class="reward-icon">🚚</div>
+              <div class="reward-main">
+                <div class="reward-name">35 pts — Livraison offerte</div>
+                <div class="reward-sub" id="reward35Status">À débloquer</div>
+              </div>
+              <div class="reward-badge locked" id="reward35Badge">🔒</div>
+            </div>
+
+            <div class="reward-row" id="rewardRow50">
+              <div class="reward-icon">🏆</div>
+              <div class="reward-main">
+                <div class="reward-name">50 pts — Avantage ultime</div>
+                <div class="reward-sub" id="reward50Status">À débloquer</div>
+              </div>
+              <div class="reward-badge locked" id="reward50Badge">🔒</div>
+            </div>
+          </div>
+
+          <button id="reward25Btn" class="gold-button reward-action" style="display:none;">🎁 Tamponner ma carte</button>
+          <button id="reward35Btn" class="gold-button reward-action" style="display:none;">🚚 Utiliser la livraison offerte</button>
+          <button id="reward50Btn" class="gold-button reward-action" style="display:none;">🏆 Utiliser mon avantage ultime</button>
+          <p id="reward25Msg" style="display:none; margin-top:0.8vh; font-size:1.75vh; line-height:1.2; text-align:center;"></p>
+        </div>
+
+        <div class="player-card">
+          <div class="player-card-title"><span>🏆 Top 50 Hib’air Drink</span><span class="player-mini">public</span></div>
+          <div id="top50Preview" class="top-preview">Votre score sera publié automatiquement sous un nom anonyme.</div>
+          <div class="player-actions">
+            <button id="top50Btn" type="button">Voir le Top 50</button>
+            <button id="refreshTop50Btn" type="button">Actualiser</button>
+          </div>
+          <a id="advMoreLink" href="https://www.aperos.net/privacy.html#article-6" aria-label="En savoir plus sur l’avantage client">en savoir plus</a>
+        </div>
+
+        <div id="highScores" style="display:none"><div id="highScoresList"><p>Aucun score.</p></div></div>
+        <div id="promoCodes" style="display:none"><div id="promoCodesList"><p class="advStatus">À débloquer.</p></div></div>
+      </div>
+    </div>
+
+    <div id="top50Modal" class="top50-modal" aria-hidden="true">
+      <div class="top50-card" role="dialog" aria-modal="true" aria-label="Top 50 Hib’air Drink">
+        <div class="top50-head">
+          <b>🏆 Top 50 Hib’air Drink</b>
+          <button id="top50CloseBtn" class="top50-close" type="button">✕</button>
+        </div>
+        <div id="top50Body" class="top50-body">
+          <div class="top-row"><span class="top-rank">—</span><span class="top-name">Chargement…</span><span class="top-score">—</span></div>
+        </div>
+        <div class="top50-foot">Votre ligne apparaît en bleu avec “Vous”. Aucun numéro ni prénom réel n’est affiché.</div>
       </div>
     </div>
 
@@ -523,7 +773,8 @@
       <p>🦉 Votre hibou doit attraper un maximum de bouteilles tout en évitant les avions.</p>
       <p>❤️ Vous disposez de 3 vies. À chaque collision, vous perdez une vie.</p>
       <p>💥 Quand vous perdez la dernière vie, la partie se termine et le score est enregistré.</p>
-      <p>🎁 Des surprises attendent les meilleurs joueurs ! Première à <strong>25 points</strong>.</p>
+      <p>🎁 25 pts : tampon fidélité. 🚚 35 pts : livraison offerte. 🏆 50 pts : avantage ultime.</p>
+      <p>🏆 Votre score peut apparaître automatiquement dans le Top 50 sous un nom anonyme.</p>
       <button id="closeInstructionsBtn">Fermer</button>
     </div>
 
@@ -748,12 +999,12 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     // Étapes de progression
     const BRAND_STEPS = [
       { score: 0,  title: "Défi lancé ✅",        message: "La mission commence, reste concentré." },
-      { score: 5,  title: "Défi lancé ✅",           message: "Enchaîne les actions pour avancer" },
-      { score: 10, title: "Niveau supérieur 🚀",       message: "Le rythme s’accélère, tiens bon." },
-      { score: 20, title: "Presque au sommet 🔥",           message: "Continue, tu es sur une bonne lancée." },
-      { score: 25, title: "Objectif N1 atteint 🏁", message: "Belle performance, vise encore plus haut." },
-      { score: 32, title: "Niveau ultime 🎁",               message: "La prochaine récompense débloque les frais de livraison offerts" },
-      { score: 50, title: "Objectif N2 atteint 🏁",   message: "Tu as atteint le niveau ultime de l'apéro de nuit !" }
+      { score: 5,  title: "Défi lancé ✅",        message: "Enchaîne les bouteilles pour avancer." },
+      { score: 10, title: "Niveau supérieur 🚀",  message: "Le rythme s’accélère, tiens bon." },
+      { score: 20, title: "Presque au sommet 🔥", message: "Continue, le premier lot approche." },
+      { score: 25, title: "Lot 25 débloqué 🎁",   message: "1 tampon fidélité à récupérer." },
+      { score: 35, title: "Lot 35 débloqué 🚚",   message: "Livraison offerte débloquée." },
+      { score: 50, title: "Lot ultime débloqué 🏆", message: "Avantage spécial Apéro de Nuit 66." }
     ];
 
     const brandTitleEl = document.getElementById('brandStageTitle');
@@ -774,6 +1025,12 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       brandFillEl.style.width = (ratio * 100) + '%';
 
             // ✨ Halo ultime sur le cadeau niveau 50 (objectif visible + intensité progressive)
+      const gift35 = document.getElementById('gift35');
+      if (gift35) {
+        gift35.style.filter = currentScore >= 35 ? "drop-shadow(0 0 12px rgba(255,215,0,.95))" : "";
+        gift35.style.transform = currentScore >= 35 ? "translateX(-50%) scale(1.12)" : "translateX(-50%)";
+      }
+
       const gift50 = document.getElementById('gift50');
       if (gift50) {
         // Visible dès le début (objectif final)
@@ -795,7 +1052,8 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         gift50.style.setProperty('--haloScale', String(haloScale));
         gift50.style.setProperty('--haloOpacity', String(haloOpacity));
       }
-if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
+      if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
+      if (lastProgressScore < 35 && currentScore >= 35) playSound(rewardSound);
       if (lastProgressScore < 50 && currentScore >= 50) playSound(rewardSound);
       lastProgressScore = currentScore;
     }
@@ -972,7 +1230,75 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
 
 
-    // High scores & codes
+    // High scores, Top 50 & récompenses
+    const TOP50_LIMIT = 50;
+    const SCORE_25 = 25;
+    const SCORE_35 = 35;
+    const SCORE_50 = 50;
+    const GAME_SCORE_API_URL = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev"; // routes prévues: /game/scores/submit et /game/scores/top
+    const LS_PLAYER_ID = "adn66_game_player_id_v2";
+    const LS_PLAYER_NAME = "adn66_game_public_name_v2";
+    const LS_TOP_CACHE = "adn66_game_top50_cache_v1";
+    const LS_REWARD_25 = "adn66_game_reward_25_claimed_v1";
+    const LS_REWARD_35 = "adn66_game_reward_35_claimed_v1";
+    const LS_REWARD_50 = "adn66_game_reward_50_claimed_v1";
+
+    const playerPublicNameEl = document.getElementById('playerPublicName');
+    const playerBestScoreEl = document.getElementById('playerBestScore');
+    const playerRankTextEl = document.getElementById('playerRankText');
+    const rewardRow25 = document.getElementById('rewardRow25');
+    const rewardRow35 = document.getElementById('rewardRow35');
+    const rewardRow50 = document.getElementById('rewardRow50');
+    const reward25Status = document.getElementById('reward25Status');
+    const reward35Status = document.getElementById('reward35Status');
+    const reward50Status = document.getElementById('reward50Status');
+    const reward25Badge = document.getElementById('reward25Badge');
+    const reward35Badge = document.getElementById('reward35Badge');
+    const reward50Badge = document.getElementById('reward50Badge');
+    const reward35Btn = document.getElementById('reward35Btn');
+    const reward50Btn = document.getElementById('reward50Btn');
+    const top50Btn = document.getElementById('top50Btn');
+    const refreshTop50Btn = document.getElementById('refreshTop50Btn');
+    const top50Modal = document.getElementById('top50Modal');
+    const top50CloseBtn = document.getElementById('top50CloseBtn');
+    const top50Body = document.getElementById('top50Body');
+    const top50Preview = document.getElementById('top50Preview');
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#39;");
+    }
+
+    function makeId(){
+      try{
+        if (crypto && crypto.randomUUID) return "player_" + crypto.randomUUID();
+      }catch(_){}
+      return "player_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,10);
+    }
+
+    function makePublicName(){
+      const n = Math.floor(1000 + Math.random() * 9000);
+      return "Hibou " + n;
+    }
+
+    function getPlayer(){
+      let id = localStorage.getItem(LS_PLAYER_ID) || "";
+      let name = localStorage.getItem(LS_PLAYER_NAME) || "";
+      if(!id){
+        id = makeId();
+        localStorage.setItem(LS_PLAYER_ID, id);
+      }
+      if(!name){
+        name = makePublicName();
+        localStorage.setItem(LS_PLAYER_NAME, name);
+      }
+      return { id, name };
+    }
+
     function hasUnlockedCode50(){
       return localStorage.getItem('unlockedCode50') === '1';
     }
@@ -981,9 +1307,8 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
       if (useCodeBtn) useCodeBtn.style.display = 'block';
     }
     function syncUseCodeButton(bestScore){
-      // Montre uniquement après 50 points atteints (lot 50)
       if (!useCodeBtn) return;
-      if (bestScore >= 50 || hasUnlockedCode50()) useCodeBtn.style.display = 'block';
+      if (bestScore >= SCORE_50 || hasUnlockedCode50()) useCodeBtn.style.display = 'block';
       else useCodeBtn.style.display = 'none';
     }
     function loadHighScores(){
@@ -991,43 +1316,251 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
       if (!raw) return [];
       try { return JSON.parse(raw); } catch(e){ return []; }
     }
+    function getBestScore(){
+      const arr = loadHighScores();
+      return arr.length ? Math.max(...arr.map(e=>Number(e.score)||0)) : 0;
+    }
+    function isClaimed(key){ return localStorage.getItem(key) === "1"; }
+    function setClaimed(key){ localStorage.setItem(key, "1"); }
+
+    function setRewardRow(row, statusEl, badgeEl, opts){
+      if(!row || !statusEl || !badgeEl) return;
+      row.classList.remove("unlocked","done");
+      badgeEl.className = "reward-badge";
+      if(opts.done){
+        row.classList.add("done");
+        badgeEl.classList.add("done");
+        badgeEl.textContent = "✅";
+      }else if(opts.ready){
+        row.classList.add("unlocked");
+        badgeEl.classList.add("ready");
+        badgeEl.textContent = "OK";
+      }else{
+        badgeEl.classList.add("locked");
+        badgeEl.textContent = "🔒";
+      }
+      statusEl.textContent = opts.text || "";
+    }
+
+    function buildLocalTop50(){
+      const player = getPlayer();
+      const best = getBestScore();
+      let seed = [];
+      try{ seed = JSON.parse(localStorage.getItem(LS_TOP_CACHE) || "[]"); }catch(_){ seed = []; }
+
+      if(!seed.length){
+        const names = ["Hibou 6600","Hibou 2847","Hibou 9912","Hibou 1128","Hibou 5031","Hibou 7755","Hibou 1945","Hibou 7300"];
+        seed = names.map((name, i)=>({
+          player_id: "demo_" + i,
+          public_name: name,
+          score: Math.max(8, 54 - i * 5),
+          created_at: new Date(Date.now() - i * 86400000).toISOString()
+        }));
+      }
+
+      if(best > 0){
+        const existing = seed.find(x => x.player_id === player.id);
+        if(existing){
+          existing.score = Math.max(Number(existing.score)||0, best);
+          existing.public_name = player.name;
+          existing.created_at = new Date().toISOString();
+        }else{
+          seed.push({player_id:player.id, public_name:player.name, score:best, created_at:new Date().toISOString()});
+        }
+      }
+
+      seed.sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
+      seed = seed.slice(0, TOP50_LIMIT);
+      try{ localStorage.setItem(LS_TOP_CACHE, JSON.stringify(seed)); }catch(_){}
+      return seed;
+    }
+
+    async function submitSharedScore(sc){
+      const player = getPlayer();
+      const safeScore = Math.max(0, Math.min(200, Math.floor(Number(sc)||0)));
+      if(!safeScore) return;
+
+      // Cache local immédiat pour que le joueur voie son score même si l’API Top 50 n’est pas encore branchée.
+      buildLocalTop50();
+
+      try{
+        const controller = new AbortController();
+        const tmr = setTimeout(()=>controller.abort(), 6500);
+        await fetch(GAME_SCORE_API_URL + "/game/scores/submit", {
+          method:"POST",
+          headers: {"Content-Type":"text/plain;charset=UTF-8"},
+          signal: controller.signal,
+          body: JSON.stringify({
+            player_id: player.id,
+            public_name: player.name,
+            score: safeScore,
+            source: "hibair_drink",
+            limit: TOP50_LIMIT
+          })
+        });
+        clearTimeout(tmr);
+      }catch(_){
+        // API pas encore prête: le Top 50 local reste fonctionnel.
+      }
+    }
+
+    async function fetchTop50(){
+      try{
+        const res = await fetch(GAME_SCORE_API_URL + "/game/scores/top?limit=" + TOP50_LIMIT, {
+          method:"GET",
+          cache:"no-store"
+        });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json().catch(()=>({}));
+        const rows = Array.isArray(data) ? data : (data.scores || data.items || data.rows || []);
+        if(!Array.isArray(rows) || !rows.length) throw new Error("empty");
+        return rows.slice(0, TOP50_LIMIT);
+      }catch(_){
+        return buildLocalTop50();
+      }
+    }
+
+    function renderTop50Rows(rows){
+      const player = getPlayer();
+      if(!top50Body) return;
+
+      if(!rows || !rows.length){
+        top50Body.innerHTML = `<div class="top-row"><span class="top-rank">—</span><span class="top-name">Aucun score publié.</span><span class="top-score">—</span></div>`;
+        return;
+      }
+
+      top50Body.innerHTML = rows.map((r, idx)=>{
+        const pid = String(r.player_id || r.id || "");
+        const mine = pid && pid === player.id;
+        const name = mine ? "Vous" : (r.public_name || r.name || "Hibou anonyme");
+        const score = Math.floor(Number(r.score)||0);
+        return `
+          <div class="top-row ${mine ? "me" : ""}">
+            <span class="top-rank">#${idx+1}</span>
+            <span class="top-name">${escapeHtml(name)}</span>
+            <span class="top-score">${score} pts</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshTop50(openModal){
+      const player = getPlayer();
+      if(playerPublicNameEl) playerPublicNameEl.textContent = player.name;
+      if(openModal && top50Modal){
+        top50Modal.classList.add("open");
+        top50Modal.setAttribute("aria-hidden","false");
+      }
+      if(top50Body) top50Body.innerHTML = `<div class="top-row"><span class="top-rank">—</span><span class="top-name">Chargement…</span><span class="top-score">—</span></div>`;
+
+      const rows = await fetchTop50();
+      renderTop50Rows(rows);
+
+      const idx = rows.findIndex(r => String(r.player_id || r.id || "") === player.id);
+      const best = getBestScore();
+      if(playerRankTextEl){
+        playerRankTextEl.textContent = idx >= 0
+          ? `Votre rang : #${idx+1} sur ${rows.length}.`
+          : (best > 0 ? "Score enregistré. Classement en attente." : "Jouez une partie pour entrer dans le Top 50.");
+      }
+      if(top50Preview){
+        top50Preview.textContent = idx >= 0
+          ? `Vous êtes #${idx+1}. Votre ligne est affichée en bleu.`
+          : "Votre score sera publié automatiquement sous un nom anonyme.";
+      }
+    }
+
     function displayHighScores(){
       const list = document.getElementById('highScoresList');
       const promo = document.getElementById('promoCodesList');
-      list.innerHTML = '';
-      promo.innerHTML = '';
+      if(list) list.innerHTML = '';
+      if(promo) promo.innerHTML = '';
 
+      const player = getPlayer();
       const arr = loadHighScores();
-      if(!arr.length) list.innerHTML='<p>Aucun score.</p>';
-      else arr.sort((a,b)=>b.score-a.score).slice(0,4).forEach(e=>{
-        const d=new Date(e.timestamp);
-        list.innerHTML+=`<p>${e.score} pts – ${d.toLocaleDateString('fr-FR')}</p>`;
-      });
+      const best = getBestScore();
+      const bestDate = arr.length ? new Date(arr.sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0))[0].timestamp) : null;
 
-      const best = arr.length ? Math.max(...arr.map(e=>e.score)) : 0;
+      if(playerPublicNameEl) playerPublicNameEl.textContent = player.name;
+      if(playerBestScoreEl) playerBestScoreEl.textContent = String(best);
+      if(list){
+        if(!arr.length) list.innerHTML='<p>Aucun score.</p>';
+        else arr.sort((a,b)=>b.score-a.score).slice(0,4).forEach(e=>{
+          const d=new Date(e.timestamp);
+          list.innerHTML+=`<p>${e.score} pts – ${d.toLocaleDateString('fr-FR')}</p>`;
+        });
+      }
+
       syncUseCodeButton(best);
 
-      // Lot 25 points : bouton récompense fidélité (remplace le code)
+      const claimed25 = isClaimed(LS_REWARD_25);
+      const claimed35 = isClaimed(LS_REWARD_35);
+      const claimed50 = isClaimed(LS_REWARD_50) || hasUnlockedCode50();
+
+      setRewardRow(rewardRow25, reward25Status, reward25Badge, {
+        done: claimed25,
+        ready: best >= SCORE_25 && !claimed25,
+        text: claimed25 ? "Tampon déjà ajouté à votre carte." : (best >= SCORE_25 ? "Vous avez gagné 1 tampon fidélité." : `Encore ${SCORE_25 - best} pts à obtenir.`)
+      });
+      setRewardRow(rewardRow35, reward35Status, reward35Badge, {
+        done: claimed35,
+        ready: best >= SCORE_35 && !claimed35,
+        text: claimed35 ? "Livraison offerte déjà utilisée." : (best >= SCORE_35 ? "Livraison offerte débloquée." : `Encore ${SCORE_35 - best} pts à obtenir.`)
+      });
+      setRewardRow(rewardRow50, reward50Status, reward50Badge, {
+        done: claimed50,
+        ready: best >= SCORE_50 && !claimed50,
+        text: claimed50 ? "Avantage ultime débloqué." : (best >= SCORE_50 ? "Avantage ultime disponible." : `Encore ${SCORE_50 - best} pts à obtenir.`)
+      });
+
       if (reward25Btn && reward25Msg) {
-        if (best >= 25) {
-          reward25Btn.style.display = "block";
-          reward25Btn.disabled = false;
-          reward25Msg.style.display = "none";
-          reward25Msg.textContent = "";
-        } else {
-          reward25Btn.style.display = "none";
-          reward25Msg.style.display = "none";
-        }
+        reward25Btn.style.display = (best >= SCORE_25 && !claimed25) ? "block" : "none";
+        reward25Btn.disabled = false;
+        if(!reward25Msg.textContent) reward25Msg.style.display = "none";
       }
-      const codes = [];
-      if(best>=50) codes.push('POLOFRT');
-      if(codes.length) codes.forEach(c=> promo.innerHTML+=`<p>Code promo : ${c}</p>`);
-      else promo.innerHTML='<p>À débloquer.</p>';
+      if (reward35Btn) reward35Btn.style.display = (best >= SCORE_35 && !claimed35) ? "block" : "none";
+      if (reward50Btn) reward50Btn.style.display = (best >= SCORE_50 && !claimed50) ? "block" : "none";
+
+      if(promo){
+        const lines = [];
+        if(best >= SCORE_25) lines.push("25 pts : tampon fidélité");
+        if(best >= SCORE_35) lines.push("35 pts : livraison offerte");
+        if(best >= SCORE_50) lines.push("50 pts : avantage ultime");
+        promo.innerHTML = lines.length ? lines.map(x=>`<p>${x}</p>`).join("") : '<p>À débloquer.</p>';
+      }
+
+      if(bestDate && top50Preview){
+        top50Preview.textContent = `Meilleur score du ${bestDate.toLocaleDateString('fr-FR')}. Actualisez pour voir votre rang.`;
+      }
+
+      refreshTop50(false);
     }
+
     function saveScore(sc){
+      const safeScore = Math.max(0, Math.floor(Number(sc)||0));
       const arr=loadHighScores();
-      arr.push({score:sc,timestamp:Date.now()});
+      arr.push({score:safeScore,timestamp:Date.now()});
       localStorage.setItem('highScores',JSON.stringify(arr));
+      submitSharedScore(safeScore);
+    }
+
+    function claimLocalReward35(){
+      setClaimed(LS_REWARD_35);
+      if(reward25Msg){
+        reward25Msg.style.display = "block";
+        reward25Msg.textContent = "Livraison offerte débloquée. Présentez cet écran lors de votre commande.";
+      }
+      displayHighScores();
+    }
+
+    function claimLocalReward50(){
+      setClaimed(LS_REWARD_50);
+      setUnlockedCode50();
+      if(reward25Msg){
+        reward25Msg.style.display = "block";
+        reward25Msg.textContent = "Avantage ultime débloqué. Code actuel : POLOFRT.";
+      }
+      displayHighScores();
     }
 
     // RÉFÉRENCES BOUTON / TEXTE AVIS
@@ -1055,10 +1588,14 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
       if (score < 10) {
         gameOverMsgEl.textContent = "On va dire que tu as commencé l’apéro un peu trop tôt… 🍺😅";
+      } else if (score >= 50) {
+        gameOverMsgEl.textContent = "Niveau ultime atteint : vous êtes une légende de l’apéro ! 🏆🦉";
+      } else if (score >= 35) {
+        gameOverMsgEl.textContent = "Livraison offerte débloquée ! Retournez au menu pour voir l’espace joueur. 🚚";
       } else if (score >= 25) {
-        gameOverMsgEl.textContent = "Toi, on devrait t’embaucher en livreur de nuit ! 🚚🦉";
+        gameOverMsgEl.textContent = "Tampon fidélité débloqué ! Retournez au menu pour le récupérer. 🎁";
       } else {
-        gameOverMsgEl.textContent = "Pas mal ! Encore quelques vols et tu deviendras une légende de l’apéro. 🍾";
+        gameOverMsgEl.textContent = "Pas mal ! Encore quelques vols et vous débloquerez le premier lot. 🍾";
       }
 
       // Affichage du bouton d'avis à partir de 25 points
@@ -1351,13 +1888,13 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
         if (!res.ok) {
           let msg = "Erreur. Réessaie plus tard.";
-          if (code === "already_claimed") msg = "Carte déjà tamponnée.";
+          if (code === "already_claimed") { msg = "Carte déjà tamponnée."; setClaimed(LS_REWARD_25); }
           else if (code === "not_eligible") msg = "À débloquer.";
           else if (data && data.error) msg = String(data.error);
           else if (data && data.message) msg = String(data.message);
 
           // Normalisation : ne jamais afficher un code technique brut
-          if (msg === "already_claimed") msg = "Carte déjà tamponnée.";
+          if (msg === "already_claimed") { msg = "Carte déjà tamponnée."; setClaimed(LS_REWARD_25); }
 
           reward25Msg.textContent = msg;
           reward25Btn.style.display = "none";
@@ -1366,8 +1903,10 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
         // Si le backend renvoie un statut sans token (ex: déjà validée)
         if (code === "already_claimed") {
+          setClaimed(LS_REWARD_25);
           reward25Msg.textContent = "Carte déjà tamponnée.";
           reward25Btn.style.display = "none";
+          displayHighScores();
           return;
         }
 
@@ -1402,6 +1941,31 @@ if (lastProgressScore < 25 && currentScore >= 25) playSound(rewardSound);
 
     if (reward25Btn) {
       reward25Btn.onclick = clickAnd(() => { requestReward25(); });
+    }
+
+    if (reward35Btn) {
+      reward35Btn.onclick = clickAnd(() => { claimLocalReward35(); });
+    }
+    if (reward50Btn) {
+      reward50Btn.onclick = clickAnd(() => { claimLocalReward50(); });
+    }
+    if (top50Btn) {
+      top50Btn.onclick = clickAnd(() => { refreshTop50(true); });
+    }
+    if (refreshTop50Btn) {
+      refreshTop50Btn.onclick = clickAnd(() => { refreshTop50(false); });
+    }
+    if (top50CloseBtn && top50Modal) {
+      top50CloseBtn.onclick = clickAnd(() => {
+        top50Modal.classList.remove("open");
+        top50Modal.setAttribute("aria-hidden","true");
+      });
+      top50Modal.addEventListener("click", (e)=>{
+        if(e.target === top50Modal){
+          top50Modal.classList.remove("open");
+          top50Modal.setAttribute("aria-hidden","true");
+        }
+      });
     }
 
 
@@ -1549,22 +2113,16 @@ if (backBtn) {
     try{
       if (localStorage.getItem("notifAsked")) return;
       localStorage.setItem("notifAsked","1");
-        try{
-          // Small delay helps on some Android devices right after first tap
-          await new Promise(r => setTimeout(r, 50));
-        }catch(e){}
-      });
+      // Si un système de notification existe plus tard, il pourra être branché ici.
     }catch(e){}
   }
 
   function isJouerElement(el){
     if(!el) return false;
-    // If element or one of its children contains exactly "Jouer"
     const txt = (el.textContent || "").trim().toLowerCase();
     return txt === "jouer";
   }
 
-  // Delegation: catches dynamically created buttons too
   document.addEventListener("click", function(ev){
     let el = ev.target;
     for(let i=0;i<6 && el; i++){
@@ -1578,6 +2136,7 @@ if (backBtn) {
 })();
 </script>
 
+<script>
 /* === FIX AUDIO PWA (réactivation après installation) === */
 (function(){
   let resumed = false;
@@ -1600,6 +2159,7 @@ if (backBtn) {
   document.addEventListener('click', resumeAudio, true);
   document.addEventListener('touchstart', resumeAudio, true);
 })();
+</script>
 <script src="./age-gate.js"></script>
 
 </body>
