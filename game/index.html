@@ -555,7 +555,9 @@
   align-items:center;
   justify-content:center;
   padding:16px;
-  background:rgba(0,0,0,.65);
+  background:rgba(0,0,0,.78);
+  backdrop-filter: blur(2.5px) saturate(120%);
+  -webkit-backdrop-filter: blur(2.5px) saturate(120%);
 }
 .top50-modal.open{display:flex}
 .top50-card{
@@ -626,6 +628,40 @@
   .player-card{padding:.85vh 1vh}
   .reward-row{padding:.65vh .7vh}
   .player-score-big{font-size:2.7vh}
+}
+
+
+/* === ADN66 — Mode popup propre ===
+   Quand le Top 50 est ouvert, on garde seulement le background du jeu
+   et on masque l'interface derrière pour éviter les superpositions illisibles. */
+body.adn66-modal-clean #menu,
+body.adn66-modal-clean #score,
+body.adn66-modal-clean #livesDisplay,
+body.adn66-modal-clean #backBtn,
+body.adn66-modal-clean #brandProgress,
+body.adn66-modal-clean #infoBtn,
+body.adn66-modal-clean #gameOver,
+body.adn66-modal-clean #instructionsOverlay,
+body.adn66-modal-clean #tapToStart,
+body.adn66-modal-clean #continueScreen,
+body.adn66-modal-clean #koEffect,
+body.adn66-modal-clean #pointFlash{
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+body.adn66-modal-clean #bgLayer1,
+body.adn66-modal-clean #bgLayer2,
+body.adn66-modal-clean #gameCanvas,
+body.adn66-modal-clean #cloud{
+  opacity:1;
+}
+body.adn66-modal-clean .top50-modal.open{
+  background:rgba(2,6,12,.82);
+}
+body.adn66-modal-clean .top50-card{
+  background:#080d16;
+  border-color:rgba(93,183,238,.28);
 }
 
 </style>
@@ -1444,12 +1480,28 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       }).join("");
     }
 
+
+    function openCleanModal(modal){
+      document.body.classList.add("adn66-modal-clean");
+      if(modal){
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden","false");
+      }
+    }
+
+    function closeCleanModal(modal){
+      if(modal){
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden","true");
+      }
+      document.body.classList.remove("adn66-modal-clean");
+    }
+
     async function refreshTop50(openModal){
       const player = getPlayer();
       if(playerPublicNameEl) playerPublicNameEl.textContent = player.name;
       if(openModal && top50Modal){
-        top50Modal.classList.add("open");
-        top50Modal.setAttribute("aria-hidden","false");
+        openCleanModal(top50Modal);
       }
       if(top50Body) top50Body.innerHTML = `<div class="top-row"><span class="top-rank">—</span><span class="top-name">Chargement…</span><span class="top-score">—</span></div>`;
 
@@ -1957,13 +2009,16 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
     }
     if (top50CloseBtn && top50Modal) {
       top50CloseBtn.onclick = clickAnd(() => {
-        top50Modal.classList.remove("open");
-        top50Modal.setAttribute("aria-hidden","true");
+        closeCleanModal(top50Modal);
       });
       top50Modal.addEventListener("click", (e)=>{
         if(e.target === top50Modal){
-          top50Modal.classList.remove("open");
-          top50Modal.setAttribute("aria-hidden","true");
+          closeCleanModal(top50Modal);
+        }
+      });
+      document.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape" && top50Modal.classList.contains("open")){
+          closeCleanModal(top50Modal);
         }
       });
     }
