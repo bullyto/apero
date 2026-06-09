@@ -1,19 +1,4 @@
-// PATH: worker.js
-// Cloudflare Worker — Carte de fidélité ADN66
-// D1 binding expected: env.DB
-// Secrets expected (set as Worker vars/secrets):
-// - ADMIN_KEY   (ex: "test123")
-// - PHONE_SALT  (random long string; keep secret)
-//
-// Routes:
-// - POST /loyalty/register
-// - GET  /loyalty/me
-// - POST /loyalty/stamp
-// - POST /loyalty/redeem (optional; stub ready)
-// - GET  /admin/loyalty/search
-// - GET  /admin/loyalty/qr
-// - GET  /health
-// - GET  / (debug)
+
 
 export default {
   async fetch(request, env, ctx) {
