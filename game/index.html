@@ -1489,6 +1489,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
             public_name: player.name,
             score: safeScore,
             source: "hibair_drink",
+            client_id: getLoyaltyClientId() || null,
             limit: TOP50_LIMIT
           })
         });
@@ -1697,7 +1698,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         reward25Msg.style.display = 'block';
         reward25Msg.textContent = "Activez votre carte, votre livraison offerte sera ajoutée automatiquement.";
         setTimeout(() => {
-          window.location.href = "https://www.aperos.net/fidel/client.html?game_reward=GAME_35";
+          window.location.href = buildLoyaltyRewardUrl("GAME_35");
         }, 900);
         return;
       }
@@ -1714,7 +1715,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=UTF-8" },
           signal: controller.signal,
-          body: JSON.stringify({ client_id: clientId, milestone: "GAME_35" })
+          body: JSON.stringify(buildGameRewardBody(clientId, "GAME_35"))
         });
         clearTimeout(tmr);
         const data = await res.json().catch(()=> ({}));
@@ -2071,6 +2072,28 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       ).trim();
     }
 
+    // Pont Hib’air Drink → Carte fidélité : on transmet le joueur anonyme au module fidélité.
+    // Important : game.aperos.net et www.aperos.net n’ont pas le même localStorage,
+    // donc le player_id doit passer par l’URL quand la carte est créée/restaurée.
+    function buildLoyaltyRewardUrl(milestone){
+      const player = getPlayer();
+      const u = new URL("https://www.aperos.net/fidel/client.html");
+      u.searchParams.set("game_reward", milestone);
+      u.searchParams.set("player_id", player.id);
+      u.searchParams.set("public_name", player.name);
+      return u.toString();
+    }
+
+    function buildGameRewardBody(clientId, milestone){
+      const player = getPlayer();
+      return {
+        client_id: clientId,
+        milestone,
+        player_id: player.id,
+        public_name: player.name
+      };
+    }
+
     async function requestReward25(){
       if (!reward25Btn || !reward25Msg) return;
 
@@ -2080,7 +2103,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
         reward25Msg.textContent = "Activez votre carte, votre tampon sera ajouté automatiquement.";
         // On transmet le palier gagné à la page fidélité. Après création, elle réclame et consomme le tampon automatiquement.
         setTimeout(() => {
-          window.location.href = "https://www.aperos.net/fidel/client.html?game_reward=GAME_25";
+          window.location.href = buildLoyaltyRewardUrl("GAME_25");
         }, 900);
         return;
       }
@@ -2097,7 +2120,7 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=UTF-8" },
           signal: controller.signal,
-          body: JSON.stringify({ client_id: clientId, milestone: "GAME_25" })
+          body: JSON.stringify(buildGameRewardBody(clientId, "GAME_25"))
         });
         clearTimeout(tmr);
         const data = await res.json().catch(()=> ({}));
