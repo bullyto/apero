@@ -885,6 +885,8 @@ async function loadCard(){
 
 /* ---------- Récompense jeu en attente (GAME_25) ---------- */
 const LS_PENDING_GAME_REWARD = "adn66_pending_game_reward_v1";
+const LS_PENDING_GAME_PLAYER_ID = "adn66_pending_game_player_id_v1";
+const LS_PENDING_GAME_PUBLIC_NAME = "adn66_pending_game_public_name_v1";
 
 function getGameRewardFromUrl(){
   try{
@@ -892,6 +894,18 @@ function getGameRewardFromUrl(){
     const reward = u.searchParams.get("game_reward") || "";
     return String(reward || "").trim();
   }catch(_){ return ""; }
+}
+
+function getGamePlayerFromUrl(){
+  try{
+    const u = new URL(location.href);
+    return {
+      player_id: String(u.searchParams.get("player_id") || "").trim(),
+      public_name: String(u.searchParams.get("public_name") || "").trim()
+    };
+  }catch(_){
+    return { player_id: "", public_name: "" };
+  }
 }
 
 function savePendingGameRewardFromUrl(){
@@ -903,10 +917,16 @@ function savePendingGameRewardFromUrl(){
 
   localStorage.setItem(LS_PENDING_GAME_REWARD, reward);
 
+  const player = getGamePlayerFromUrl();
+  if(player.player_id) localStorage.setItem(LS_PENDING_GAME_PLAYER_ID, player.player_id);
+  if(player.public_name) localStorage.setItem(LS_PENDING_GAME_PUBLIC_NAME, player.public_name);
+
   // Nettoyage de l'URL pour éviter de relancer plusieurs fois le traitement.
   try{
     const u = new URL(location.href);
     u.searchParams.delete("game_reward");
+    u.searchParams.delete("player_id");
+    u.searchParams.delete("public_name");
     history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
   }catch(_){}
 }
@@ -916,28 +936,39 @@ async function applyPendingGameReward(clientId){
   if(!reward || !clientId) return;
 
   try{
+    const playerId = String(localStorage.getItem(LS_PENDING_GAME_PLAYER_ID) || "").trim();
+    const publicName = String(localStorage.getItem(LS_PENDING_GAME_PUBLIC_NAME) || "").trim();
+
     const r = await api("/game/reward/request", {
       method: "POST",
       body: JSON.stringify({
         client_id: clientId,
-        milestone: reward
+        milestone: reward,
+        player_id: playerId || undefined,
+        public_name: publicName || undefined
       })
     });
 
     if(r && r.token){
       await consumeRewardToken(r.token);
       localStorage.removeItem(LS_PENDING_GAME_REWARD);
+      localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
+      localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
       return;
     }
 
     const code = String((r && (r.code || r.status || r.error_code || r.message || r.error)) || "").trim();
     if(code === "already_claimed"){
       localStorage.removeItem(LS_PENDING_GAME_REWARD);
+      localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
+      localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
       showInfoPopup("Récompense", "Votre récompense a déjà été utilisée.");
       return;
     }
 
     localStorage.removeItem(LS_PENDING_GAME_REWARD);
+    localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
+    localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
   }catch(e){
     // On garde la récompense en attente si erreur réseau.
     showInfoPopup(
