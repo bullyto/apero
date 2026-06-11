@@ -2072,6 +2072,33 @@ const CHEAT_IMAGE_FALLBACK = "./img/cheat.png";
       ).trim();
     }
 
+    async function syncPlayerWithLoyaltyCard(){
+      // Même domaine www.aperos.net : si la carte est déjà en localStorage,
+      // on relie silencieusement le joueur Hib’air Drink à cette carte.
+      // Cela permet à l’Admin Fidélité de voir le meilleur score déjà enregistré.
+      const clientId = getLoyaltyClientId();
+      if(!clientId) return false;
+      const player = getPlayer();
+      if(!player || !player.id) return false;
+
+      try{
+        const url = LOYALTY_WORKER_URL
+          + "/game/player/me?player_id=" + encodeURIComponent(player.id)
+          + "&public_name=" + encodeURIComponent(player.name || "")
+          + "&client_id=" + encodeURIComponent(clientId)
+          + "&t=" + Date.now();
+
+        const res = await fetch(url, { method:"GET", cache:"no-store" });
+        return !!res.ok;
+      }catch(_){
+        return false;
+      }
+    }
+
+    // Réparation automatique : si le jeu et la carte sont sur www.aperos.net,
+    // le lien se fait sans que le client ait besoin de rejouer.
+    setTimeout(()=>{ syncPlayerWithLoyaltyCard(); }, 400);
+
     // Pont Hib’air Drink → Carte fidélité : on transmet le joueur anonyme au module fidélité.
     // Important : game.aperos.net et www.aperos.net n’ont pas le même localStorage,
     // donc le player_id doit passer par l’URL quand la carte est créée/restaurée.
