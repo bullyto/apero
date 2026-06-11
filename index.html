@@ -2591,5 +2591,183 @@
 })();
 </script>
 
+
+
+<!-- =====================================================
+     HIBAIR DRINK — EFFET NOUVEAUTE 7 JOURS
+     - L'onglet reste présent en permanence
+     - Seuls le badge New, le reflet et l'animation disparaissent après 7 jours
+     ===================================================== -->
+<style>
+  #adnMenuGame.hibair-new-active{
+    position:relative;
+    overflow:hidden;
+    isolation:isolate;
+    background:rgba(93,183,238,.10);
+    box-shadow:inset 0 0 0 1px rgba(93,183,238,.20);
+  }
+
+  #adnMenuGame.hibair-new-active:hover{
+    background:rgba(93,183,238,.14);
+  }
+
+  #adnMenuGame.hibair-new-active:active{
+    background:rgba(93,183,238,.18);
+  }
+
+  #adnMenuGame.hibair-new-active::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(93,183,238,.24) 45%,
+      transparent 75%
+    );
+    transform:translateX(-120%);
+    animation:hibairShine 2.8s infinite;
+    z-index:-1;
+    pointer-events:none;
+  }
+
+  @keyframes hibairShine{
+    0%{transform:translateX(-120%)}
+    45%{transform:translateX(120%)}
+    100%{transform:translateX(120%)}
+  }
+
+  #adnMenuGame.hibair-new-active .adn-menu-title{
+    gap:8px;
+  }
+
+  #adnMenuGame.hibair-new-active .adn-menu-icon{
+    animation:hibairIconBounce 2.4s infinite;
+    will-change:transform;
+  }
+
+  @keyframes hibairIconBounce{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    45%{transform:translateY(-3px) rotate(-4deg)}
+    60%{transform:translateY(0) rotate(3deg)}
+  }
+
+  .hibair-new-dot{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#5db7ee;
+    box-shadow:0 0 0 0 rgba(93,183,238,.55);
+    animation:hibairDotPulse 1.8s infinite;
+    flex:0 0 auto;
+  }
+
+  @keyframes hibairDotPulse{
+    0%{box-shadow:0 0 0 0 rgba(93,183,238,.55)}
+    70%{box-shadow:0 0 0 9px rgba(93,183,238,0)}
+    100%{box-shadow:0 0 0 0 rgba(93,183,238,0)}
+  }
+
+  .hibair-new-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:3px 7px;
+    border-radius:999px;
+    font-size:9px;
+    font-weight:950;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:#fff;
+    background:#5db7ee;
+    box-shadow:0 8px 18px rgba(93,183,238,.38);
+    flex:0 0 auto;
+    white-space:nowrap;
+  }
+
+  /* Après 7 jours : on retire uniquement l'effet nouveauté */
+  #adnMenuGame.hibair-new-expired{
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+
+  #adnMenuGame.hibair-new-expired::before{
+    display:none!important;
+  }
+
+  #adnMenuGame.hibair-new-expired .hibair-new-badge,
+  #adnMenuGame.hibair-new-expired .hibair-new-dot{
+    display:none!important;
+  }
+</style>
+
+<script>
+(function(){
+  const gameItem = document.getElementById("adnMenuGame");
+  if(!gameItem) return;
+
+  const FIRST_SEEN_KEY = "adn_hibair_drink_new_first_seen";
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  let firstSeen = parseInt(localStorage.getItem(FIRST_SEEN_KEY) || "0", 10);
+
+  if(!firstSeen){
+    firstSeen = now;
+    localStorage.setItem(FIRST_SEEN_KEY, String(firstSeen));
+  }
+
+  const isStillNew = (now - firstSeen) <= SEVEN_DAYS;
+
+  const titleLine = gameItem.querySelector(".adn-menu-title");
+  const titleSpan = gameItem.querySelector(".adn-menu-title span");
+  const subLine = gameItem.querySelector(".adn-menu-sub");
+
+  function removeNoveltyPieces(){
+    gameItem.querySelectorAll(".hibair-new-dot,.hibair-new-badge").forEach(el => el.remove());
+  }
+
+  if(isStillNew){
+    gameItem.classList.add("hibair-new-active");
+    gameItem.classList.remove("hibair-new-expired");
+
+    if(titleSpan){
+      titleSpan.textContent = "Jeu & récompenses";
+    }
+
+    if(subLine){
+      subLine.textContent = "Jouez et débloquez vos récompenses";
+    }
+
+    if(titleLine && !titleLine.querySelector(".hibair-new-dot")){
+      const dot = document.createElement("span");
+      dot.className = "hibair-new-dot";
+      dot.setAttribute("aria-hidden", "true");
+      titleLine.appendChild(dot);
+    }
+
+    if(titleLine && !titleLine.querySelector(".hibair-new-badge")){
+      const badge = document.createElement("span");
+      badge.className = "hibair-new-badge";
+      badge.textContent = "New";
+      titleLine.appendChild(badge);
+    }
+  }else{
+    gameItem.classList.remove("hibair-new-active");
+    gameItem.classList.add("hibair-new-expired");
+    removeNoveltyPieces();
+
+    if(titleSpan){
+      titleSpan.textContent = "Jeux & surprises";
+    }
+
+    if(subLine){
+      subLine.textContent = "Des défis & des surprises";
+    }
+  }
+})();
+</script>
+<!-- FIN HIBAIR DRINK — EFFET NOUVEAUTE 7 JOURS -->
+
 </body>
 </html>
