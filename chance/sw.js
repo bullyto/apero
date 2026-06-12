@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adn66-roue-v3-install-fidelite-1';
+const CACHE_NAME = 'adn66-roue-v4-spin-first-claim-1';
 const ASSETS = [
   './',
   './index.html',
