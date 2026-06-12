@@ -984,6 +984,7 @@ async function loadCard(){
     setStateText(0, null);
     setCtaVisible(false);
     renderWheelClaimBanner(null);
+    try{ renderPendingWheelCreateBanner(); }catch(_){}
     return;
   }
 
@@ -1066,6 +1067,9 @@ function savePendingGameRewardFromUrl(){
     u.searchParams.delete("public_name");
     history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
   }catch(_){}
+
+  // Met à jour le bandeau de création dès que la récompense Hib’air Drink est mémorisée.
+  try{ renderPendingWheelCreateBanner(); }catch(_){}
 }
 
 async function applyPendingGameReward(clientId){
@@ -1146,6 +1150,9 @@ function savePendingWheelRewardFromUrl(){
     u.searchParams.delete("wheel_label");
     history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
   }catch(_){}
+
+  // Met à jour le bandeau de création dès que le gain roue est mémorisé.
+  try{ renderPendingWheelCreateBanner(); }catch(_){}
 }
 
 
@@ -1161,7 +1168,7 @@ function getPendingWheelLabel(){
   const label = String(localStorage.getItem(LS_PENDING_WHEEL_LABEL) || "").trim();
   if(label) return label;
   const reward = String(localStorage.getItem(LS_PENDING_WHEEL_REWARD) || "").trim();
-  if(reward === "WHEEL_DELIVERY_7D") return "Livraison offerte";
+  if(reward === "WHEEL_DELIVERY_7D") return "livraison offerte";
   if(reward === "WHEEL_STAMP") return "1 tampon fidélité";
   return "votre gain";
 }
@@ -1169,8 +1176,8 @@ function getPendingWheelLabel(){
 function getPendingGameLabel(){
   const reward = String(localStorage.getItem(LS_PENDING_GAME_REWARD) || "").trim();
   if(reward === "GAME_35") return "livraison offerte Hib’air Drink";
-  if(reward === "GAME_25") return "tampon Hib’air Drink";
-  return "récompense Hib’air Drink";
+  if(reward === "GAME_25") return "1 tampon Hib’air Drink";
+  return "votre récompense Hib’air Drink";
 }
 
 function ensureWheelPendingCreateBanner(){
@@ -1200,8 +1207,19 @@ function renderPendingWheelCreateBanner(){
     return;
   }
 
-  const title = hasWheel ? "🎡 Gain roue en attente" : "🎁 Récompense Hib’air Drink en attente";
-  const label = hasWheel ? getPendingWheelLabel() : getPendingGameLabel();
+  let title = "🎁 Récompense en attente";
+  let label = "votre récompense";
+  let sourceText = "la récompense";
+
+  if(hasWheel){
+    title = "🎡 Gain roue en attente";
+    label = getPendingWheelLabel();
+    sourceText = "le gain";
+  }else if(hasGame){
+    title = "🎁 Récompense Hib’air Drink en attente";
+    label = getPendingGameLabel();
+    sourceText = "la récompense";
+  }
 
   banner.style.display = "block";
   banner.innerHTML = `
@@ -1764,9 +1782,9 @@ function tryAutoRestoreFromUrl(){
 /* ---------- Bind events ---------- */
 function bind(){
   savePendingWheelRewardFromUrl();
+  savePendingGameRewardFromUrl();
   renderPendingWheelCreateBanner();
   tryAutoRestoreFromUrl();
-  savePendingGameRewardFromUrl();
 
   const rewardToken = getRewardTokenFromUrl();
   if(rewardToken){
