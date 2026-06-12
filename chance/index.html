@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07162f" />
+  <meta name="description" content="Roue de la fortune Apéro de Nuit 66 - Jeu & récompenses reliés à la carte fidélité." />
+
+  <title>Roue de la fortune | Apéro de Nuit 66</title>
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png" />
+  <link rel="stylesheet" href="./styles.css" />
+
+  <meta property="og:title" content="Roue de la fortune - Apéro de Nuit 66" />
+  <meta property="og:description" content="Installez l’application et débloquez votre récompense fidélité." />
+  <meta property="og:image" content="./assets/img/wheel-base.png" />
+</head>
+<body>
+  <main class="app-shell" aria-label="Roue de la fortune Apéro de Nuit 66">
+    <section class="phone-card">
+      <header class="hero">
+        <img class="brand-logo" src="./assets/img/logo-apero-de-nuit-66.png" alt="Apéro de Nuit 66" />
+        <div class="game-badge">🎁 Jeu & récompenses</div>
+        <h1>Roue de la fortune</h1>
+        <p class="subtitle">Gain relié à votre carte de fidélité</p>
+      </header>
+
+      <section class="wheel-zone" aria-live="polite">
+        <div class="wheel-light" aria-hidden="true"></div>
+        <div class="wheel-stack">
+          <img id="wheel" class="wheel wheel-base" src="./assets/img/wheel-base.png" alt="Roue des récompenses" draggable="false" />
+          <img class="wheel-center" src="./assets/img/wheel-center.png" alt="" aria-hidden="true" draggable="false" />
+          <img class="wheel-pointer" src="./assets/img/wheel-pointer.png" alt="" aria-hidden="true" draggable="false" />
+        </div>
+      </section>
+
+      <button id="spinButton" class="spin-button" type="button">
+        <span>»</span> Tourner la roue <span>«</span>
+      </button>
+
+      <p id="statusText" class="status-text">Installez l’application pour jouer</p>
+
+      <section id="lockedPanel" class="locked-panel hidden">
+        <strong>Votre gain roue est déjà enregistré.</strong>
+        <span id="lockedInfo"></span>
+        <button id="showSavedPrize" type="button" class="ghost-button">Voir mon gain</button>
+      </section>
+    </section>
+  </main>
+
+  <div id="installOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="installTitle">
+    <div class="modal-card install-card">
+      <img src="./assets/icons/icon-144.png" alt="Apéro de Nuit 66" class="official-app-icon" />
+      <h2 id="installTitle">Installez l’application</h2>
+      <p>
+        Pour lancer la roue, ouvrez Apéro de Nuit 66 depuis l’application installée.
+        Votre gain sera relié à votre carte de fidélité.
+      </p>
+
+      <div class="trust-row">
+        <span class="trust-dot">✓</span>
+        <span>Application officielle Apéro de Nuit 66</span>
+      </div>
+
+      <a id="playStoreLink" class="primary-link playstore-link" href="#" target="_blank" rel="noopener">
+        ▶ Télécharger sur Google Play
+      </a>
+
+      <button id="installPwaButton" class="modal-button" type="button">
+        Installer cette application
+      </button>
+
+      <button id="alreadyInstalledButton" class="ghost-button install-check-button" type="button">
+        J’ai déjà installé l’application
+      </button>
+
+      <p id="installHelp" class="countdown">
+        Si le bouton d’installation n’apparaît pas, utilisez le menu du navigateur puis “Installer l’application”.
+      </p>
+    </div>
+  </div>
+
+  <div id="phoneOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="phoneTitle">
+    <div class="modal-card install-card">
+      <img src="./assets/icons/icon-144.png" alt="Apéro de Nuit 66" class="official-app-icon" />
+      <h2 id="phoneTitle">Carte fidélité</h2>
+      <p>
+        Entrez le numéro de téléphone lié à votre carte fidélité. Le Worker vérifie votre carte et bloque les doubles gains roue.
+      </p>
+      <div class="claim-box">
+        <label for="phoneInput">Téléphone de la carte fidélité</label>
+        <input id="phoneInput" class="claim-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="06 52 33 64 61" />
+        <button id="phoneContinue" type="button" class="modal-button">Valider et tourner</button>
+        <p id="phoneStatus" class="claim-status"></p>
+      </div>
+      <p class="countdown">
+        Un seul vrai gain roue est possible par carte : tampon ou livraison. La relance ne bloque rien.
+      </p>
+    </div>
+  </div>
+
+  <div id="resultOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="modal-card result-card">
+      <button id="closeResult" class="close-button" type="button" aria-label="Fermer">×</button>
+      <p class="win-kicker">Vous avez gagné</p>
+      <h2 id="resultTitle">Votre récompense</h2>
+      <img id="rewardImage" class="reward-image" src="" alt="" />
+      <p id="rewardDetail" class="reward-detail"></p>
+
+      <div class="code-box">
+        <span>Statut du gain</span>
+        <strong id="rewardCode">VALIDÉ</strong>
+      </div>
+
+      <div class="result-actions">
+        <button id="copyCode" type="button" class="modal-button">Copier le statut</button>
+        <a id="orderLink" class="secondary-link" href="https://aperos.net/">Commander</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
