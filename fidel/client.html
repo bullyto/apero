@@ -739,6 +739,32 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
 .stamp{z-index:7 !important; opacity:0; visibility:hidden;}
 .stamp.filled{opacity:1 !important; visibility:visible !important; display:block !important;}
 
+
+/* ✅ Roue de la chance — bandeau gain en attente sur création carte */
+.adn66-wheel-pending-create-banner{
+  display:none;
+  margin:0 0 12px 0;
+  padding:12px 12px;
+  border-radius:16px;
+  background:linear-gradient(135deg, rgba(93,183,238,.18), rgba(255,212,90,.18));
+  border:1px solid rgba(93,183,238,.45);
+  box-shadow:0 10px 22px rgba(0,0,0,.10);
+  color:#0b1c2d;
+}
+.adn66-wheel-pending-title{
+  font-size:14px;
+  font-weight:950;
+  line-height:1.15;
+  color:#0b1c2d;
+}
+.adn66-wheel-pending-text{
+  margin-top:6px;
+  font-size:13px;
+  font-weight:850;
+  line-height:1.35;
+  color:rgba(11,28,45,.78);
+}
+
 </style>
 
 </head>
@@ -895,7 +921,7 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="/fidel/client.js?v=20260202-cta-fix" defer></script>
+  <script src="/fidel/client.js?v=20260202-wheel-popup-fix" defer></script>
 
   <script>
     (function(){

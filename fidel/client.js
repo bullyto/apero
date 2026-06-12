@@ -701,6 +701,8 @@ function setModalMode(mode){
   // reset hint
   const hint = $("scanHint");
   if(hint) hint.textContent = "";
+
+  renderPendingWheelCreateBanner();
 }
 
 /* ---------- Modal QR ---------- */
@@ -1015,6 +1017,151 @@ function savePendingWheelRewardFromUrl(){
   }catch(_){}
 }
 
+
+function hasPendingWheelReward(){
+  return !!String(localStorage.getItem(LS_PENDING_WHEEL_TOKEN) || "").trim();
+}
+
+function getPendingWheelLabel(){
+  const label = String(localStorage.getItem(LS_PENDING_WHEEL_LABEL) || "").trim();
+  if(label) return label;
+  const reward = String(localStorage.getItem(LS_PENDING_WHEEL_REWARD) || "").trim();
+  if(reward === "WHEEL_DELIVERY_7D") return "Livraison offerte";
+  if(reward === "WHEEL_STAMP") return "1 tampon fidélité";
+  return "votre gain";
+}
+
+function ensureWheelPendingCreateBanner(){
+  const createView = $("createView");
+  if(!createView) return null;
+
+  let banner = document.getElementById("adn66WheelPendingCreateBanner");
+  if(!banner){
+    banner = document.createElement("div");
+    banner.id = "adn66WheelPendingCreateBanner";
+    banner.className = "adn66-wheel-pending-create-banner";
+    createView.insertBefore(banner, createView.firstChild);
+  }
+  return banner;
+}
+
+function renderPendingWheelCreateBanner(){
+  const banner = ensureWheelPendingCreateBanner();
+  if(!banner) return;
+
+  if(!hasPendingWheelReward()){
+    banner.style.display = "none";
+    banner.innerHTML = "";
+    return;
+  }
+
+  const label = getPendingWheelLabel();
+  banner.style.display = "block";
+  banner.innerHTML = `
+    <div class="adn66-wheel-pending-title">🎡 Gain roue en attente</div>
+    <div class="adn66-wheel-pending-text">
+      Indiquez simplement votre prénom et votre numéro de téléphone pour enregistrer <b>${escapeHtml(label)}</b> sur votre carte fidélité.
+    </div>
+  `;
+}
+
+function ensureWheelRewardPopupStyles(){
+  if(document.getElementById("adn66WheelRewardPopupStyles")) return;
+  const style = document.createElement("style");
+  style.id = "adn66WheelRewardPopupStyles";
+  style.textContent = `
+  .adn66-wheel-result-overlay{position:fixed;inset:0;z-index:130000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,11,18,.68);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);}
+  .adn66-wheel-result-card{width:min(520px,100%);background:#ffffff;color:#0b1c2d;border-radius:22px;border:1px solid rgba(11,28,45,.12);box-shadow:0 22px 70px rgba(0,0,0,.35);overflow:hidden;text-align:left;}
+  .adn66-wheel-result-head{padding:15px 16px;background:linear-gradient(180deg,rgba(93,183,238,.24),rgba(93,183,238,.07));border-bottom:1px solid rgba(11,28,45,.10);display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .adn66-wheel-result-title{font-size:16px;font-weight:950;line-height:1.15;color:#0b1c2d;}
+  .adn66-wheel-result-icon{width:42px;height:42px;border-radius:16px;display:grid;place-items:center;background:#5db7ee;color:#fff;font-size:22px;box-shadow:0 8px 18px rgba(93,183,238,.28);flex:0 0 auto;}
+  .adn66-wheel-result-body{padding:15px 16px 4px;color:#0b1c2d;}
+  .adn66-wheel-result-main{font-size:15px;font-weight:900;line-height:1.35;margin:0;}
+  .adn66-wheel-result-sub{margin:8px 0 0;color:rgba(11,28,45,.72);font-size:13px;font-weight:800;line-height:1.35;}
+  .adn66-wheel-result-extra{margin-top:12px;padding:10px 11px;border-radius:14px;background:rgba(93,183,238,.10);border:1px solid rgba(93,183,238,.25);font-size:12.5px;font-weight:850;color:#0b1c2d;line-height:1.35;}
+  .adn66-wheel-result-foot{display:flex;gap:10px;justify-content:flex-end;padding:13px 16px 16px;}
+  .adn66-wheel-result-ok{appearance:none;border:0;background:#5db7ee;color:#fff;font-weight:950;border-radius:14px;padding:11px 16px;min-width:140px;cursor:pointer;box-shadow:0 10px 18px rgba(93,183,238,.30);}
+  .adn66-wheel-result-ok:active{transform:translateY(1px);}
+  `;
+  document.head.appendChild(style);
+}
+
+function showWheelRewardPopup(type, data){
+  ensureWheelRewardPopupStyles();
+
+  const prev = document.getElementById("adn66WheelRewardPopup");
+  if(prev) prev.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "adn66WheelRewardPopup";
+  overlay.className = "adn66-wheel-result-overlay";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+
+  const card = document.createElement("div");
+  card.className = "adn66-wheel-result-card";
+
+  let icon = "🎡";
+  let title = "Gain enregistré";
+  let main = "Votre gain a bien été enregistré sur votre carte fidélité.";
+  let sub = "Vous pouvez maintenant présenter votre carte lors de votre prochaine commande.";
+  let extra = "";
+
+  if(type === "delivery"){
+    icon = "🚚";
+    title = data && data.extended ? "Livraison offerte prolongée" : "Livraison offerte activée";
+    main = data && data.extended
+      ? "7 jours ont été ajoutés à votre livraison offerte."
+      : "Votre livraison offerte est bien enregistrée sur votre carte fidélité.";
+    sub = "Cet avantage est séparé de Hib’air Drink et reste lié à votre carte.";
+    if(data && data.expires_at){
+      extra = `Valable jusqu’au : <b>${escapeHtml(new Date(data.expires_at).toLocaleString("fr-FR"))}</b>`;
+    }
+  }else if(type === "stamp"){
+    icon = "✅";
+    title = "Tampon ajouté";
+    main = "Votre tampon a bien été ajouté à votre carte fidélité.";
+    sub = "Votre récompense roue est maintenant enregistrée.";
+    if(data && data.points !== undefined && data.goal !== undefined){
+      extra = `Nouveau total : <b>${escapeHtml(data.points)}/${escapeHtml(data.goal)}</b>`;
+    }
+  }else if(type === "already"){
+    icon = "🔒";
+    title = "Gain déjà enregistré";
+    main = "Une récompense roue est déjà associée à cette carte fidélité.";
+    sub = "Pour éviter les abus, un seul vrai gain roue est possible par carte.";
+  }else if(type === "pending"){
+    icon = "⏳";
+    title = "Gain roue en attente";
+    main = "Votre carte est prête, mais le gain de la roue n’a pas encore pu être validé.";
+    sub = "Rafraîchissez la page dans quelques instants si besoin.";
+  }
+
+  card.innerHTML = `
+    <div class="adn66-wheel-result-head">
+      <div class="adn66-wheel-result-title">${escapeHtml(title)}</div>
+      <div class="adn66-wheel-result-icon" aria-hidden="true">${icon}</div>
+    </div>
+    <div class="adn66-wheel-result-body">
+      <p class="adn66-wheel-result-main">${main}</p>
+      <p class="adn66-wheel-result-sub">${sub}</p>
+      ${extra ? `<div class="adn66-wheel-result-extra">${extra}</div>` : ""}
+    </div>
+    <div class="adn66-wheel-result-foot">
+      <button type="button" class="adn66-wheel-result-ok">Voir ma carte</button>
+    </div>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = ()=> overlay.remove();
+  const ok = card.querySelector(".adn66-wheel-result-ok");
+  if(ok) ok.addEventListener("click", close);
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+}
+
+
 async function applyPendingWheelReward(clientId){
   const token = String(localStorage.getItem(LS_PENDING_WHEEL_TOKEN) || "").trim();
   if(!token || !clientId) return;
@@ -1028,17 +1175,16 @@ async function applyPendingWheelReward(clientId){
     localStorage.removeItem(LS_PENDING_WHEEL_TOKEN);
     localStorage.removeItem(LS_PENDING_WHEEL_REWARD);
     localStorage.removeItem(LS_PENDING_WHEEL_LABEL);
+    renderPendingWheelCreateBanner();
 
     if(res && res.reward_id === "WHEEL_DELIVERY_7D"){
       const benefit = res.result || res.benefit || {};
-      const until = benefit.expires_at ? `<br><br>Valable jusqu’au : <b>${escapeHtml(new Date(benefit.expires_at).toLocaleString("fr-FR"))}</b>` : "";
-      showInfoPopup("Roue de la chance 🎡", "Livraison offerte activée sur votre carte fidélité." + until);
+      showWheelRewardPopup("delivery", benefit);
     }else if(res && res.reward_id === "WHEEL_STAMP"){
       const state = res.result || {};
-      const total = (state.points !== undefined && state.goal !== undefined) ? `<br><br>Nouveau total : <b>${escapeHtml(state.points)}/${escapeHtml(state.goal)}</b>` : "";
-      showInfoPopup("Roue de la chance 🎡", "Un tampon a été ajouté à votre carte fidélité." + total);
+      showWheelRewardPopup("stamp", state);
     }else{
-      showInfoPopup("Roue de la chance 🎡", "Votre gain a été validé sur votre carte fidélité.");
+      showWheelRewardPopup("default", {});
     }
 
     await loadCard();
@@ -1048,11 +1194,11 @@ async function applyPendingWheelReward(clientId){
       localStorage.removeItem(LS_PENDING_WHEEL_TOKEN);
       localStorage.removeItem(LS_PENDING_WHEEL_REWARD);
       localStorage.removeItem(LS_PENDING_WHEEL_LABEL);
-      showInfoPopup("Roue de la chance", "Une récompense roue est déjà enregistrée sur cette carte fidélité.");
+      showWheelRewardPopup("already", {});
       await loadCard();
       return;
     }
-    showInfoPopup("Gain roue en attente", "Votre carte est prête, mais le gain de la roue n’a pas encore pu être validé. Réouvrez ce lien ou rafraîchissez la page dans quelques instants.");
+    showWheelRewardPopup("pending", {});
   }
 }
 
@@ -1469,6 +1615,7 @@ function tryAutoRestoreFromUrl(){
 /* ---------- Bind events ---------- */
 function bind(){
   savePendingWheelRewardFromUrl();
+  renderPendingWheelCreateBanner();
   tryAutoRestoreFromUrl();
   savePendingGameRewardFromUrl();
 
