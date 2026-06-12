@@ -765,6 +765,23 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
   color:rgba(11,28,45,.78);
 }
 
+
+/* ✅ Gain en attente — bandeau court sur écran d’accueil */
+.adn66-wheel-pending-home-banner{
+  display:none;
+  margin:10px 0 12px 0;
+  padding:9px 11px;
+  border-radius:14px;
+  background:rgba(93,183,238,.13);
+  border:1px solid rgba(93,183,238,.36);
+  color:#0b1c2d;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.28;
+  text-align:left;
+}
+.adn66-wheel-pending-home-banner b{font-weight:950;}
+
 </style>
 
 </head>
@@ -799,6 +816,7 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
       <div class="panel" id="startBlock">
         <div class="note">Activer la carte en 10 secondes.</div>
         <div class="noteSub">Faites tamponner votre carte à chaque commande et débloquez des avantages.</div>
+        <div id="adn66WheelPendingHomeBanner" class="adn66-wheel-pending-home-banner" aria-live="polite"></div>
         <div class="row">
           <button id="btnOpenCreate">Activer la carte</button>
           <button class="secondary" id="btnOpenRestore"> Jai deja une carte</button>

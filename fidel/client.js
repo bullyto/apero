@@ -354,7 +354,9 @@ function setScreen(hasCard){
   const cardBlock = $("cardBlock");
   if(startBlock) startBlock.style.display = hasCard ? "none" : "block";
   if(cardBlock) cardBlock.style.display = hasCard ? "block" : "none";
+  if(hasCard) hidePendingWheelHomeBanner();
 }
+
 
 function setSyncText(ok){
   const t = $("syncText");
@@ -984,6 +986,7 @@ async function loadCard(){
     setStateText(0, null);
     setCtaVisible(false);
     renderWheelClaimBanner(null);
+    renderPendingWheelHomeBanner();
     return;
   }
 
@@ -1195,6 +1198,27 @@ function renderPendingWheelCreateBanner(){
     </div>
   `;
 }
+
+function renderPendingWheelHomeBanner(){
+  const banner = $("adn66WheelPendingHomeBanner");
+  if(!banner) return;
+
+  if(!hasPendingWheelReward() || localStorage.getItem(LS_KEY)){
+    banner.style.display = "none";
+    banner.innerHTML = "";
+    return;
+  }
+
+  banner.style.display = "block";
+  banner.innerHTML = `🎡 Gain en attente — cliquez sur <b>Activer la carte</b> pour l’enregistrer.`;
+}
+
+function hidePendingWheelHomeBanner(){
+  const banner = $("adn66WheelPendingHomeBanner");
+  if(!banner) return;
+  banner.style.display = "none";
+}
+
 
 function ensureWheelRewardPopupStyles(){
   if(document.getElementById("adn66WheelRewardPopupStyles")) return;
@@ -1749,6 +1773,7 @@ function tryAutoRestoreFromUrl(){
 function bind(){
   savePendingWheelRewardFromUrl();
   renderPendingWheelCreateBanner();
+  renderPendingWheelHomeBanner();
   tryAutoRestoreFromUrl();
   savePendingGameRewardFromUrl();
 
@@ -1782,7 +1807,7 @@ function bind(){
   const qrClose = $("qrClose");
   const btnCopyLink = $("btnCopyLink");
 
-  if(btnOpenCreate) btnOpenCreate.onclick = ()=>showModal("create");
+  if(btnOpenCreate) btnOpenCreate.onclick = ()=>{ hidePendingWheelHomeBanner(); showModal("create"); };
   if(btnOpenRestore) btnOpenRestore.onclick = ()=>showModal("restore");
 
   if(tabCreate) tabCreate.onclick = ()=>setModalMode("create");
