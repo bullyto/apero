@@ -70,14 +70,13 @@ h1{margin:0;font-size:clamp(28px,7.4vw,42px);line-height:1;font-weight:1000;lett
   pointer-events:none;
 }
 #claimReward.claim-cta::after{
-  content:"Enregistrez-le sur votre carte fidélité";
-  display:block;
-  margin-top:3px;
-  font-size:10px;
-  line-height:1;
-  letter-spacing:.01em;
-  text-transform:none;
-  opacity:.86;
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:20px;
+  box-shadow:0 0 0 0 rgba(255,212,90,.55);
+  animation:claimOuterGlow 1.35s ease-in-out infinite;
+  pointer-events:none;
 }
 .locked-panel{
   border-color:rgba(255,212,90,.34) !important;
@@ -102,4 +101,9 @@ h1{margin:0;font-size:clamp(28px,7.4vw,42px);line-height:1;font-weight:1000;lett
 @media(prefers-reduced-motion:reduce){
   #claimReward.claim-cta,
   #claimReward.claim-cta::before{animation:none !important;}
+}
+
+@keyframes claimOuterGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,212,90,.48);}
+  50%{box-shadow:0 0 0 8px rgba(255,212,90,0);}
 }
