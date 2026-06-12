@@ -29,3 +29,77 @@ h1{margin:0;font-size:clamp(28px,7.4vw,42px);line-height:1;font-weight:1000;lett
 
 /* Nouvelle logique installation + carte fidélité */
 .official-app-icon{width:96px;height:96px;border-radius:24px;display:block;margin:0 auto 10px;box-shadow:0 0 0 2px rgba(255,255,255,.18),0 0 24px rgba(0,168,255,.38);object-fit:cover}.install-card h2{margin-top:8px}.trust-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 4px;padding:10px 12px;border-radius:15px;background:rgba(126,240,178,.08);border:1px solid rgba(126,240,178,.24);color:#dfffee;font-size:13px;font-weight:850}.trust-dot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(126,240,178,.16);color:var(--success);font-weight:1000}.playstore-link{gap:8px}.install-check-button{width:100%;margin-top:10px;min-height:46px}.claim-box{margin:14px 0;padding:13px;border-radius:18px;background:rgba(93,183,238,.08);border:1px solid rgba(93,183,238,.26);display:grid;gap:9px;text-align:left}.claim-box label{font-size:13px;color:#d9f4ff;font-weight:850}.claim-input{width:100%;border:1px solid rgba(93,183,238,.36);border-radius:14px;background:rgba(2,7,18,.72);color:#fff;font-size:17px;font-weight:850;padding:12px 13px;outline:none}.claim-input:focus{border-color:rgba(93,183,238,.85);box-shadow:0 0 0 3px rgba(93,183,238,.16)}.claim-status{margin:0!important;color:#d8e8ff!important;font-size:13px!important;font-weight:750!important;text-align:center}.result-actions{margin-top:10px}
+
+
+/* === ADN66 — Ajustements roue / sons / CTA / blocage local === */
+.wheel-zone{
+  margin-top:14px !important;
+  margin-bottom:20px !important;
+  transform:translate(-50%, 10px) !important;
+}
+.phone-card{
+  padding-bottom:16px !important;
+}
+#claimReward.claim-cta{
+  position:relative;
+  overflow:hidden;
+  min-height:58px;
+  border-radius:20px;
+  background:linear-gradient(180deg,#fff7b7 0%,#ffd45a 25%,#ffb11b 62%,#f08a00 100%) !important;
+  color:#06121e !important;
+  text-transform:uppercase;
+  letter-spacing:.02em;
+  font-size:17px;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.28) inset,
+    0 0 0 5px rgba(93,183,238,.20),
+    0 0 26px rgba(255,212,90,.55),
+    0 14px 34px rgba(0,0,0,.42) !important;
+  animation:claimPulse 1.15s ease-in-out infinite;
+}
+#claimReward.claim-cta::before{
+  content:"";
+  position:absolute;
+  top:-40%;
+  bottom:-40%;
+  left:-70%;
+  width:45%;
+  transform:rotate(22deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent);
+  animation:claimShine 1.85s ease-in-out infinite;
+  pointer-events:none;
+}
+#claimReward.claim-cta::after{
+  content:"Enregistrez-le sur votre carte fidélité";
+  display:block;
+  margin-top:3px;
+  font-size:10px;
+  line-height:1;
+  letter-spacing:.01em;
+  text-transform:none;
+  opacity:.86;
+}
+.locked-panel{
+  border-color:rgba(255,212,90,.34) !important;
+  background:linear-gradient(135deg,rgba(255,212,90,.12),rgba(93,183,238,.10)) !important;
+}
+.locked-panel strong::before{content:"🔒 ";}
+@keyframes claimPulse{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.035);filter:brightness(1.12)}
+}
+@keyframes claimShine{
+  0%{left:-75%;opacity:0}
+  35%{opacity:.9}
+  70%,100%{left:130%;opacity:0}
+}
+@media(max-height:720px){
+  .wheel-zone{
+    margin-top:8px !important;
+    transform:translate(-50%, 8px) !important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #claimReward.claim-cta,
+  #claimReward.claim-cta::before{animation:none !important;}
+}
