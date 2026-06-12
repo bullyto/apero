@@ -1153,6 +1153,10 @@ function hasPendingWheelReward(){
   return !!String(localStorage.getItem(LS_PENDING_WHEEL_TOKEN) || "").trim();
 }
 
+function hasPendingGameReward(){
+  return !!String(localStorage.getItem(LS_PENDING_GAME_REWARD) || "").trim();
+}
+
 function getPendingWheelLabel(){
   const label = String(localStorage.getItem(LS_PENDING_WHEEL_LABEL) || "").trim();
   if(label) return label;
@@ -1160,6 +1164,13 @@ function getPendingWheelLabel(){
   if(reward === "WHEEL_DELIVERY_7D") return "Livraison offerte";
   if(reward === "WHEEL_STAMP") return "1 tampon fidélité";
   return "votre gain";
+}
+
+function getPendingGameLabel(){
+  const reward = String(localStorage.getItem(LS_PENDING_GAME_REWARD) || "").trim();
+  if(reward === "GAME_35") return "livraison offerte Hib’air Drink";
+  if(reward === "GAME_25") return "tampon Hib’air Drink";
+  return "récompense Hib’air Drink";
 }
 
 function ensureWheelPendingCreateBanner(){
@@ -1180,16 +1191,21 @@ function renderPendingWheelCreateBanner(){
   const banner = ensureWheelPendingCreateBanner();
   if(!banner) return;
 
-  if(!hasPendingWheelReward()){
+  const hasWheel = hasPendingWheelReward();
+  const hasGame = hasPendingGameReward();
+
+  if(!hasWheel && !hasGame){
     banner.style.display = "none";
     banner.innerHTML = "";
     return;
   }
 
-  const label = getPendingWheelLabel();
+  const title = hasWheel ? "🎡 Gain roue en attente" : "🎁 Récompense Hib’air Drink en attente";
+  const label = hasWheel ? getPendingWheelLabel() : getPendingGameLabel();
+
   banner.style.display = "block";
   banner.innerHTML = `
-    <div class="adn66-wheel-pending-title">🎡 Gain roue en attente</div>
+    <div class="adn66-wheel-pending-title">${escapeHtml(title)}</div>
     <div class="adn66-wheel-pending-text">
       Indiquez simplement votre prénom et votre numéro de téléphone pour enregistrer <b>${escapeHtml(label)}</b> sur votre carte fidélité.
     </div>
