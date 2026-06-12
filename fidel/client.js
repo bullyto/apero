@@ -821,6 +821,163 @@ async function loadFreeDeliveryFallback(clientId){
 }
 
 
+/* ---------- Roue de la chance : affichage côté carte ---------- */
+let adn66WheelTimer = null;
+
+function ensureWheelClaimStyles(){
+  if(document.getElementById("adn66WheelClaimStyles")) return;
+  const style = document.createElement("style");
+  style.id = "adn66WheelClaimStyles";
+  style.textContent = `
+  .adn66-wheel-banner{
+    width:100%;
+    margin:0 0 10px 0;
+    padding:10px 11px;
+    border-radius:14px;
+    background:linear-gradient(135deg, rgba(255,212,90,.24), rgba(93,183,238,.16));
+    border:1px solid rgba(255,212,90,.62);
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+    color:#0b1c2d;
+    text-align:left;
+  }
+  .adn66-wheel-title{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-weight:950;
+    font-size:13px;
+    line-height:1.15;
+  }
+  .adn66-wheel-chip{
+    white-space:nowrap;
+    border-radius:999px;
+    padding:5px 8px;
+    background:#ffd45a;
+    color:#0b1c2d;
+    border:1px solid rgba(11,28,45,.12);
+    font-size:10.5px;
+    font-weight:950;
+  }
+  .adn66-wheel-msg{
+    margin-top:5px;
+    color:rgba(11,28,45,.78);
+    font-weight:850;
+    font-size:12px;
+    line-height:1.25;
+  }
+  .adn66-wheel-count{
+    margin-top:7px;
+    font-weight:950;
+    font-size:12.5px;
+    color:#0b1c2d;
+  }
+  `;
+  document.head.appendChild(style);
+}
+
+function normalizeWheelClaimPayload(payload){
+  if(!payload) return null;
+
+  // Formats acceptés :
+  // { ok:true, claimed:true, claim:{...} }
+  // { ok:true, wheel:{...} }
+  // { ok:true, reward_id:"...", reward_label:"..." }
+  const claim = payload.claim || payload.wheel || payload.wheel_claim || payload;
+
+  const rewardId = String(claim.reward_id || claim.id || "").trim();
+  const rewardLabel = String(claim.reward_label || claim.label || "").trim();
+  const claimedAt = String(claim.claimed_at || claim.created_at || "").trim();
+
+  if(!rewardId) return null;
+
+  return {
+    claimed: !!(payload.claimed || claim.claimed || rewardId),
+    reward_id: rewardId,
+    reward_label: rewardLabel || rewardId,
+    claimed_at: claimedAt || null,
+    raw: payload
+  };
+}
+
+async function loadWheelClaim(clientId){
+  if(!clientId) return null;
+  try{
+    const res = await api("/wheel/me?client_id=" + encodeURIComponent(clientId) + "&t=" + Date.now(), {method:"GET"});
+    if(res && res.ok === false) return null;
+    return normalizeWheelClaimPayload(res);
+  }catch(_){
+    return null;
+  }
+}
+
+function formatDateShortFR(value){
+  if(!value) return "";
+  const d = new Date(value);
+  if(!Number.isFinite(d.getTime())) return "";
+  try{
+    return d.toLocaleDateString("fr-FR", { day:"2-digit", month:"2-digit", year:"numeric" });
+  }catch(_){
+    return "";
+  }
+}
+
+function renderWheelClaim(claim){
+  ensureWheelClaimStyles();
+  if(adn66WheelTimer){ clearInterval(adn66WheelTimer); adn66WheelTimer = null; }
+
+  const cardBlock = $("cardBlock");
+  if(!cardBlock) return;
+
+  let banner = document.getElementById("adn66WheelClaimBanner");
+
+  if(!claim || !claim.reward_id){
+    if(banner) banner.remove();
+    return;
+  }
+
+  if(!banner){
+    banner = document.createElement("div");
+    banner.id = "adn66WheelClaimBanner";
+    banner.className = "adn66-wheel-banner";
+
+    // On l’affiche tout en haut de la carte, mais après la livraison gratuite si elle existe.
+    const freeBanner = document.getElementById("adn66FreeDeliveryBanner");
+    if(freeBanner && freeBanner.parentNode === cardBlock){
+      freeBanner.insertAdjacentElement("afterend", banner);
+    }else{
+      cardBlock.insertBefore(banner, cardBlock.firstChild);
+    }
+  }
+
+  const rewardId = String(claim.reward_id || "").trim();
+  const dateTxt = formatDateShortFR(claim.claimed_at);
+
+  let title = "🎡 Roue de la chance";
+  let chip = "Gain enregistré";
+  let msg = "Votre gain roue est relié à votre carte fidélité Apéro de Nuit 66.";
+
+  if(rewardId === "WHEEL_STAMP"){
+    title = "🎡 Roue de la chance";
+    chip = "+1 tampon";
+    msg = "Un tampon fidélité a été ajouté à votre carte. Vous ne pouvez obtenir qu’un seul vrai gain roue par carte.";
+  }else if(rewardId === "WHEEL_DELIVERY_7D"){
+    title = "🎡 Roue de la chance";
+    chip = "Livraison offerte";
+    msg = "Livraison offerte gagnée via la roue. Si une livraison gratuite était déjà active, 7 jours ont été ajoutés.";
+  }
+
+  banner.innerHTML = `
+    <div class="adn66-wheel-title">
+      <span>${escapeHtml(title)}</span>
+      <span class="adn66-wheel-chip">${escapeHtml(chip)}</span>
+    </div>
+    <div class="adn66-wheel-msg">${escapeHtml(msg)}</div>
+    ${dateTxt ? `<div class="adn66-wheel-count">📅 Gain obtenu le ${escapeHtml(dateTxt)}</div>` : ""}
+  `;
+}
+
+
 function hasBenefitFlagFromUrl(){
   try{
     const u = new URL(location.href);
@@ -851,6 +1008,7 @@ async function loadCard(){
     renderVisualStamps(0);
     setStateText(0, null);
     setCtaVisible(false);
+    renderWheelClaim(null);
     return;
   }
 
@@ -863,6 +1021,11 @@ async function loadCard(){
     const points = Number(card.points || 0);
     const freeDelivery = card.free_delivery || res.free_delivery || await loadFreeDeliveryFallback(cid);
     renderFreeDeliveryBenefit(freeDelivery || null);
+
+    // Roue de la chance : affichage indépendant de Hib’air Drink.
+    const wheelClaim = res.wheel || card.wheel || await loadWheelClaim(cid);
+    renderWheelClaim(wheelClaim || null);
+
     const goal = Number(card.goal || GOAL);
 
     const pts = $("points");
@@ -879,6 +1042,7 @@ async function loadCard(){
     setSyncText(false);
     setCtaVisible(false);
     renderFreeDeliveryBenefit(null);
+    renderWheelClaim(null);
   }
 }
 
