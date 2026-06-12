@@ -1,11 +1,28 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-01-28 minimal-ui + qr-popup + copy-link
+// Version: 2026-02-03 install-app-nudge + roue-popup
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
 const RESET_HOURS = 24;
 const LS_KEY = "adn66_loyalty_client_id";
+const LS_APP_INSTALL_NUDGE_SESSION = "adn66_install_app_nudge_seen_session_v1";
+let adn66DeferredInstallPrompt = null;
+let adn66InstallNudgeTimer = null;
+
+window.addEventListener("beforeinstallprompt", (event)=>{
+  try{
+    event.preventDefault();
+    adn66DeferredInstallPrompt = event;
+  }catch(_){}
+});
+
+window.addEventListener("appinstalled", ()=>{
+  try{ sessionStorage.setItem(LS_APP_INSTALL_NUDGE_SESSION, "1"); }catch(_){}
+  const nudge = document.getElementById("adn66AppInstallNudge");
+  if(nudge) nudge.remove();
+});
+
 
 
 
@@ -724,6 +741,119 @@ function closeQrModal(){
 
 
 
+
+/* ---------- Rappel installation application après création / affichage carte ---------- */
+function isRunningAsInstalledPwa(){
+  try{
+    return window.matchMedia && window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }catch(_){ return false; }
+}
+
+function ensureAppInstallNudgeStyles(){
+  if(document.getElementById("adn66AppInstallNudgeStyles")) return;
+  const style = document.createElement("style");
+  style.id = "adn66AppInstallNudgeStyles";
+  style.textContent = `
+  .adn66-install-nudge-overlay{position:fixed;inset:0;z-index:125000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,11,18,.58);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .adn66-install-nudge-card{width:min(500px,100%);background:#ffffff;color:#0b1c2d;border-radius:22px;border:1px solid rgba(11,28,45,.12);box-shadow:0 22px 70px rgba(0,0,0,.35);overflow:hidden;text-align:left;}
+  .adn66-install-nudge-head{padding:15px 16px;background:linear-gradient(180deg,rgba(93,183,238,.24),rgba(93,183,238,.06));border-bottom:1px solid rgba(11,28,45,.10);display:flex;align-items:center;gap:12px;}
+  .adn66-install-nudge-icon{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;background:#5db7ee;color:#fff;font-size:22px;box-shadow:0 8px 18px rgba(93,183,238,.28);flex:0 0 auto;}
+  .adn66-install-nudge-title{font-size:16px;font-weight:950;line-height:1.15;color:#0b1c2d;}
+  .adn66-install-nudge-sub{font-size:12.5px;font-weight:850;color:rgba(11,28,45,.68);line-height:1.25;margin-top:3px;}
+  .adn66-install-nudge-body{padding:14px 16px 4px;}
+  .adn66-install-nudge-main{font-size:15px;font-weight:900;line-height:1.35;margin:0;color:#0b1c2d;}
+  .adn66-install-nudge-help{margin:8px 0 0;color:rgba(11,28,45,.72);font-size:13px;font-weight:800;line-height:1.35;}
+  .adn66-install-nudge-foot{display:flex;gap:10px;justify-content:flex-end;align-items:center;padding:13px 16px 16px;flex-wrap:wrap;}
+  .adn66-install-nudge-install{appearance:none;border:0;background:#5db7ee;color:#fff;font-weight:950;border-radius:14px;padding:11px 15px;min-width:160px;cursor:pointer;box-shadow:0 10px 18px rgba(93,183,238,.30);}
+  .adn66-install-nudge-later{appearance:none;border:1px solid rgba(11,28,45,.15);background:#fff;color:#0b1c2d;font-weight:900;border-radius:14px;padding:11px 14px;min-width:110px;cursor:pointer;box-shadow:none;}
+  .adn66-install-nudge-install:active,.adn66-install-nudge-later:active{transform:translateY(1px);}
+  @media(max-width:420px){.adn66-install-nudge-foot{display:grid;grid-template-columns:1fr;}.adn66-install-nudge-install,.adn66-install-nudge-later{width:100%;}}
+  `;
+  document.head.appendChild(style);
+}
+
+function shouldShowAppInstallNudge(){
+  if(isRunningAsInstalledPwa()) return false;
+  if(!localStorage.getItem(LS_KEY)) return false;
+  try{ if(sessionStorage.getItem(LS_APP_INSTALL_NUDGE_SESSION) === "1") return false; }catch(_){}
+  return true;
+}
+
+function showAppInstallNudge(){
+  if(!shouldShowAppInstallNudge()) return;
+  if(document.getElementById("adn66AppInstallNudge")) return;
+
+  // Si la popup de gain roue est encore affichée, on attend pour ne pas empiler deux messages.
+  if(document.getElementById("adn66WheelRewardPopup")){
+    scheduleAppInstallNudge(1600);
+    return;
+  }
+
+  ensureAppInstallNudgeStyles();
+  const overlay = document.createElement("div");
+  overlay.id = "adn66AppInstallNudge";
+  overlay.className = "adn66-install-nudge-overlay";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+
+  const card = document.createElement("div");
+  card.className = "adn66-install-nudge-card";
+  card.innerHTML = `
+    <div class="adn66-install-nudge-head">
+      <div class="adn66-install-nudge-icon" aria-hidden="true">📲</div>
+      <div>
+        <div class="adn66-install-nudge-title">Installez l’application</div>
+        <div class="adn66-install-nudge-sub">Carte fidélité Apéro de Nuit 66</div>
+      </div>
+    </div>
+    <div class="adn66-install-nudge-body">
+      <p class="adn66-install-nudge-main">Installez l’application pour conserver votre carte et votre gain directement sur votre téléphone.</p>
+      <p class="adn66-install-nudge-help" id="adn66InstallNudgeHelp">Vous pourrez retrouver votre carte plus facilement, sans rechercher le lien.</p>
+    </div>
+    <div class="adn66-install-nudge-foot">
+      <button type="button" class="adn66-install-nudge-later">Plus tard</button>
+      <button type="button" class="adn66-install-nudge-install">Installer l’application</button>
+    </div>
+  `;
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = ()=>{
+    try{ sessionStorage.setItem(LS_APP_INSTALL_NUDGE_SESSION, "1"); }catch(_){}
+    overlay.remove();
+  };
+  const later = card.querySelector(".adn66-install-nudge-later");
+  const install = card.querySelector(".adn66-install-nudge-install");
+  const help = card.querySelector("#adn66InstallNudgeHelp");
+
+  if(later) later.addEventListener("click", close);
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+
+  if(install){
+    install.addEventListener("click", async ()=>{
+      if(adn66DeferredInstallPrompt){
+        try{
+          adn66DeferredInstallPrompt.prompt();
+          await adn66DeferredInstallPrompt.userChoice;
+          adn66DeferredInstallPrompt = null;
+          if(help) help.textContent = "Installation demandée. Ouvrez ensuite la carte depuis l’icône installée.";
+          try{ sessionStorage.setItem(LS_APP_INSTALL_NUDGE_SESSION, "1"); }catch(_){}
+          setTimeout(()=>{ if(overlay.parentNode) overlay.remove(); }, 1200);
+        }catch(_){
+          if(help) help.textContent = "Si le bouton ne s’ouvre pas, utilisez le menu ⋮ du navigateur puis “Installer l’application”.";
+        }
+        return;
+      }
+      if(help) help.textContent = "Sur Chrome : appuyez sur le menu ⋮ puis sur “Installer l’application” ou “Ajouter à l’écran d’accueil”.";
+    });
+  }
+}
+
+function scheduleAppInstallNudge(delayMs){
+  if(adn66InstallNudgeTimer) clearTimeout(adn66InstallNudgeTimer);
+  adn66InstallNudgeTimer = setTimeout(()=>showAppInstallNudge(), Math.max(300, Number(delayMs || 900)));
+}
+
 /* ---------- Livraison gratuite active (GAME_35) ---------- */
 let adn66FreeDeliveryTimer = null;
 
@@ -880,6 +1010,7 @@ async function loadCard(){
     renderCta(points);
     setStateText(points, card.completed_at || null);
     setSyncText(true);
+    scheduleAppInstallNudge(1200);
   }catch(e){
     setSyncText(false);
     setCtaVisible(false);
@@ -1093,6 +1224,7 @@ function showWheelRewardPopup(type, data){
   if(prev) prev.remove();
 
   const overlay = document.createElement("div");
+  overlay.id = "adn66WheelRewardPopup";
   overlay.id = "adn66WheelRewardPopup";
   overlay.className = "adn66-wheel-result-overlay";
   overlay.setAttribute("role", "dialog");
@@ -1362,6 +1494,7 @@ async function createCard(){
     await applyPendingGameReward(r.client_id);
     await applyPendingWheelReward(r.client_id);
     await loadCard();
+    scheduleAppInstallNudge(1800);
   }catch(e){
     const code = String((e && e.message) ? e.message : "").trim();
 
@@ -1724,6 +1857,7 @@ function bind(){
       await applyPendingGameReward(adn66JustRestoredClientId);
       await applyPendingWheelReward(adn66JustRestoredClientId);
       await loadCard();
+      scheduleAppInstallNudge(1800);
       showInfoPopup(
         "Carte restaurée ✅",
         `Cette carte est maintenant utilisée sur ce téléphone.<br><br><b>ID :</b><br><span style="font-family:monospace;font-size:12px">${escapeHtml(shortClientId(adn66JustRestoredClientId))}</span>`
