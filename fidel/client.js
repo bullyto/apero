@@ -1024,16 +1024,21 @@ async function loadCard(){
 
 
 /* ---------- Récompense jeu en attente (GAME_25) ---------- */
-const LS_PENDING_GAME_REWARD = "adn66_pending_game_reward_v1";
+const LS_PENDING_GAME_REWARD = "adn66_pending_game_reward_v1"; // ancien stockage simple, conservé en compatibilité
 const LS_PENDING_GAME_PLAYER_ID = "adn66_pending_game_player_id_v1";
 const LS_PENDING_GAME_PUBLIC_NAME = "adn66_pending_game_public_name_v1";
+const LS_PENDING_GAME_QUEUE = "adn66_pending_game_rewards_queue_v2"; // nouveau : plusieurs gains Hib’air Drink en attente
 
 function getGameRewardFromUrl(){
   try{
     const u = new URL(location.href);
+    const rewards = u.searchParams.getAll("game_reward")
+      .map(v => String(v || "").trim())
+      .filter(Boolean);
+    if(rewards.length) return rewards;
     const reward = u.searchParams.get("game_reward") || "";
-    return String(reward || "").trim();
-  }catch(_){ return ""; }
+    return String(reward || "").trim() ? [String(reward || "").trim()] : [];
+  }catch(_){ return []; }
 }
 
 function getGamePlayerFromUrl(){
@@ -1048,20 +1053,103 @@ function getGamePlayerFromUrl(){
   }
 }
 
+function readPendingGameQueue(){
+  let list = [];
+  try{
+    const raw = localStorage.getItem(LS_PENDING_GAME_QUEUE) || "[]";
+    const parsed = JSON.parse(raw);
+    if(Array.isArray(parsed)) list = parsed;
+  }catch(_){ list = []; }
+
+  // Compatibilité ancienne version : si un seul gain était stocké, on le transforme en file d’attente.
+  const oldReward = String(localStorage.getItem(LS_PENDING_GAME_REWARD) || "").trim();
+  if(["GAME_25","GAME_35"].includes(oldReward)){
+    const already = list.some(x => x && x.reward === oldReward && x.from_legacy === true);
+    if(!already){
+      list.push({
+        reward: oldReward,
+        player_id: String(localStorage.getItem(LS_PENDING_GAME_PLAYER_ID) || "").trim(),
+        public_name: String(localStorage.getItem(LS_PENDING_GAME_PUBLIC_NAME) || "").trim(),
+        added_at: new Date().toISOString(),
+        from_legacy: true
+      });
+    }
+    localStorage.removeItem(LS_PENDING_GAME_REWARD);
+    localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
+    localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
+    writePendingGameQueue(list);
+  }
+
+  return list
+    .filter(x => x && ["GAME_25","GAME_35"].includes(String(x.reward || "").trim()))
+    .map(x => ({
+      reward: String(x.reward || "").trim(),
+      player_id: String(x.player_id || "").trim(),
+      public_name: String(x.public_name || "").trim(),
+      added_at: String(x.added_at || new Date().toISOString())
+    }));
+}
+
+function writePendingGameQueue(list){
+  const safe = (Array.isArray(list) ? list : [])
+    .filter(x => x && ["GAME_25","GAME_35"].includes(String(x.reward || "").trim()))
+    .map(x => ({
+      reward: String(x.reward || "").trim(),
+      player_id: String(x.player_id || "").trim(),
+      public_name: String(x.public_name || "").trim(),
+      added_at: String(x.added_at || new Date().toISOString())
+    }));
+  try{ localStorage.setItem(LS_PENDING_GAME_QUEUE, JSON.stringify(safe)); }catch(_){}
+  if(!safe.length){
+    try{ localStorage.removeItem(LS_PENDING_GAME_QUEUE); }catch(_){}
+  }
+  return safe;
+}
+
+function getPendingGameSummary(){
+  const queue = readPendingGameQueue();
+  const stamps = queue.filter(x => x.reward === "GAME_25").length;
+  const deliveries = queue.filter(x => x.reward === "GAME_35").length;
+  return {
+    queue,
+    total: queue.length,
+    stamps,
+    deliveries
+  };
+}
+
+function plural(n, one, many){
+  return Number(n || 0) > 1 ? many : one;
+}
+
+function buildPendingGameSummaryHtml(summary){
+  const s = summary || getPendingGameSummary();
+  const lines = [];
+  if(s.stamps) lines.push(`• <b>${s.stamps}</b> ${plural(s.stamps, "tampon fidélité", "tampons fidélité")}`);
+  if(s.deliveries) lines.push(`• <b>${s.deliveries}</b> ${plural(s.deliveries, "livraison offerte", "livraisons offertes")}`);
+  return lines.length ? lines.join("<br>") : "";
+}
+
 function savePendingGameRewardFromUrl(){
-  const reward = getGameRewardFromUrl();
-  if(!reward) return;
-
-  // Sécurité simple : on n'accepte que les paliers prévus.
-  if(!["GAME_25", "GAME_35"].includes(reward)) return;
-
-  localStorage.setItem(LS_PENDING_GAME_REWARD, reward);
+  const rewards = getGameRewardFromUrl();
+  if(!rewards || !rewards.length) return;
 
   const player = getGamePlayerFromUrl();
-  if(player.player_id) localStorage.setItem(LS_PENDING_GAME_PLAYER_ID, player.player_id);
-  if(player.public_name) localStorage.setItem(LS_PENDING_GAME_PUBLIC_NAME, player.public_name);
+  const queue = readPendingGameQueue();
 
-  // Nettoyage de l'URL pour éviter de relancer plusieurs fois le traitement.
+  rewards.forEach(reward => {
+    if(!["GAME_25", "GAME_35"].includes(reward)) return;
+    queue.push({
+      reward,
+      player_id: player.player_id || "",
+      public_name: player.public_name || "",
+      added_at: new Date().toISOString()
+    });
+  });
+
+  writePendingGameQueue(queue);
+
+  // Nettoyage de l'URL pour éviter de réajouter les mêmes gains à chaque rechargement.
   try{
     const u = new URL(location.href);
     u.searchParams.delete("game_reward");
@@ -1071,51 +1159,136 @@ function savePendingGameRewardFromUrl(){
   }catch(_){}
 }
 
-async function applyPendingGameReward(clientId){
-  const reward = localStorage.getItem(LS_PENDING_GAME_REWARD);
-  if(!reward || !clientId) return;
+function showHibairDrinkRewardPopup(stats){
+  ensureWheelRewardPopupStyles();
 
-  try{
-    const playerId = String(localStorage.getItem(LS_PENDING_GAME_PLAYER_ID) || "").trim();
-    const publicName = String(localStorage.getItem(LS_PENDING_GAME_PUBLIC_NAME) || "").trim();
+  const prev = document.getElementById("adn66HibairRewardPopup");
+  if(prev) prev.remove();
 
-    const r = await api("/game/reward/request", {
-      method: "POST",
-      body: JSON.stringify({
-        client_id: clientId,
-        milestone: reward,
-        player_id: playerId || undefined,
-        public_name: publicName || undefined
-      })
-    });
+  const s = stats || {};
+  const stamps = Number(s.stamps || 0);
+  const deliveries = Number(s.deliveries || 0);
+  const already = Number(s.already || 0);
+  const failed = Number(s.failed || 0);
 
-    if(r && r.token){
-      await consumeRewardToken(r.token);
-      localStorage.removeItem(LS_PENDING_GAME_REWARD);
-      localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
-      localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
-      return;
-    }
+  const overlay = document.createElement("div");
+  overlay.id = "adn66HibairRewardPopup";
+  overlay.className = "adn66-wheel-result-overlay";
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
 
-    const code = String((r && (r.code || r.status || r.error_code || r.message || r.error)) || "").trim();
-    if(code === "already_claimed"){
-      localStorage.removeItem(LS_PENDING_GAME_REWARD);
-      localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
-      localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
-      showInfoPopup("Récompense", "Votre récompense a déjà été utilisée.");
-      return;
-    }
+  const card = document.createElement("div");
+  card.className = "adn66-wheel-result-card";
 
-    localStorage.removeItem(LS_PENDING_GAME_REWARD);
-    localStorage.removeItem(LS_PENDING_GAME_PLAYER_ID);
-    localStorage.removeItem(LS_PENDING_GAME_PUBLIC_NAME);
-  }catch(e){
-    // On garde la récompense en attente si erreur réseau.
-    showInfoPopup(
-      "Récompense en attente",
-      "Votre carte est créée. Le tampon du jeu sera ajouté dès que possible. Rafraîchissez la page dans quelques instants si besoin."
-    );
+  let title = "Récompense Hib’air Drink enregistrée";
+  let main = "Votre récompense a bien été ajoutée à votre carte fidélité.";
+  let extraLines = [];
+
+  if(stamps || deliveries){
+    title = (stamps + deliveries) > 1 ? "Récompenses Hib’air Drink enregistrées" : "Récompense Hib’air Drink enregistrée";
+    main = (stamps + deliveries) > 1
+      ? "Vos récompenses ont bien été ajoutées à votre carte fidélité."
+      : "Votre récompense a bien été ajoutée à votre carte fidélité.";
+
+    if(stamps) extraLines.push(`✅ <b>${stamps}</b> ${plural(stamps, "tampon ajouté", "tampons ajoutés")}`);
+    if(deliveries) extraLines.push(`🚚 <b>${deliveries}</b> ${plural(deliveries, "livraison offerte activée", "livraisons offertes activées")}`);
+  }else if(already){
+    title = "Récompense déjà utilisée";
+    main = "Cette récompense Hib’air Drink était déjà enregistrée ou déjà utilisée.";
+  }else if(failed){
+    title = "Récompense en attente";
+    main = "La récompense n’a pas pu être enregistrée pour le moment.";
   }
+
+  if(already && (stamps || deliveries)){
+    extraLines.push(`ℹ️ ${already} ${plural(already, "récompense déjà utilisée", "récompenses déjà utilisées")}`);
+  }
+  if(failed){
+    extraLines.push(`⚠️ ${failed} ${plural(failed, "récompense non enregistrée", "récompenses non enregistrées")}`);
+  }
+
+  const extra = extraLines.length ? extraLines.join("<br>") : "";
+
+  card.innerHTML = `
+    <div class="adn66-wheel-result-head">
+      <div class="adn66-wheel-result-title">${escapeHtml(title)}</div>
+      <div class="adn66-wheel-result-icon" aria-hidden="true">🎁</div>
+    </div>
+    <div class="adn66-wheel-result-body">
+      <p class="adn66-wheel-result-main">${main}</p>
+      <p class="adn66-wheel-result-sub">Vos gains Hib’air Drink sont séparés de la roue de la chance.</p>
+      ${extra ? `<div class="adn66-wheel-result-extra">${extra}</div>` : ""}
+    </div>
+    <div class="adn66-wheel-result-foot">
+      <button type="button" class="adn66-wheel-result-ok">Voir ma carte</button>
+    </div>
+  `;
+
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = ()=> overlay.remove();
+  const ok = card.querySelector(".adn66-wheel-result-ok");
+  if(ok) ok.addEventListener("click", close);
+  overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
+}
+
+async function applyPendingGameReward(clientId){
+  if(!clientId) return;
+
+  const queue = readPendingGameQueue();
+  if(!queue.length) return;
+
+  const remaining = [];
+  const stats = { stamps:0, deliveries:0, already:0, failed:0 };
+
+  for(const item of queue){
+    try{
+      const r = await api("/game/reward/request", {
+        method: "POST",
+        body: JSON.stringify({
+          client_id: clientId,
+          milestone: item.reward,
+          player_id: item.player_id || undefined,
+          public_name: item.public_name || undefined
+        })
+      });
+
+      if(r && r.token){
+        const consumed = await consumeRewardToken(r.token, { silent:true });
+        const milestone = String((consumed && consumed.milestone) || item.reward || "");
+        if(milestone === "GAME_35") stats.deliveries += 1;
+        else stats.stamps += 1;
+        continue;
+      }
+
+      const code = String((r && (r.code || r.status || r.error_code || r.message || r.error)) || "").trim();
+      if(code === "already_claimed"){
+        stats.already += 1;
+        continue;
+      }
+
+      stats.failed += 1;
+      remaining.push(item);
+    }catch(e){
+      const payload = e && e.payload ? e.payload : {};
+      const msg = String((payload && (payload.error || payload.code || payload.message)) || (e && e.message) || "");
+      if(msg === "already_claimed"){
+        stats.already += 1;
+        continue;
+      }
+      stats.failed += 1;
+      remaining.push(item);
+    }
+  }
+
+  writePendingGameQueue(remaining);
+
+  if(stats.stamps || stats.deliveries || stats.already || stats.failed){
+    showHibairDrinkRewardPopup(stats);
+  }
+
+  await loadCard();
 }
 
 
@@ -1156,6 +1329,10 @@ function hasPendingWheelReward(){
   return !!String(localStorage.getItem(LS_PENDING_WHEEL_TOKEN) || "").trim();
 }
 
+function hasPendingGameRewards(){
+  return getPendingGameSummary().total > 0;
+}
+
 function getPendingWheelLabel(){
   const label = String(localStorage.getItem(LS_PENDING_WHEEL_LABEL) || "").trim();
   if(label) return label;
@@ -1163,6 +1340,14 @@ function getPendingWheelLabel(){
   if(reward === "WHEEL_DELIVERY_7D") return "Livraison offerte";
   if(reward === "WHEEL_STAMP") return "1 tampon fidélité";
   return "votre gain";
+}
+
+function getPendingAllSummary(){
+  const game = getPendingGameSummary();
+  const hasWheel = hasPendingWheelReward();
+  const wheelLabel = hasWheel ? getPendingWheelLabel() : "";
+  const total = game.total + (hasWheel ? 1 : 0);
+  return { game, hasWheel, wheelLabel, total };
 }
 
 function ensureWheelPendingCreateBanner(){
@@ -1183,18 +1368,32 @@ function renderPendingWheelCreateBanner(){
   const banner = ensureWheelPendingCreateBanner();
   if(!banner) return;
 
-  if(!hasPendingWheelReward()){
+  const summary = getPendingAllSummary();
+  if(!summary.total){
     banner.style.display = "none";
     banner.innerHTML = "";
     return;
   }
 
-  const label = getPendingWheelLabel();
+  const lines = [];
+  if(summary.hasWheel){
+    lines.push(`🎡 Roue : <b>${escapeHtml(summary.wheelLabel)}</b>`);
+  }
+  if(summary.game.stamps){
+    lines.push(`🎁 Hib’air Drink : <b>${summary.game.stamps}</b> ${plural(summary.game.stamps, "tampon fidélité", "tampons fidélité")}`);
+  }
+  if(summary.game.deliveries){
+    lines.push(`🚚 Hib’air Drink : <b>${summary.game.deliveries}</b> ${plural(summary.game.deliveries, "livraison offerte", "livraisons offertes")}`);
+  }
+
+  const title = summary.total > 1 ? `🎁 ${summary.total} gains en attente` : (summary.hasWheel ? "🎡 Gain roue en attente" : "🎁 Récompense Hib’air Drink en attente");
+
   banner.style.display = "block";
   banner.innerHTML = `
-    <div class="adn66-wheel-pending-title">🎡 Gain roue en attente</div>
+    <div class="adn66-wheel-pending-title">${title}</div>
     <div class="adn66-wheel-pending-text">
-      Indiquez simplement votre prénom et votre numéro de téléphone pour enregistrer <b>${escapeHtml(label)}</b> sur votre carte fidélité.
+      Indiquez simplement votre prénom et votre numéro de téléphone pour enregistrer sur votre carte fidélité :
+      <div style="margin-top:7px">${lines.join("<br>")}</div>
     </div>
   `;
 }
@@ -1203,14 +1402,22 @@ function renderPendingWheelHomeBanner(){
   const banner = $("adn66WheelPendingHomeBanner");
   if(!banner) return;
 
-  if(!hasPendingWheelReward() || localStorage.getItem(LS_KEY)){
+  const summary = getPendingAllSummary();
+  if(!summary.total || localStorage.getItem(LS_KEY)){
     banner.style.display = "none";
     banner.innerHTML = "";
     return;
   }
 
   banner.style.display = "block";
-  banner.innerHTML = `🎡 Gain en attente — cliquez sur <b>Activer la carte</b> pour l’enregistrer.`;
+  if(summary.total > 1){
+    banner.innerHTML = `🎁 <b>${summary.total} gains en attente</b> — cliquez sur <b>Activer la carte</b> pour les enregistrer.`;
+  }else if(summary.hasWheel){
+    banner.innerHTML = `🎡 Gain en attente — cliquez sur <b>Activer la carte</b> pour l’enregistrer.`;
+  }else{
+    const label = summary.game.stamps ? "1 tampon fidélité" : "1 livraison offerte";
+    banner.innerHTML = `🎁 ${label} en attente — cliquez sur <b>Activer la carte</b> pour l’enregistrer.`;
+  }
 }
 
 function hidePendingWheelHomeBanner(){
@@ -1772,10 +1979,10 @@ function tryAutoRestoreFromUrl(){
 /* ---------- Bind events ---------- */
 function bind(){
   savePendingWheelRewardFromUrl();
+  savePendingGameRewardFromUrl();
   renderPendingWheelCreateBanner();
   renderPendingWheelHomeBanner();
   tryAutoRestoreFromUrl();
-  savePendingGameRewardFromUrl();
 
   const rewardToken = getRewardTokenFromUrl();
   if(rewardToken){
@@ -1899,33 +2106,33 @@ if(document.readyState === "loading"){
 
 
 
-async function consumeRewardToken(token){
-  if(!token) return;
+async function consumeRewardToken(token, opts={}){
+  if(!token) return null;
+  const silent = !!(opts && opts.silent);
+
   try{
     const res = await api("/loyalty/reward/consume", {
       method: "POST",
       body: JSON.stringify({ token })
     });
 
-    if(res && res.milestone === "GAME_35"){
-      showInfoPopup(
-        "Livraison offerte activée 🚚",
-        "Profitez de la livraison gratuite à chaque commande pendant 1 semaine. Le compte à rebours apparaît en haut de votre carte."
-      );
-    }else{
-      showInfoPopup(
-        "Récompense validée 🎉",
-        "Un tampon a été ajouté à votre carte de fidélité."
-      );
+    if(!silent){
+      if(res && res.milestone === "GAME_35"){
+        showHibairDrinkRewardPopup({ deliveries:1 });
+      }else{
+        showHibairDrinkRewardPopup({ stamps:1 });
+      }
+      await loadCard();
     }
 
-    await loadCard();
+    return res || {};
   }catch(e){
+    if(silent) throw e;
+
     await loadCard();
-    showInfoPopup(
-      "Récompense",
-      "Cette récompense a déjà été utilisée, n’est plus valide, ou elle a été appliquée sur une autre carte. Vérifiez la ligne DEBUG : elle doit afficher le même ID que l’admin."
-    );
+    showHibairDrinkRewardPopup({ failed:1 });
+    return null;
   }
 }
+
 
