@@ -1,6 +1,6 @@
 // PATH: /fidel/client.js
 // ADN66 • Carte de fidélité — Client
-// Version: 2026-02-03 install-app-nudge + roue-popup
+// Version: 2026-02-03 play-store-nudge + roue-popup
 
 const API_BASE = "https://carte-de-fideliter.apero-nuit-du-66.workers.dev";
 const GOAL = 8;
@@ -47,6 +47,8 @@ const PHONE_WARN_DELAY_SEC = 15;
 
 // IMPORTANT: le QR + copie = URL (pas d'ID affiché)
 const PUBLIC_RESTORE_URL_BASE = "https://www.aperos.net/fidel/client.html?restore=1&id=";
+const OFFICIAL_APP_PLAY_STORE_URL = "https://play.google.com/store/search?q=ap%C3%A9ro%20de%20nuit%2066&c=apps";
+const OFFICIAL_APP_SEARCH_TEXT = "Apéro de Nuit 66";
 
 /* ---------- Restore: extraction (même logique que Admin) ---------- */
 function extractClientIdFromAny(raw){
@@ -804,17 +806,17 @@ function showAppInstallNudge(){
     <div class="adn66-install-nudge-head">
       <div class="adn66-install-nudge-icon" aria-hidden="true">📲</div>
       <div>
-        <div class="adn66-install-nudge-title">Installez l’application</div>
-        <div class="adn66-install-nudge-sub">Carte fidélité Apéro de Nuit 66</div>
+        <div class="adn66-install-nudge-title">Application officielle</div>
+        <div class="adn66-install-nudge-sub">Apéro de Nuit 66 sur Google Play</div>
       </div>
     </div>
     <div class="adn66-install-nudge-body">
-      <p class="adn66-install-nudge-main">Installez l’application pour conserver votre carte et votre gain directement sur votre téléphone.</p>
-      <p class="adn66-install-nudge-help" id="adn66InstallNudgeHelp">Vous pourrez retrouver votre carte plus facilement, sans rechercher le lien.</p>
+      <p class="adn66-install-nudge-main">Pour installer l’application officielle, ouvrez Google Play Store et recherchez : <strong>Apéro de Nuit 66</strong>.</p>
+      <p class="adn66-install-nudge-help" id="adn66InstallNudgeHelp">Le bouton ci-dessous ouvre Google Play. Si la recherche ne s’ouvre pas directement, tapez simplement “Apéro de Nuit 66” dans le Play Store.</p>
     </div>
     <div class="adn66-install-nudge-foot">
       <button type="button" class="adn66-install-nudge-later">Plus tard</button>
-      <button type="button" class="adn66-install-nudge-install">Installer l’application</button>
+      <button type="button" class="adn66-install-nudge-install">Ouvrir Google Play</button>
     </div>
   `;
   overlay.appendChild(card);
@@ -832,21 +834,14 @@ function showAppInstallNudge(){
   overlay.addEventListener("click", (e)=>{ if(e.target === overlay) close(); });
 
   if(install){
-    install.addEventListener("click", async ()=>{
-      if(adn66DeferredInstallPrompt){
-        try{
-          adn66DeferredInstallPrompt.prompt();
-          await adn66DeferredInstallPrompt.userChoice;
-          adn66DeferredInstallPrompt = null;
-          if(help) help.textContent = "Installation demandée. Ouvrez ensuite la carte depuis l’icône installée.";
-          try{ sessionStorage.setItem(LS_APP_INSTALL_NUDGE_SESSION, "1"); }catch(_){}
-          setTimeout(()=>{ if(overlay.parentNode) overlay.remove(); }, 1200);
-        }catch(_){
-          if(help) help.textContent = "Si le bouton ne s’ouvre pas, utilisez le menu ⋮ du navigateur puis “Installer l’application”.";
-        }
-        return;
+    install.addEventListener("click", ()=>{
+      try{ sessionStorage.setItem(LS_APP_INSTALL_NUDGE_SESSION, "1"); }catch(_){}
+      if(help) help.textContent = `Ouverture de Google Play. Recherchez “${OFFICIAL_APP_SEARCH_TEXT}” si besoin.`;
+      try{
+        window.location.href = OFFICIAL_APP_PLAY_STORE_URL;
+      }catch(_){
+        try{ window.open(OFFICIAL_APP_PLAY_STORE_URL, "_blank", "noopener,noreferrer"); }catch(__){}
       }
-      if(help) help.textContent = "Sur Chrome : appuyez sur le menu ⋮ puis sur “Installer l’application” ou “Ajouter à l’écran d’accueil”.";
     });
   }
 }
