@@ -29,15 +29,15 @@ window.addEventListener("appinstalled", ()=>{
 // ===== ADN66 — CTA Social (Facebook / Avis Google) =====
 // ⚠️ Remplace les 2 liens ci-dessous par les tiens (liens directs)
 const FACEBOOK_PAGE_URL = "https://www.facebook.com/share/16o4JJ8gnL/";
-const GOOGLE_REVIEW_URL = "https://www.google.com/maps/place/APERO+DE+NUIT+66+%7C+1er+service+de+Livraison+d'alcools+de+nuit+%C3%A0+Perpignan/@42.8637473,2.9156249,10z/data=!4m7!3m6!1s0x0:0xfdd578ec415e75e4!8m2!3d42.8637473!4d2.9156249!9m1!1b1";
+const GOOGLE_REVIEW_URL = "https://g.page/r/CeR1XkHseNX9EBM/review";
 
-// Affichage: 1er tampon => Facebook ; 3e tampon => Avis Google
+// Affichage: 1er tampon => Facebook ; 3 tampons => Avis Google pour débloquer le 4e
 const CTA_FB_AT = 1;
 const CTA_GOOGLE_AT = 3;
 
 // Anti-spam (on n'affiche + pulse qu'une seule fois)
 const LS_CTA_FB_DONE = "adn66_cta_fb_done_v1";
-const LS_CTA_GOOGLE_DONE = "adn66_cta_google_done_v1";
+const LS_CTA_GOOGLE_DONE = "adn66_cta_google_done_v1"; // conservé pour compat, non utilisé pour le tampon automatique
 
 // Anti-abus (client-side) — erreurs téléphone (progressif)
 const LS_PHONE_ERR = "adn66_loyalty_phone_err_count_v1";
@@ -388,6 +388,15 @@ function setStateText(points, completedAt){
   }
 }
 
+function renderCardVisual(points){
+  const img = document.getElementById("cardImg");
+  if(!img) return;
+  const p = Math.max(0, Math.floor(Number(points)||0));
+  const nextSrc = p >= 2 ? "img/carte2.png" : "img/carte.png";
+  const current = String(img.getAttribute("src") || "");
+  if(current !== nextSrc) img.setAttribute("src", nextSrc);
+}
+
 function renderVisualStamps(points){
   // Correction robuste ADN66 : l'affichage doit suivre STRICTEMENT card.points reçu par /loyalty/me.
   // Avant : certains téléphones ne montraient qu'un seul tampon visuellement.
@@ -473,28 +482,85 @@ function escapeHtml(str){
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#39;");
 }
-function renderCta(points){
+function getGoogleReviewStatus(review){
+  const r = review || {};
+  return String(r.status || "none");
+}
+
+async function startGoogleReviewIntent(){
+  const cid = localStorage.getItem(LS_KEY);
+  if(!cid) return;
+
+  try{
+    const res = await api("/loyalty/google-review/start", {
+      method:"POST",
+      body: JSON.stringify({ client_id: cid })
+    });
+
+    showInfoPopup("Avis Google ⭐", `
+      <p><b>Publiez votre avis Google ⭐</b></p>
+      <p>Patientez quelques minutes après publication.</p>
+      <p>Votre carte sera vérifiée automatiquement.</p>
+      <div class="adn66-info-sub">Si le nouvel avis n’apparaît pas tout de suite, une deuxième vérification sera faite environ 1 heure après votre clic.</div>
+    `);
+
+    openExternal(res.review_url || GOOGLE_REVIEW_URL);
+    setTimeout(()=>loadCard(), 900);
+  }catch(e){
+    const code = String(e && e.message || "");
+    if(code === "not_exactly_3_points"){
+      showInfoPopup("Avis Google", "<p>Le bouton avis Google est disponible uniquement quand votre carte est à <b>3 tampons</b>, pour débloquer le 4e.</p>");
+      return;
+    }
+    if(code === "google_review_already_rewarded"){
+      showInfoPopup("Avis Google", "<p>Le tampon avis Google a déjà été débloqué sur cette carte ✅</p>");
+      return;
+    }
+    if(code === "review_count_unavailable" || code === "google_review_not_configured"){
+      showInfoPopup("Avis Google", "<p>La vérification automatique des avis Google n’est pas encore configurée côté serveur.</p>");
+      return;
+    }
+    showInfoPopup("Avis Google", "<p>Impossible de lancer la vérification pour le moment. Réessayez dans quelques instants.</p>");
+  }
+}
+
+async function checkGoogleReviewNow(){
+  const cid = localStorage.getItem(LS_KEY);
+  if(!cid) return;
+  try{
+    await api("/loyalty/google-review/check", {
+      method:"POST",
+      body: JSON.stringify({ client_id: cid })
+    });
+  }catch(_){}
+  await loadCard();
+}
+
+function renderCta(points, googleReview){
   const p = Math.max(0, Math.floor(Number(points)||0));
   const top = $("ctaTop");
   const card = $("ctaCard");
   if(!top || !card) return;
 
-  // Rules: 1er tampon => FB ; 3e tampon => Google
-  const showFb = (p === CTA_FB_AT) && localStorage.getItem(LS_CTA_FB_DONE) !== "1";
-  const showGg = (p === CTA_GOOGLE_AT) && localStorage.getItem(LS_CTA_GOOGLE_DONE) !== "1";
+  const review = googleReview || {};
+  const reviewStatus = getGoogleReviewStatus(review);
+  const googleAlreadyRewarded = !!review.stamp_given || reviewStatus === "rewarded";
 
-  // If no CTA to show, display a supportive message by stamp so it NEVER blocks next steps.
+  // Rules: 1er tampon => FB ; exactement 3 tampons => avis Google automatique pour débloquer le 4e
+  const showFb = (p === CTA_FB_AT) && localStorage.getItem(LS_CTA_FB_DONE) !== "1";
+  const showGg = (p === CTA_GOOGLE_AT) && !googleAlreadyRewarded;
+
   const messageByStamp = (stamp)=>{
     switch(stamp){
       case 2:
         return {
-          title: "Deux utilisations enregistrées 👀",
-          sub: "On comprend que vous souhaitiez tester le service plusieurs fois avant de vous faire un avis. Prenez le temps, on s’occupe du reste."
+          title: "Votre carte évolue ✨",
+          sub: "Votre nouveau visuel fidélité est débloqué. Continuez, le 4e tampon pourra aussi être débloqué avec un avis Google."
         };
       case 4:
         return {
-          title: "Vous êtes à mi-parcours 🎯",
-          sub: "Votre fidélité commence à payer. Plus que quelques tampons avant votre avantage 🎁"
+          title: "4e tampon débloqué 🎯",
+          sub: "Votre carte avance bien. Plus que quelques tampons avant votre avantage 🎁"
         };
       case 5:
         return {
@@ -521,12 +587,10 @@ function renderCta(points){
     }
   };
 
-  // Always show the container when there is something (CTA or message) to display.
   const msg = (!showFb && !showGg) ? messageByStamp(p) : null;
 
   if(!showFb && !showGg && !msg){
     setCtaVisible(false);
-    // Ne pas effacer ici le bandeau livraison gratuite : il est indépendant des CTA.
     return;
   }
 
@@ -557,7 +621,6 @@ function renderCta(points){
       btn.addEventListener("click", ()=>{
         try{ localStorage.setItem(LS_CTA_FB_DONE, "1"); }catch(_){}
         openExternal(FACEBOOK_PAGE_URL);
-        // hide after click
         setTimeout(()=>setCtaVisible(false), 50);
       }, {once:true});
     }
@@ -565,20 +628,27 @@ function renderCta(points){
   }
 
   if(showGg){
+    const isWaiting = reviewStatus === "pending_10min" || reviewStatus === "waiting_1h";
+    const title = isWaiting ? "Avis Google en vérification ⭐" : "Débloquez votre 4e tampon ⭐";
+    const sub = isWaiting
+      ? "Votre clic est enregistré. La carte vérifie automatiquement si un nouvel avis Google apparaît."
+      : "À 3 tampons, laissez un avis Google pour débloquer automatiquement le 4e tampon.";
+    const btnLabel = isWaiting ? "Vérifier" : "Mettre un avis Google";
+
     card.innerHTML = `
       <div class="ctaRow">
         <div class="ctaText">
-          <p class="ctaTitle">Votre avis nous aide énormément 🙏</p>
-          <p class="ctaSub">Si vous êtes satisfait, laissez un avis Google (moins d’une minute).</p>
+          <p class="ctaTitle">${escapeHtml(title)}</p>
+          <p class="ctaSub">${escapeHtml(sub)}</p>
         </div>
         <div class="ctaBtns">
-          <button type="button" class="ctaBtn ctaPulse" id="adnCtaGgBtn" aria-label="Laisser un avis Google">
+          <button type="button" class="ctaBtn ctaPulse" id="adnCtaGgBtn" aria-label="${escapeHtml(btnLabel)}">
             <span class="ctaIcon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                 <path fill="currentColor" d="M12 10.2v3.6h5.1c-.2 1.1-1.3 3.2-5.1 3.2-3.1 0-5.6-2.6-5.6-5.7S8.9 5.8 12 5.8c1.8 0 3 .7 3.7 1.4l2.5-2.4C16.7 3.4 14.6 2.4 12 2.4 7 2.4 3 6.5 3 11.5S7 20.6 12 20.6c5.8 0 9.6-4.1 9.6-9.9 0-.7-.1-1.2-.2-1.7H12z"/>
               </svg>
             </span>
-            <span class="ctaLabel">Google</span>
+            <span class="ctaLabel">${escapeHtml(btnLabel)}</span>
           </button>
         </div>
       </div>
@@ -587,15 +657,13 @@ function renderCta(points){
     if(btn){
       stopPulseLater(btn, 7000);
       btn.addEventListener("click", ()=>{
-        try{ localStorage.setItem(LS_CTA_GOOGLE_DONE, "1"); }catch(_){}
-        openExternal(GOOGLE_REVIEW_URL);
-        setTimeout(()=>setCtaVisible(false), 50);
-      }, {once:true});
+        if(isWaiting) checkGoogleReviewNow();
+        else startGoogleReviewIntent();
+      });
     }
     return;
   }
 
-  // No CTA: show message card
   if(msg){
     card.innerHTML = `
       <div class="ctaRow">
@@ -605,7 +673,6 @@ function renderCta(points){
         </div>
       </div>
     `;
-    return;
   }
 }
 
@@ -977,6 +1044,7 @@ async function loadCard(){
     const goal = $("goal");
     if(pts) pts.textContent = "0";
     if(goal) goal.textContent = String(GOAL);
+    renderCardVisual(0);
     renderVisualStamps(0);
     setStateText(0, null);
     setCtaVisible(false);
@@ -1003,9 +1071,10 @@ async function loadCard(){
     if(pts) pts.textContent = String(points);
     if(g) g.textContent = String(goal);
 
+    renderCardVisual(points);
     renderVisualStamps(points);
-    // CTA Social (Facebook / Avis Google)
-    renderCta(points);
+    // CTA Social (Facebook / Avis Google automatique au 3e tampon)
+    renderCta(points, card.google_review || res.google_review || null);
     setStateText(points, card.completed_at || null);
     setSyncText(true);
     scheduleAppInstallNudge(1200);
