@@ -517,7 +517,7 @@ async function startGoogleReviewIntent(){
       return;
     }
     if(code === "review_count_unavailable" || code === "google_review_not_configured"){
-      showInfoPopup("Avis Google", "<p>La vérification automatique des avis Google n’est pas encore configurée côté serveur.</p>");
+      showInfoPopup("Avis Google", "<p>La vérification automatique des avis Google n’est pas encore configurée côté serveur, le service sera disponible le 1er juillet.</p>");
       return;
     }
     showInfoPopup("Avis Google", "<p>Impossible de lancer la vérification pour le moment. Réessayez dans quelques instants.</p>");
