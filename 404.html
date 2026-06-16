@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Page introuvable - Apéro de Nuit 66</title>
+
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#5db7ee" />
+
+  <link rel="icon" type="image/png" sizes="144x144" href="/icons/icon-144.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />
+
+  <style>
+    :root {
+      --blue: #5db7ee;
+      --blue-dark: #1d8fd1;
+      --white: #ffffff;
+      --text: #102033;
+      --muted: #64748b;
+      --soft: #eef8ff;
+      --border: #d8ecfb;
+      --green: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(93, 183, 238, 0.28), transparent 34%),
+        linear-gradient(180deg, #f7fcff 0%, #eaf7ff 52%, #ffffff 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 460px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      padding: 28px 22px 24px;
+      text-align: center;
+      box-shadow: 0 22px 55px rgba(29, 143, 209, 0.16);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -90px;
+      right: -90px;
+      width: 190px;
+      height: 190px;
+      background: rgba(93, 183, 238, 0.18);
+      border-radius: 50%;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      bottom: -80px;
+      left: -80px;
+      width: 160px;
+      height: 160px;
+      background: rgba(93, 183, 238, 0.12);
+      border-radius: 50%;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      width: 104px;
+      height: 104px;
+      margin: 0 auto 14px;
+      border-radius: 26px;
+      background: white;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 14px 32px rgba(93, 183, 238, 0.28);
+      overflow: hidden;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 950;
+      margin: 0;
+      letter-spacing: .2px;
+      color: var(--text);
+    }
+
+    .baseline {
+      margin: 6px 0 22px;
+      color: var(--blue-dark);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .code {
+      font-size: 86px;
+      line-height: .85;
+      font-weight: 950;
+      color: var(--blue);
+      margin: 4px 0 8px;
+      letter-spacing: -5px;
+      text-shadow: 0 10px 28px rgba(93, 183, 238, 0.22);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.2;
+      font-weight: 950;
+    }
+
+    .text {
+      margin: 14px auto 22px;
+      max-width: 350px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .info {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 14px;
+      margin: 0 0 18px;
+      color: #24435d;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    .buttons {
+      display: grid;
+      gap: 11px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 54px;
+      padding: 15px 16px;
+      border-radius: 17px;
+      text-decoration: none;
+      font-weight: 950;
+      font-size: 15px;
+      border: 0;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+      box-shadow: 0 14px 28px rgba(93, 183, 238, 0.32);
+    }
+
+    .btn-install {
+      background: #ffffff;
+      color: var(--blue-dark);
+      border: 1px solid var(--border);
+    }
+
+    .btn-call {
+      background: #ecfdf5;
+      color: var(--green);
+      border: 1px solid #bbf7d0;
+    }
+
+    .legal {
+      margin-top: 18px;
+      color: #7890a5;
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f0f9ff;
+      border: 1px solid var(--border);
+      color: var(--blue-dark);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 380px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 24px 16px 20px;
+        border-radius: 26px;
+      }
+
+      .logo {
+        width: 94px;
+        height: 94px;
+      }
+
+      .code {
+        font-size: 76px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="content">
+
+        <div class="logo">
+          <img src="/icons/icon-144.png" alt="Apéro de Nuit 66">
+        </div>
+
+        <p class="brand">APÉRO DE NUIT 66</p>
+        <p class="baseline">Livraison de boissons sur Perpignan</p>
+
+        <div class="code">404</div>
+
+        <h1>Page introuvable</h1>
+
+        <p class="text">
+          Le lien que vous avez ouvert n’existe pas ou n’est plus disponible.
+          Vous pouvez revenir directement sur le site officiel.
+        </p>
+
+        <div class="info">
+          Pour commander ou consulter les informations du service, utilisez les boutons ci-dessous.
+        </div>
+
+        <div class="buttons">
+          <a class="btn btn-primary" href="/">
+            Accéder au site officiel
+          </a>
+
+          <a class="btn btn-install" href="https://play.google.com/store/apps/details?id=fr.aperos.nuit66">
+            Télécharger l’application
+          </a>
+
+          <a class="btn btn-call" href="tel:0652336461">
+            Appeler Apéro de Nuit 66
+          </a>
+        </div>
+
+        <div class="badge">
+          Service réservé aux personnes majeures
+        </div>
+
+        <div class="legal">
+          L’abus d’alcool est dangereux pour la santé, à consommer avec modération.<br>
+          Vente interdite aux mineurs.
+        </div>
+
+      </div>
+    </section>
+  </main>
+</body>
+</html>
