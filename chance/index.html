@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#07162f" />
+  <meta name="theme-color" content="#0b1c2d" />
   <meta name="description" content="Roue de la fortune Apéro de Nuit 66 - Jeu & récompenses reliés à la carte fidélité." />
 
   <title>Roue de la fortune | Apéro de Nuit 66</title>
@@ -16,14 +16,14 @@
   <meta property="og:description" content="Installez l’application et débloquez votre récompense fidélité." />
   <meta property="og:image" content="./assets/img/wheel-base.png" />
 </head>
-<body>
+<body class="client-marketing">
   <main class="app-shell" aria-label="Roue de la fortune Apéro de Nuit 66">
     <section class="phone-card">
       <header class="hero">
         <img class="brand-logo" src="./assets/img/logo-apero-de-nuit-66.png" alt="Apéro de Nuit 66" />
-        <div class="game-badge">🎁 Jeu & récompenses</div>
-        <h1>Roue de la fortune</h1>
-        <p class="subtitle">Gain relié à votre carte de fidélité</p>
+        <div class="game-badge">🎁 100% gagnant</div>
+        <h1>Tournez la roue</h1>
+        <p class="subtitle">Votre récompense fidélité vous attend</p>
       </header>
 
       <section class="wheel-zone" aria-live="polite">
@@ -39,7 +39,7 @@
         <span>»</span> Tourner la roue <span>«</span>
       </button>
 
-      <p id="statusText" class="status-text">Tournez la roue puis récupérez le gain sur votre carte fidélité</p>
+      <p id="statusText" class="status-text">Tournez la roue et récupérez votre gain sur votre carte fidélité.</p>
 
       <section id="lockedPanel" class="locked-panel hidden">
         <strong>Votre gain roue est déjà enregistré.</strong>
@@ -54,8 +54,7 @@
       <img src="./assets/icons/icon-144.png" alt="Apéro de Nuit 66" class="official-app-icon" />
       <h2 id="installTitle">Installez l’application</h2>
       <p>
-        Pour lancer la roue, ouvrez Apéro de Nuit 66 depuis l’application installée.
-        Votre gain sera relié à votre carte de fidélité.
+        Installez l’application officielle Apéro de Nuit 66 pour conserver votre récompense fidélité.
       </p>
 
       <div class="trust-row">
@@ -86,16 +85,16 @@
       <img src="./assets/icons/icon-144.png" alt="Apéro de Nuit 66" class="official-app-icon" />
       <h2 id="phoneTitle">Carte fidélité</h2>
       <p>
-        Entrez le numéro de téléphone lié à votre carte fidélité. Le Worker vérifie votre carte et bloque les doubles gains roue.
+        Entrez le numéro de téléphone lié à votre carte fidélité pour enregistrer votre récompense.
       </p>
       <div class="claim-box">
         <label for="phoneInput">Téléphone de la carte fidélité</label>
         <input id="phoneInput" class="claim-input" type="tel" inputmode="tel" autocomplete="tel" placeholder="06 52 33 64 61" />
-        <button id="phoneContinue" type="button" class="modal-button">Valider et tourner</button>
+        <button id="phoneContinue" type="button" class="modal-button">Continuer</button>
         <p id="phoneStatus" class="claim-status"></p>
       </div>
       <p class="countdown">
-        Un seul vrai gain roue est possible par carte : tampon ou livraison. La relance ne bloque rien.
+        Votre gain sera ajouté automatiquement à votre carte fidélité.
       </p>
     </div>
   </div>
@@ -113,9 +112,9 @@
         <strong id="rewardCode">À RÉCUPÉRER</strong>
       </div>
 
-      <div class="result-actions">
+      <div class="result-actions result-actions-single">
         <button id="claimReward" type="button" class="modal-button">Récupérer mon gain</button>
-        <a id="orderLink" class="secondary-link" href="https://aperos.net/">Commander</a>
+        <a id="orderLink" class="secondary-link hidden-order-link" href="https://aperos.net/" aria-hidden="true" tabindex="-1">Commander</a>
       </div>
     </div>
   </div>
