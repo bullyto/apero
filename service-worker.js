@@ -24,6 +24,9 @@ const DEFAULT_SITE_URL = "https://aperos.net/";
 const DEFAULT_ICON_URL = "https://bullyto.github.io/outil/apps/PUSH/icons/icon-adn66-192.png";
 const DEFAULT_BADGE_URL = "https://bullyto.github.io/outil/apps/PUSH/icons/badge-adn66-96.png";
 
+// Page affichée quand la PWA est hors connexion.
+const OFFLINE_URL = "./offline.html";
+
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -86,7 +89,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((c) => c.put(req, copy)).catch(() => {});
           return res;
         })
-        .catch(() => caches.match(req) || caches.match("./index.html"))
+        .catch(() => caches.match(req) || caches.match(OFFLINE_URL) || caches.match("./index.html"))
     );
     return;
   }
