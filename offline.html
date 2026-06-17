@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>Hors connexion — Apéro de Nuit 66</title>
+  <meta name="description" content="Vous êtes hors connexion. Vérifiez votre réseau puis réessayez d’accéder à Apéro de Nuit 66.">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#0b1c2d">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="Apéro de Nuit 66">
+  <meta name="apple-mobile-web-app-title" content="Apéro de Nuit 66">
+
+  <link rel="manifest" href="./manifest.webmanifest?v=20260101">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png?v=20260101">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=20260101">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png?v=20260101">
+
+  <link rel="preload" as="image" href="assets/logo-header.png">
+  <link rel="preload" as="image" href="assets/bottle1.png">
+  <link rel="preload" as="image" href="assets/bottle2.png">
+  <link rel="preload" as="image" href="assets/bottle3.png">
+
+  <style>
+    :root{
+      --blue:#0b1c2d;
+      --sky:#5db7ee;
+      --text:#0b1c2d;
+      --muted:rgba(11,28,45,.68);
+      --line:rgba(11,28,45,.12);
+      --white:#fff;
+      --soft:#f4f8fb;
+      --red:#dc2626;
+      --green:#16a34a;
+    }
+
+    *{box-sizing:border-box}
+
+    html,body{
+      margin:0;
+      min-height:100%;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:#fff;
+      color:var(--text);
+    }
+
+    body{
+      min-height:100dvh;
+      overflow-x:hidden;
+      display:flex;
+      flex-direction:column;
+      padding-bottom:calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .page{
+      width:100%;
+      max-width:430px;
+      min-height:100dvh;
+      margin:0 auto;
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    /* HEADER CLIENT ADN66 */
+    .top{
+      background:var(--blue);
+      padding:10px 0 8px;
+      position:relative;
+      z-index:2;
+    }
+
+    .top img{
+      width:100%;
+      max-height:24vh;
+      object-fit:contain;
+      display:block;
+    }
+
+    .status-pill{
+      position:absolute;
+      top:12px;
+      right:12px;
+      z-index:5;
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      border-radius:999px;
+      padding:7px 10px;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.22);
+      color:#fff;
+      font-size:12px;
+      font-weight:900;
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+    }
+
+    .status-dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--red);
+      box-shadow:0 0 0 5px rgba(220,38,38,.18);
+    }
+
+    .mid{
+      text-align:center;
+      padding:17px 14px 4px;
+      position:relative;
+      z-index:2;
+    }
+
+    .mid h1{
+      margin:0;
+      color:var(--sky);
+      font-size:clamp(26px,6vw,40px);
+      line-height:1.04;
+      font-weight:950;
+      letter-spacing:-.5px;
+    }
+
+    .brand66{
+      position:relative;
+      display:inline-block;
+    }
+
+    .brand66 .reg{
+      position:absolute;
+      top:-.22em;
+      right:-.42em;
+      font-size:.9em;
+      font-weight:900;
+    }
+
+    .hours{
+      margin-top:7px;
+      color:rgba(11,28,45,.72);
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .stage{
+      flex:1;
+      position:relative;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding:8px 12px 0;
+      min-height:420px;
+    }
+
+    .bottleWrap{
+      position:relative;
+      width:min(520px,96vw);
+      min-height:56vh;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+    }
+
+    .bottleWrap img{
+      position:absolute;
+      top:6px;
+      max-height:52vh;
+      max-width:100%;
+      width:auto;
+      opacity:0;
+      transition:opacity .45s ease;
+      -webkit-mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0) 100%);
+      -webkit-mask-size:100% 100%;
+      mask-size:100% 100%;
+    }
+
+    .bottleWrap img.active{
+      opacity:1;
+    }
+
+    .offline-card{
+      position:absolute;
+      left:50%;
+      top:52%;
+      transform:translate(-50%,-50%);
+      width:min(398px,88vw);
+      z-index:6;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(11,28,45,.10);
+      border-radius:24px;
+      box-shadow:0 18px 60px rgba(11,28,45,.18);
+      padding:16px 14px 14px;
+      text-align:center;
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+    }
+
+    .offline-icon{
+      width:70px;
+      height:70px;
+      margin:0 auto 10px;
+      border-radius:22px;
+      display:grid;
+      place-items:center;
+      background:rgba(93,183,238,.15);
+      border:1px solid rgba(93,183,238,.24);
+      color:var(--sky);
+      font-size:36px;
+      position:relative;
+      font-weight:950;
+    }
+
+    .offline-icon::before{
+      content:"";
+      width:44px;
+      height:34px;
+      border:5px solid currentColor;
+      border-bottom:none;
+      border-radius:34px 34px 0 0;
+      display:block;
+    }
+
+    .offline-icon::after{
+      content:"";
+      position:absolute;
+      width:58px;
+      height:6px;
+      border-radius:999px;
+      background:var(--red);
+      transform:rotate(-38deg);
+      box-shadow:0 8px 18px rgba(220,38,38,.22);
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:7px;
+      border-radius:999px;
+      background:rgba(220,38,38,.08);
+      border:1px solid rgba(220,38,38,.16);
+      color:#991b1b;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:950;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .tag span{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:var(--red);
+    }
+
+    .offline-card h2{
+      margin:11px 0 7px;
+      font-size:26px;
+      line-height:1.08;
+      color:var(--blue);
+      font-weight:950;
+      letter-spacing:-.7px;
+    }
+
+    .offline-card p{
+      margin:0 auto;
+      max-width:330px;
+      color:rgba(11,28,45,.72);
+      font-size:14.5px;
+      line-height:1.38;
+      font-weight:650;
+    }
+
+    .btnStack{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .btn{
+      width:100%;
+      border:none;
+      border-radius:16px;
+      padding:14px 13px;
+      min-height:52px;
+      font-size:16px;
+      font-weight:950;
+      cursor:pointer;
+      text-decoration:none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:9px;
+      transition:transform .15s ease, opacity .15s ease;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    .btn:active{transform:scale(.985)}
+
+    .btn.primary{
+      background:var(--sky);
+      color:#fff;
+      box-shadow:0 13px 26px rgba(93,183,238,.30);
+    }
+
+    .btn.secondary{
+      background:rgba(255,255,255,.92);
+      color:var(--blue);
+      border:1px solid rgba(11,28,45,.20);
+    }
+
+    .btn.call{
+      background:var(--blue);
+      color:#fff;
+      box-shadow:0 13px 26px rgba(11,28,45,.18);
+    }
+
+    .info{
+      display:grid;
+      gap:8px;
+      margin-top:13px;
+      text-align:left;
+    }
+
+    .info-row{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      border-radius:14px;
+      background:rgba(11,28,45,.045);
+      border:1px solid rgba(11,28,45,.065);
+      padding:9px 10px;
+      color:rgba(11,28,45,.76);
+      font-size:12.5px;
+      font-weight:800;
+      line-height:1.2;
+    }
+
+    .info-ico{
+      width:26px;
+      height:26px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      background:rgba(93,183,238,.14);
+      color:var(--sky);
+      font-size:16px;
+      flex:0 0 auto;
+    }
+
+    .legal{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:calc(10px + env(safe-area-inset-bottom));
+      z-index:8;
+      text-align:center;
+      padding:0 12px;
+      font-size:11px;
+      color:rgba(11,28,45,.50);
+      font-weight:750;
+      pointer-events:none;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:calc(28px + env(safe-area-inset-bottom));
+      transform:translateX(-50%) translateY(120px);
+      width:min(390px, calc(100% - 28px));
+      z-index:50;
+      background:rgba(22,163,74,.96);
+      color:#fff;
+      border-radius:16px;
+      padding:12px 14px;
+      font-size:14px;
+      font-weight:900;
+      text-align:center;
+      box-shadow:0 18px 45px rgba(0,0,0,.22);
+      transition:transform .24s ease;
+    }
+
+    .toast.show{
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @keyframes pulseAdd {
+      0%   { box-shadow:0 0 0 0 rgba(93,183,238,.45), 0 13px 26px rgba(93,183,238,.30); }
+      60%  { box-shadow:0 0 0 14px rgba(93,183,238,0), 0 13px 26px rgba(93,183,238,.30); }
+      100% { box-shadow:0 0 0 0 rgba(93,183,238,0), 0 13px 26px rgba(93,183,238,.30); }
+    }
+
+    @media (prefers-reduced-motion:no-preference){
+      .btn.primary{animation:pulseAdd 2.6s infinite;}
+      .offline-card{animation:pop .35s ease both;}
+      @keyframes pop{
+        from{opacity:0; transform:translate(-50%,-45%) scale(.985);}
+        to{opacity:1; transform:translate(-50%,-50%) scale(1);}
+      }
+    }
+
+    @media (max-width:380px){
+      .status-pill{font-size:11px; top:9px; right:9px;}
+      .mid{padding-top:14px;}
+      .hours{font-size:13px;}
+      .offline-card{
+        width:min(382px,90vw);
+        top:53%;
+        padding:14px 12px 12px;
+      }
+      .offline-card h2{font-size:23px;}
+      .offline-card p{font-size:13.5px;}
+      .btn{font-size:15px; min-height:50px;}
+      .offline-icon{width:62px;height:62px;border-radius:20px;}
+    }
+
+    @media (max-height:760px){
+      .top img{max-height:21vh;}
+      .mid{padding-top:12px;}
+      .offline-card{top:54%;}
+      .info-row:nth-child(3){display:none;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="top">
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Hors connexion</span>
+      </div>
+
+      <img id="adnSeasonLogo" src="assets/logo-header.png" alt="Apéro de Nuit 66">
+    </header>
+
+    <section class="mid">
+      <h1>APÉRO DE NUIT <span class="brand66">66<span class="reg">®</span></span></h1>
+      <div class="hours">Livraison de 19h à 6h • 7j/7</div>
+    </section>
+
+    <main class="stage">
+      <div class="bottleWrap" id="bottles" aria-hidden="true">
+        <img src="assets/bottle1.png" class="active" alt="">
+        <img src="assets/bottle2.png" alt="">
+        <img src="assets/bottle3.png" alt="">
+        <img src="assets/bottle4.png" alt="">
+        <img src="assets/bottle5.png" alt="">
+        <img src="assets/bottle6.png" alt="">
+        <img src="assets/bottle7.png" alt="">
+      </div>
+
+      <section class="offline-card" aria-labelledby="offlineTitle">
+        <div class="offline-icon" aria-hidden="true"></div>
+
+        <div class="tag"><span></span> Connexion coupée</div>
+
+        <h2 id="offlineTitle">Vous êtes hors connexion</h2>
+        <p>
+          Impossible de charger Apéro de Nuit 66 pour le moment.
+          Vérifiez votre 4G ou votre Wi‑Fi, puis réessayez.
+        </p>
+
+        <div class="btnStack">
+          <button class="btn primary" type="button" onclick="window.location.reload()">
+            ↻ Réessayer
+          </button>
+
+          <a class="btn call" href="tel:0652336461">
+            ☎ Appeler maintenant
+          </a>
+
+          <a class="btn secondary" href="./">
+            ← Retour à l’accueil
+          </a>
+        </div>
+
+        <div class="info">
+          <div class="info-row">
+            <span class="info-ico">🕒</span>
+            <span>Service de 19h à 6h, 7j/7</span>
+          </div>
+          <div class="info-row">
+            <span class="info-ico">📍</span>
+            <span>Livraison sur Perpignan et alentours</span>
+          </div>
+          <div class="info-row">
+            <span class="info-ico">📲</span>
+            <span>Cette page s’affiche automatiquement si la PWA n’a plus Internet</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="legal">
+      APÉRO DE NUIT 66® — réservé aux personnes majeures.
+    </div>
+  </div>
+
+  <div class="toast" id="onlineToast">Connexion retrouvée. Appuyez sur Réessayer.</div>
+
+  <script>
+    // Défilement bouteilles comme sur la page client
+    (function(){
+      const imgs = document.querySelectorAll("#bottles img");
+      let idx = 0;
+      if (imgs.length > 1) {
+        setInterval(() => {
+          imgs[idx].classList.remove("active");
+          idx = (idx + 1) % imgs.length;
+          imgs[idx].classList.add("active");
+        }, 2000);
+      }
+    })();
+
+    // Logo saisonnier identique à la logique client, sans dépendance externe
+    (function(){
+      const logo = document.getElementById("adnSeasonLogo");
+      if (!logo) return;
+
+      const LOGOS = {
+        normal: "assets/logo-header.png",
+        nouvelAn: "assets/adn-nouvel-an.png",
+        galette: "assets/adn-galette.png",
+        saintValentin: "assets/adn-saint-valentin.png",
+        saintPatrick: "assets/adn-saint-patrick.png",
+        paques: "assets/adn-paque.png",
+        quatorzeJuillet: "assets/adn-14-juillet.png",
+        halloween: "assets/adn-halloween.png",
+        noel: "assets/adn-noel.png"
+      };
+
+      function dayValue(date){
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+      }
+
+      function between(date, startMonth, startDay, endMonth, endDay){
+        const y = date.getFullYear();
+        const d = dayValue(date);
+        const start = new Date(y, startMonth - 1, startDay).getTime();
+        const end = new Date(y, endMonth - 1, endDay).getTime();
+        return d >= start && d <= end;
+      }
+
+      function getEasterDate(year){
+        const a = year % 19;
+        const b = Math.floor(year / 100);
+        const c = year % 100;
+        const d = Math.floor(b / 4);
+        const e = b % 4;
+        const f = Math.floor((b + 8) / 25);
+        const g = Math.floor((b - f + 1) / 3);
+        const h = (19 * a + b - d - g + 15) % 30;
+        const i = Math.floor(c / 4);
+        const k = c % 4;
+        const l = (32 + 2 * e + 2 * i - h - k) % 7;
+        const m = Math.floor((a + 11 * h + 22 * l) / 451);
+        const month = Math.floor((h + l - 7 * m + 114) / 31);
+        const day = ((h + l - 7 * m + 114) % 31) + 1;
+        return new Date(year, month - 1, day);
+      }
+
+      function inEasterWindow(date){
+        const easter = getEasterDate(date.getFullYear());
+        const start = new Date(easter);
+        start.setDate(easter.getDate() - 2);
+        const end = new Date(easter);
+        end.setDate(easter.getDate() + 1);
+        const d = dayValue(date);
+        return d >= dayValue(start) && d <= dayValue(end);
+      }
+
+      function pickLogo(date){
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        if ((month === 12 && day === 31) || (month === 1 && day === 1)) return LOGOS.nouvelAn;
+        if (between(date, 1, 3, 1, 8)) return LOGOS.galette;
+        if (between(date, 2, 12, 2, 15)) return LOGOS.saintValentin;
+        if (between(date, 3, 13, 3, 18)) return LOGOS.saintPatrick;
+        if (inEasterWindow(date)) return LOGOS.paques;
+        if (between(date, 7, 12, 7, 15)) return LOGOS.quatorzeJuillet;
+        if (between(date, 10, 24, 10, 31) || (month === 11 && day === 1)) return LOGOS.halloween;
+        if (month === 12 && day >= 1 && day <= 30) return LOGOS.noel;
+        return LOGOS.normal;
+      }
+
+      logo.src = pickLogo(new Date());
+      logo.addEventListener("error", function(){
+        if (logo.getAttribute("src") !== LOGOS.normal) {
+          logo.src = LOGOS.normal;
+        }
+      }, { once:true });
+    })();
+
+    // Indicateur réseau simple, style client
+    (function(){
+      const pill = document.getElementById("statusPill");
+      const dot = document.getElementById("statusDot");
+      const text = document.getElementById("statusText");
+      const toast = document.getElementById("onlineToast");
+
+      function setState(){
+        if (!pill || !dot || !text) return;
+
+        if (navigator.onLine) {
+          text.textContent = "En ligne";
+          dot.style.background = "#16a34a";
+          dot.style.boxShadow = "0 0 0 5px rgba(22,163,74,.18)";
+        } else {
+          text.textContent = "Hors connexion";
+          dot.style.background = "#dc2626";
+          dot.style.boxShadow = "0 0 0 5px rgba(220,38,38,.18)";
+        }
+      }
+
+      window.addEventListener("online", () => {
+        setState();
+        if (toast) {
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 3200);
+        }
+      });
+
+      window.addEventListener("offline", setState);
+      setState();
+    })();
+  </script>
+</body>
+</html>
