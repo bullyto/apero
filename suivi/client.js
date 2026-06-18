@@ -375,6 +375,60 @@ function toast(msg) {
   alert(msg);
 }
 
+
+// ------------------------------------------------------------
+// ADN66 FIX UI : suppression de l'ancienne popup d'information
+// ------------------------------------------------------------
+// On garde uniquement la grande popup ADN66 (#adnOverlay) affichée
+// après l'envoi de la demande, celle qui précise que le livreur reste
+// libre d'accepter ou de refuser le partage de sa position.
+// L'ancien encadré "Information importante — Suivi de livraison" était
+// affiché avant l'envoi et faisait doublon.
+function removeDuplicatePreRequestInfoPopup() {
+  try {
+    const allNodes = Array.from(document.querySelectorAll("body *"));
+
+    const titleNode = allNodes.find((node) => {
+      const txt = String(node.textContent || "").replace(/\s+/g, " ").trim();
+      return txt.includes("Information importante") && txt.includes("Suivi de livraison");
+    });
+
+    if (!titleNode) return;
+
+    let card = titleNode;
+    for (let i = 0; i < 8 && card && card.parentElement && card.parentElement !== document.body; i++) {
+      const txt = String(card.textContent || "").replace(/\s+/g, " ").trim();
+
+      const looksLikeOldInfoCard =
+        txt.includes("Information importante") &&
+        txt.includes("Suivi de livraison") &&
+        txt.includes("strictement limité") &&
+        !txt.includes("Suivi en direct");
+
+      if (looksLikeOldInfoCard) {
+        break;
+      }
+
+      card = card.parentElement;
+    }
+
+    if (!card || card === document.body) return;
+
+    const cardText = String(card.textContent || "").replace(/\s+/g, " ").trim();
+    const safeToRemove =
+      cardText.includes("Information importante") &&
+      cardText.includes("Suivi de livraison") &&
+      cardText.includes("strictement limité") &&
+      !cardText.includes("Suivi en direct");
+
+    if (safeToRemove) {
+      card.remove();
+    }
+  } catch (e) {
+    console.log("[adn66_remove_duplicate_info_popup]", e?.message || e);
+  }
+}
+
 /* ===== ADN66 OVERLAY POPUP (reuse existing #adnOverlay) =====
    Utilisé UNIQUEMENT pour remplacer 3 alertes:
    - prénom manquant
@@ -1529,6 +1583,9 @@ function handleResetClick() {
 // ----------------------------
 function boot() {
   initMap();
+
+  removeDuplicatePreRequestInfoPopup();
+  setTimeout(removeDuplicatePreRequestInfoPopup, 250);
 
   setBadge("Prêt : demande de suivi");
   setState("—");
