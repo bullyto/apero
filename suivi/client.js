@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260526-original-plus-securites-v5-accepted-hide-force-display
+// ADN66 BUILD 20260618-dispatch-client-tracking-v2
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -29,6 +29,9 @@ const els = {
   inlineStatusSub: document.getElementById("clientInlineStatusSub"),
   map: document.getElementById("map"),
   popup: document.querySelector(".clientPopup"),
+  driverInfo: document.getElementById("driverInfo"),
+  driverInfoName: document.getElementById("driverInfoName"),
+  driverInfoMeta: document.getElementById("driverInfoMeta"),
 };
 
 const LS = {
@@ -44,8 +47,13 @@ const STATE = {
   map: null,
   markerClient: null,
   markerDriver: null,
+  routeLine: null,
   clientPos: null, // {lat,lng,acc,ts}
   watchId: null,
+
+  // ✅ La carte se recentre une seule fois. Après un geste client, on ne force plus la vue.
+  mapUserMoved: false,
+  firstAutoCenterDone: false,
 
   // session
   requestId: "",
@@ -141,6 +149,13 @@ function setInlineStatus(mode, icon, title, sub) {
   if (els.inlineStatusIcon) els.inlineStatusIcon.textContent = icon || "ℹ️";
   if (els.inlineStatusTitle) els.inlineStatusTitle.textContent = title || "";
   if (els.inlineStatusSub) els.inlineStatusSub.textContent = sub || "";
+}
+
+function setDriverInfo({ visible = false, name = "", meta = "" } = {}) {
+  if (!els.driverInfo) return;
+  els.driverInfo.style.display = visible ? "flex" : "none";
+  if (els.driverInfoName) els.driverInfoName.textContent = name || "Livreur attribué";
+  if (els.driverInfoMeta) els.driverInfoMeta.textContent = meta || "Position en attente…";
 }
 
 // ----------------------------
@@ -579,14 +594,86 @@ function initMap() {
   const markerDriver = L.marker([42.6887, 2.8948], { icon: ICON_DRIVER }).addTo(map);
   markerDriver.bindPopup("Livreur");
 
+  map.on("dragstart zoomstart", () => {
+    STATE.mapUserMoved = true;
+  });
+  const mapEl = map.getContainer?.();
+  if (mapEl) {
+    mapEl.addEventListener("touchstart", () => { STATE.mapUserMoved = true; }, { passive: true });
+    mapEl.addEventListener("pointerdown", () => { STATE.mapUserMoved = true; }, { passive: true });
+  }
+
   STATE.map = map;
   STATE.markerClient = markerClient;
   STATE.markerDriver = markerDriver;
 }
 
+function decodeGooglePolyline(encoded) {
+  const points = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  while (index < String(encoded || "").length) {
+    let b;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20 && index < encoded.length);
+    const dlat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20 && index < encoded.length);
+    const dlng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += dlng;
+
+    points.push([lat / 1e5, lng / 1e5]);
+  }
+
+  return points;
+}
+
+function updateRouteLine(route) {
+  if (!STATE.map || !route?.encodedPolyline) return;
+  const latlngs = decodeGooglePolyline(route.encodedPolyline);
+  if (!latlngs.length) return;
+
+  if (!STATE.routeLine) {
+    STATE.routeLine = L.polyline(latlngs, {
+      color: "#5db7ee",
+      weight: 5,
+      opacity: 0.88,
+      lineCap: "round",
+      lineJoin: "round",
+    }).addTo(STATE.map);
+  } else {
+    STATE.routeLine.setLatLngs(latlngs);
+  }
+}
+
+function clearRouteLine() {
+  if (STATE.routeLine && STATE.map) {
+    STATE.map.removeLayer(STATE.routeLine);
+  }
+  STATE.routeLine = null;
+}
+
 function updateClientMarker(lat, lng) {
   if (!STATE.markerClient) return;
   STATE.markerClient.setLatLng([lat, lng]);
+  if (STATE.map && !STATE.firstAutoCenterDone && !STATE.mapUserMoved && STATE.status !== "accepted") {
+    STATE.map.setView([lat, lng], Math.max(15, STATE.map.getZoom() || 15));
+    STATE.firstAutoCenterDone = true;
+  }
 }
 
 function setDriverMarkerImmediate(lat, lng) {
@@ -597,15 +684,20 @@ function setDriverMarkerImmediate(lat, lng) {
 function fitIfBothThrottled(force = false) {
   if (!STATE.map || !STATE.markerClient || !STATE.markerDriver) return;
 
+  // ✅ ADN66: recentrage automatique uniquement au départ.
+  // Dès que le client touche la carte, on ne reprend plus le contrôle de sa vue.
+  if (STATE.mapUserMoved) return;
+  if (STATE.firstAutoCenterDone && !force) return;
+
   const now = Date.now();
-  const throttleMs = 12000; // ✅ pas tout le temps
-  if (!force && now - STATE.lastFitMs < throttleMs) return;
+  if (!force && now - STATE.lastFitMs < 1200) return;
   STATE.lastFitMs = now;
 
   const a = STATE.markerClient.getLatLng();
   const b = STATE.markerDriver.getLatLng();
   const bounds = L.latLngBounds([a, b]);
   STATE.map.fitBounds(bounds.pad(0.25));
+  STATE.firstAutoCenterDone = true;
 }
 
 // ----------------------------
@@ -1083,6 +1175,7 @@ async function sendClientPositionUpdate() {
       method: "POST",
       body: {
         clientId: STATE.clientId,
+        requestId: STATE.requestId,
         name,
         phone,
         lat: STATE.clientPos.lat,
@@ -1096,30 +1189,58 @@ async function sendClientPositionUpdate() {
 }
 
 async function pollDriverPosition() {
-  if (!STATE.clientId) return;
+  if (!STATE.clientId && !STATE.requestId) return;
 
   try {
-    const data = await apiFetchJson("/client/driver-position", {
-      method: "GET",
-      params: { clientId: STATE.clientId },
-    });
+    // Nouveau Worker: renvoie uniquement le livreur attribué + trajet livreur → client.
+    let data = null;
+    try {
+      data = await apiFetchJson("/client/tracking", {
+        method: "GET",
+        params: { clientId: STATE.clientId, requestId: STATE.requestId, route: "1" },
+      });
+    } catch (trackingErr) {
+      // Compatibilité ancien Worker si /client/tracking n'est pas encore publié.
+      data = await apiFetchJson("/client/driver-position", {
+        method: "GET",
+        params: { clientId: STATE.clientId, route: "1" },
+      });
+    }
+
+    if (data?.client && Number.isFinite(Number(data.client.lat)) && Number.isFinite(Number(data.client.lng))) {
+      updateClientMarker(Number(data.client.lat), Number(data.client.lng));
+    }
 
     if (data && data.driver && Number.isFinite(Number(data.driver.lat)) && Number.isFinite(Number(data.driver.lng))) {
       const lat = Number(data.driver.lat);
       const lng = Number(data.driver.lng);
+      const driverName = String(data.driver.driverName || data.request?.assignedDriverName || "Votre livreur");
 
       // Use server timestamp if present, else now
       const tsServerMs = data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now();
 
       driverAddPoint(lat, lng, tsServerMs);
       driverStartLoop();
+
+      if (data.route?.encodedPolyline) updateRouteLine(data.route);
+
+      const metaParts = [];
+      if (data.route?.durationText) metaParts.push(data.route.durationText);
+      if (data.route?.distanceText) metaParts.push(data.route.distanceText);
+      setDriverInfo({
+        visible: true,
+        name: `Votre livreur : ${driverName}`,
+        meta: metaParts.length ? `Trajet estimé : ${metaParts.join(" • ")}` : "Trajet en cours de calcul…",
+      });
+    } else {
+      setDriverInfo({ visible: true, name: "Livreur attribué", meta: "Position du livreur en attente…" });
     }
 
     if (typeof data.remainingMs === "number") {
       STATE.accessRemainingMs = data.remainingMs;
     }
   } catch (e) {
-    console.log("[driver_position]", e?.message || e);
+    console.log("[driver_tracking]", e?.message || e);
     // Ne pas terminer l'accès sur une erreur de position.
   }
 }
@@ -1154,6 +1275,8 @@ async function pollStatus() {
       setState("Refusé par le livreur");
       setInlineStatus("bad", "❌", "Demande refusée par le livreur", "Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.");
       setCountdown("—");
+      setDriverInfo({ visible: false });
+      clearRouteLine();
 
       disableRequest(false);
       showReset(true);
@@ -1165,6 +1288,8 @@ async function pollStatus() {
       setState("Demande expirée");
       setInlineStatus("waiting", "⏱️", "Demande expirée", "La demande n’a pas été acceptée à temps. Vous pouvez relancer une demande si nécessaire.");
       setCountdown("—");
+      setDriverInfo({ visible: false });
+      clearRouteLine();
 
       disableRequest(false);
       showReset(true);
@@ -1174,12 +1299,16 @@ async function pollStatus() {
     if (status === "accepted") {
       setBadge("Autorisé ✅");
       setState("Suivi actif");
+      const assignedName = String(req?.assignedDriverName || req?.decided_by_driver_name || "").trim();
       setInlineStatus(
         "ok",
         "✅",
-        "Suivi accepté",
-        "Le suivi est actif. La carte va s’afficher automatiquement."
+        assignedName ? `Suivi accepté par ${assignedName}` : "Suivi accepté",
+        assignedName ? `Votre livreur ${assignedName} est affiché sur la carte.` : "Le suivi est actif. La carte va s’afficher automatiquement."
       );
+      if (assignedName) {
+        setDriverInfo({ visible: true, name: `Votre livreur : ${assignedName}`, meta: "Position en cours de récupération…" });
+      }
 
       // On garde la popup 3 secondes, sans afficher le compteur immédiatement.
       // Ensuite la popup disparaît et le compteur démarre normalement.
@@ -1256,6 +1385,8 @@ function startAcceptedLoops() {
       STATE.tCountdown = null;
 
       driverStopLoop();
+      clearRouteLine();
+      setDriverInfo({ visible: false });
 
       // Après expiration, on revient proprement au départ.
       setTimeout(() => {

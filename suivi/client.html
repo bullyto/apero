@@ -500,6 +500,79 @@
       border-color:rgba(255,77,77,.35);
     }
 
+
+
+    /* ===== ADN66 DRIVER ASSIGNÉ SUR CARTE ===== */
+    .driverInfoCard{
+      position:fixed;
+      left:14px;
+      right:14px;
+      top:74px;
+      z-index:9996;
+      display:none;
+      align-items:center;
+      gap:10px;
+      width:auto;
+      max-width:520px;
+      margin:0 auto;
+      box-sizing:border-box;
+      padding:12px 14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.96);
+      color:#0b1c2d;
+      border:2px solid rgba(93,183,238,.75);
+      box-shadow:0 14px 32px rgba(0,0,0,.22), 0 0 0 4px rgba(93,183,238,.18);
+      backdrop-filter:saturate(140%) blur(10px);
+      -webkit-backdrop-filter:saturate(140%) blur(10px);
+      pointer-events:none;
+    }
+
+    .driverInfoIcon{
+      width:38px;
+      height:38px;
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      flex:0 0 auto;
+      background:#5db7ee;
+      color:#fff;
+      font-size:20px;
+      box-shadow:0 8px 18px rgba(93,183,238,.32);
+    }
+
+    .driverInfoText{
+      min-width:0;
+      flex:1;
+      line-height:1.2;
+    }
+
+    .driverInfoName{
+      display:block;
+      font-size:14px;
+      font-weight:950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .driverInfoMeta{
+      display:block;
+      margin-top:3px;
+      font-size:12px;
+      font-weight:800;
+      opacity:.72;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    @media (max-width:390px){
+      .driverInfoCard{ top:70px; padding:10px 12px; }
+      .driverInfoIcon{ width:34px; height:34px; font-size:18px; }
+      .driverInfoName{ font-size:13px; }
+      .driverInfoMeta{ font-size:11px; }
+    }
+
 </style>
 </head>
 
@@ -507,6 +580,15 @@
 
   <!-- MAP -->
   <div id="map"></div>
+
+  <!-- INFO LIVREUR ATTRIBUÉE (client ne voit qu'un seul livreur) -->
+  <div class="driverInfoCard" id="driverInfo" aria-live="polite">
+    <span class="driverInfoIcon" aria-hidden="true">🚗</span>
+    <span class="driverInfoText">
+      <strong class="driverInfoName" id="driverInfoName">Votre livreur</strong>
+      <span class="driverInfoMeta" id="driverInfoMeta">Trajet en cours de calcul…</span>
+    </span>
+  </div>
 
   <!-- TOP BAR (statut + timer + retour) -->
   <header class="clientTopbar" aria-label="Bandeau suivi">
@@ -633,7 +715,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260526-original-plus-securites-v4-accepted-hide"></script>
+  <script type="module" src="./client.js?v=20260618-dispatch-client-tracking-v2"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {
