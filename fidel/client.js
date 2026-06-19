@@ -509,7 +509,7 @@ async function startGoogleReviewIntent(){
   }catch(e){
     const code = String(e && e.message || "");
     if(code === "not_exactly_3_points"){
-      showInfoPopup("Avis Google", "<p>Le bouton avis Google est disponible uniquement quand votre carte est à <b>3 tampons</b>, pour débloquer le 4e.</p>");
+      showInfoPopup("Avis Google", "<p>Le bouton avis Google est disponible à <b>2 tampons</b> pour débloquer le 3e, ou à <b>3 tampons</b> pour débloquer le 4e.</p>");
       return;
     }
     if(code === "google_review_already_rewarded"){
@@ -544,18 +544,19 @@ function renderCta(points, googleReview){
 
   const review = googleReview || {};
   const reviewStatus = getGoogleReviewStatus(review);
-  const googleAlreadyRewarded = !!review.stamp_given || reviewStatus === "rewarded";
+  const googleAlreadyRewarded = !!review.stamp_given || reviewStatus === "rewarded" || reviewStatus === "manual_rewarded";
 
-  // Rules: 1er tampon => FB ; exactement 3 tampons => avis Google automatique pour débloquer le 4e
+  // 1er tampon => Facebook ; 2 ou 3 tampons => avis Google pour débloquer le tampon suivant.
   const showFb = (p === CTA_FB_AT) && localStorage.getItem(LS_CTA_FB_DONE) !== "1";
-  const showGg = (p === CTA_GOOGLE_AT) && !googleAlreadyRewarded;
+  const googleEligiblePoint = (p === 2 || p === 3);
+  const showGg = googleEligiblePoint && !googleAlreadyRewarded;
 
   const messageByStamp = (stamp)=>{
     switch(stamp){
       case 2:
         return {
           title: "Votre carte évolue ✨",
-          sub: "Votre nouveau visuel fidélité est débloqué. Continuez, le 4e tampon pourra aussi être débloqué avec un avis Google."
+          sub: "Votre nouveau visuel fidélité est débloqué. Vous pouvez aussi laisser un avis Google pour débloquer le 3e tampon."
         };
       case 4:
         return {
@@ -576,11 +577,6 @@ function renderCta(points, googleReview){
         return {
           title: "Plus qu’un tampon ⏳",
           sub: "Votre récompense est presque débloquée 🎉 Encore un effort !"
-        };
-      case 8:
-        return {
-          title: "Félicitations 🎉",
-          sub: "Votre carte est complétée. Merci pour votre confiance envers un service local indépendant 🙏"
         };
       default:
         return null;
@@ -629,10 +625,11 @@ function renderCta(points, googleReview){
 
   if(showGg){
     const isWaiting = reviewStatus === "pending_10min" || reviewStatus === "waiting_1h";
-    const title = isWaiting ? "Avis Google en vérification ⭐" : "Débloquez votre 4e tampon ⭐";
+    const nextStamp = p + 1;
+    const title = isWaiting ? "Avis Google en vérification ⭐" : `Débloquez votre ${nextStamp}e tampon ⭐`;
     const sub = isWaiting
       ? "Votre clic est enregistré. La carte vérifie automatiquement si un nouvel avis Google apparaît."
-      : "À 3 tampons, laissez un avis Google pour débloquer automatiquement le 4e tampon.";
+      : `À ${p} tampons, laissez un avis Google pour débloquer automatiquement le ${nextStamp}e tampon.`;
     const btnLabel = isWaiting ? "Vérifier" : "Mettre un avis Google";
 
     card.innerHTML = `
@@ -675,6 +672,7 @@ function renderCta(points, googleReview){
     `;
   }
 }
+
 
 /* ---------- QR ---------- */
 function qrRender(text){
@@ -1034,6 +1032,158 @@ function clearBenefitFlagFromUrl(){
   }catch(_){}
 }
 
+
+/* ---------- Choix récompense carte complète ---------- */
+const ADN66_REWARD_LEGAL_NOTICE = "La récompense choisie est offerte. Les frais de livraison restent payants, ainsi que tout autre article ajouté à votre commande.";
+const ADN66_REWARD_CELEBRATED_KEY = "adn66_loyalty_completed_fx_v1";
+const ADN66_REWARD_OPTIONS = [
+  { id:"william_peel", label:"William Peel", type:"spirit", image:"/suivi/assets/william_peel.png" },
+  { id:"poliakov", label:"Poliakov", type:"spirit", image:"/suivi/assets/poliakov.png" },
+  { id:"captain_morgan", label:"Captain Morgan", type:"spirit", image:"/suivi/assets/captain_morgan.png" },
+  { id:"vin_rouge", label:"Vin rouge", type:"wine", image:"/suivi/assets/xv_catalan_rouge.png" },
+  { id:"vin_rose", label:"Vin rosé", type:"wine", image:"/suivi/assets/xv_catalan_rose.png" },
+  { id:"vin_blanc", label:"Vin blanc", type:"wine", image:"/suivi/assets/xv_catalan_blanc.png" },
+];
+
+function getRewardOptionById(id){
+  return ADN66_REWARD_OPTIONS.find(x => x.id === String(id || "")) || null;
+}
+
+function triggerCompletedCardFx(clientId){
+  const key = ADN66_REWARD_CELEBRATED_KEY + ":" + String(clientId || "");
+  try{
+    if(localStorage.getItem(key) === "1") return;
+    localStorage.setItem(key, "1");
+  }catch(_){}
+
+  try{ if(navigator.vibrate) navigator.vibrate([80, 40, 80]); }catch(_){}
+  try{
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(660, audioCtx.currentTime);
+    o.frequency.setValueAtTime(880, audioCtx.currentTime + .10);
+    g.gain.setValueAtTime(.0001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.14, audioCtx.currentTime + .03);
+    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + .38);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + .42);
+  }catch(_){}
+  const block = document.getElementById("cardBlock");
+  if(block){
+    block.classList.add("adn66-card-complete-glow");
+    setTimeout(()=>block.classList.remove("adn66-card-complete-glow"), 1800);
+  }
+}
+
+function normalizeRewardChoice(choice){
+  if(!choice) return null;
+  const id = choice.reward_id || choice.id || "";
+  const local = getRewardOptionById(id);
+  return {
+    id: String(id || local?.id || ""),
+    reward_id: String(id || local?.id || ""),
+    label: choice.reward_label || choice.label || local?.label || "Récompense",
+    reward_label: choice.reward_label || choice.label || local?.label || "Récompense",
+    type: choice.reward_type || choice.type || local?.type || "reward",
+    reward_type: choice.reward_type || choice.type || local?.type || "reward",
+    image: choice.reward_image || choice.image || local?.image || "",
+    reward_image: choice.reward_image || choice.image || local?.image || "",
+    status: choice.status || "selected",
+    selected_at: choice.selected_at || null,
+    legal_notice: choice.legal_notice || ADN66_REWARD_LEGAL_NOTICE,
+  };
+}
+
+async function selectLoyaltyReward(option){
+  const cid = localStorage.getItem(LS_KEY);
+  if(!cid || !option) return;
+  try{
+    await api("/loyalty/reward-choice/select", {
+      method:"POST",
+      body: JSON.stringify({
+        client_id: cid,
+        reward_id: option.id,
+        reward_label: option.label,
+        reward_type: option.type,
+        reward_image: option.image,
+        legal_notice: ADN66_REWARD_LEGAL_NOTICE
+      })
+    });
+    await loadCard();
+    showInfoPopup("Récompense enregistrée 🎁", `<p><b>${escapeHtml(option.label)}</b> est enregistré sur votre carte.</p><p>Présentez votre carte lors de la livraison pour récupérer votre récompense.</p><div class="adn66-info-sub">${escapeHtml(ADN66_REWARD_LEGAL_NOTICE)}</div>`);
+  }catch(e){
+    const code = String(e && e.message || "");
+    if(code === "reward_already_selected"){
+      showInfoPopup("Récompense déjà choisie", "<p>Une récompense est déjà enregistrée sur cette carte. Elle ne peut être changée que par l’admin.</p>");
+    }else if(code === "card_not_completed"){
+      showInfoPopup("Carte non complète", "<p>La récompense est disponible uniquement quand la carte atteint 8 tampons.</p>");
+    }else{
+      showInfoPopup("Récompense", "<p>Impossible d’enregistrer le choix pour le moment. Réessayez dans quelques instants.</p>");
+    }
+  }
+}
+
+function renderRewardChoiceModule(points, rewardChoice, clientId){
+  const p = Math.max(0, Math.floor(Number(points)||0));
+  if(p < GOAL) return false;
+  const top = $("ctaTop");
+  const card = $("ctaCard");
+  if(!top || !card) return false;
+
+  setCtaVisible(true);
+  const selected = normalizeRewardChoice(rewardChoice);
+
+  if(selected && selected.reward_id){
+    card.innerHTML = `
+      <div class="adn66-reward-choice-card">
+        <p class="adn66-reward-choice-title">🎁 Récompense choisie : ${escapeHtml(selected.reward_label)}</p>
+        <div class="adn66-reward-selected">
+          ${selected.reward_image ? `<img class="adn66-reward-selected-img" src="${escapeHtml(selected.reward_image)}" alt="${escapeHtml(selected.reward_label)}">` : ""}
+          <div class="adn66-reward-selected-text">
+            <p class="adn66-reward-choice-sub">Présentez cette carte lors de votre prochaine livraison pour récupérer votre récompense offerte.</p>
+            <div class="adn66-reward-legal">${escapeHtml(selected.legal_notice || ADN66_REWARD_LEGAL_NOTICE)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    return true;
+  }
+
+  triggerCompletedCardFx(clientId);
+  const items = ADN66_REWARD_OPTIONS.map(opt => `
+    <button type="button" class="adn66-reward-item" data-reward-id="${escapeHtml(opt.id)}" aria-label="Choisir ${escapeHtml(opt.label)}">
+      <img class="adn66-reward-img" src="${escapeHtml(opt.image)}" alt="${escapeHtml(opt.label)}">
+      <span class="adn66-reward-label">${escapeHtml(opt.label)}</span>
+    </button>
+  `).join("");
+
+  card.innerHTML = `
+    <div class="adn66-reward-choice-card">
+      <p class="adn66-reward-choice-title">Félicitations 🎉 choisissez votre récompense</p>
+      <p class="adn66-reward-choice-sub">Votre carte est complète. Sélectionnez la bouteille que vous souhaitez récupérer à la livraison.</p>
+      <div class="adn66-reward-grid">${items}</div>
+      <div class="adn66-reward-legal">${escapeHtml(ADN66_REWARD_LEGAL_NOTICE)}</div>
+    </div>
+  `;
+
+  card.querySelectorAll(".adn66-reward-item").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const opt = getRewardOptionById(btn.getAttribute("data-reward-id"));
+      if(opt) selectLoyaltyReward(opt);
+    });
+  });
+  return true;
+}
+
+async function loadRewardChoiceFallback(clientId){
+  if(!clientId) return null;
+  try{
+    const r = await api("/loyalty/reward-choice/me?client_id=" + encodeURIComponent(clientId) + "&t=" + Date.now(), {method:"GET"});
+    return r.reward_choice || null;
+  }catch(_){ return null; }
+}
+
 /* ---------- Load card ---------- */
 async function loadCard(){
   const cid = localStorage.getItem(LS_KEY);
@@ -1062,10 +1212,11 @@ async function loadCard(){
     const points = Number(card.points || 0);
     const freeDelivery = card.free_delivery || res.free_delivery || await loadFreeDeliveryFallback(cid);
     renderFreeDeliveryBenefit(freeDelivery || null);
-    const wheelClaim = await loadWheelClaim(cid);
-    renderWheelClaimBanner(wheelClaim);
-    const goal = Number(card.goal || GOAL);
 
+    const wheelClaim = card.wheel_claim || res.wheel_claim || await loadWheelClaim(cid);
+    renderWheelClaimBanner(wheelClaim);
+
+    const goal = Number(card.goal || GOAL);
     const pts = $("points");
     const g = $("goal");
     if(pts) pts.textContent = String(points);
@@ -1073,8 +1224,13 @@ async function loadCard(){
 
     renderCardVisual(points);
     renderVisualStamps(points);
-    // CTA Social (Facebook / Avis Google automatique au 3e tampon)
-    renderCta(points, card.google_review || res.google_review || null);
+
+    const rewardChoice = card.reward_choice || res.reward_choice || await loadRewardChoiceFallback(cid);
+    const rewardHandled = renderRewardChoiceModule(points, rewardChoice, cid);
+    if(!rewardHandled){
+      renderCta(points, card.google_review || res.google_review || null);
+    }
+
     setStateText(points, card.completed_at || null);
     setSyncText(true);
     scheduleAppInstallNudge(1200);
@@ -1085,6 +1241,7 @@ async function loadCard(){
     renderWheelClaimBanner(null);
   }
 }
+
 
 
 /* ---------- Récompense jeu en attente (GAME_25) ---------- */
