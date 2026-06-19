@@ -1214,7 +1214,6 @@ async function loadCard(){
     renderFreeDeliveryBenefit(freeDelivery || null);
 
     const wheelClaim = card.wheel_claim || res.wheel_claim || await loadWheelClaim(cid);
-    renderWheelClaimBanner(wheelClaim);
 
     const goal = Number(card.goal || GOAL);
     const pts = $("points");
@@ -1226,6 +1225,7 @@ async function loadCard(){
     renderVisualStamps(points);
 
     const rewardChoice = card.reward_choice || res.reward_choice || await loadRewardChoiceFallback(cid);
+    renderWheelClaimBanner(wheelClaim, { clientId: cid, points, rewardChoice });
     const rewardHandled = renderRewardChoiceModule(points, rewardChoice, cid);
     if(!rewardHandled){
       renderCta(points, card.google_review || res.google_review || null);
@@ -1599,12 +1599,52 @@ function ensureWheelClaimStyles(){
   document.head.appendChild(style);
 }
 
-function renderWheelClaimBanner(claim){
+const LS_WHEEL_CLAIM_BANNER_SEEN_PREFIX = "adn66_wheel_claim_banner_seen_v2:";
+const WHEEL_CLAIM_BANNER_MAX_AGE_MS = 2 * 60 * 60 * 1000; // affichage provisoire max 2h
+const WHEEL_CLAIM_BANNER_AUTO_HIDE_MS = 45 * 1000; // puis disparaît automatiquement
+
+function getWheelClaimBannerKey(clientId, claim){
+  const cid = String(clientId || localStorage.getItem(LS_KEY) || "").trim();
+  const reward = String(claim?.reward_id || "").trim();
+  const at = String(claim?.claimed_at || "").trim();
+  return LS_WHEEL_CLAIM_BANNER_SEEN_PREFIX + cid + ":" + reward + ":" + at;
+}
+
+function shouldShowWheelClaimBanner(claim, ctx = {}){
+  if(!claim) return false;
+
+  // Si la carte est complète et qu'une bouteille est déjà choisie,
+  // le bandeau final récompense devient prioritaire : on ne garde pas l'ancien bandeau roue.
+  const selected = normalizeRewardChoice(ctx.rewardChoice || null);
+  const p = Math.max(0, Math.floor(Number(ctx.points || 0)));
+  if(p >= GOAL && selected && selected.reward_id) return false;
+
+  const claimedMs = Date.parse(String(claim.claimed_at || ""));
+  if(Number.isFinite(claimedMs) && Date.now() - claimedMs > WHEEL_CLAIM_BANNER_MAX_AGE_MS) return false;
+
+  try{
+    const key = getWheelClaimBannerKey(ctx.clientId, claim);
+    if(localStorage.getItem(key) === "1") return false;
+  }catch(_){}
+
+  return true;
+}
+
+function markWheelClaimBannerSeen(clientId, claim){
+  try{
+    localStorage.setItem(getWheelClaimBannerKey(clientId, claim), "1");
+  }catch(_){}
+}
+
+function renderWheelClaimBanner(claim, ctx = {}){
   ensureWheelClaimStyles();
   const cardBlock = $("cardBlock");
   if(!cardBlock) return;
   let banner = document.getElementById("adn66WheelClaimBanner");
-  if(!claim){ if(banner) banner.remove(); return; }
+  if(!shouldShowWheelClaimBanner(claim, ctx)){
+    if(banner) banner.remove();
+    return;
+  }
   if(!banner){
     banner = document.createElement("div");
     banner.id = "adn66WheelClaimBanner";
@@ -1616,6 +1656,13 @@ function renderWheelClaimBanner(claim){
     ? "Un tampon fidélité a été ajouté à votre carte."
     : (claim.reward_id === "WHEEL_DELIVERY_7D" ? "Livraison offerte gagnée via la roue." : "Récompense enregistrée.");
   banner.innerHTML = `<div class="adn66-wheel-claim-title">🎡 Roue de la chance — ${escapeHtml(label)}</div><div class="adn66-wheel-claim-msg">${escapeHtml(msg)}</div>`;
+
+  clearTimeout(window.__adn66WheelClaimBannerTimer);
+  window.__adn66WheelClaimBannerTimer = setTimeout(()=>{
+    markWheelClaimBannerSeen(ctx.clientId, claim);
+    const b = document.getElementById("adn66WheelClaimBanner");
+    if(b) b.remove();
+  }, WHEEL_CLAIM_BANNER_AUTO_HIDE_MS);
 }
 
 /* ---------- Create ---------- */
