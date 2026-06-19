@@ -812,6 +812,25 @@ button{ min-width:140px !important; padding:8px 10px !important; font-size:13.5p
 @keyframes adnCompleteGlow{0%{box-shadow:0 0 0 rgba(93,183,238,0)}28%{box-shadow:0 0 0 4px rgba(93,183,238,.35),0 0 32px rgba(93,183,238,.55)}100%{box-shadow:0 10px 22px rgba(0,0,0,.07)}}
 @media(max-width:420px){.adn66-reward-grid{grid-template-columns:repeat(2,1fr);}.adn66-reward-img{height:68px}.adn66-reward-selected-img{width:64px;height:84px}}
 
+
+/* ===== ADN66 — Correctif espacement bouton retour / bloc récompense ===== */
+/* Le bouton Retour est fixe. On descend le contenu pour éviter qu’il mange le titre
+   du bloc récompense sur mobile, surtout quand la carte est complète à 8/8. */
+body{
+  align-items:flex-start !important;
+  justify-content:flex-start !important;
+  padding-top:calc(86px + env(safe-area-inset-top)) !important;
+}
+.globalBack{
+  top:calc(12px + env(safe-area-inset-top)) !important;
+}
+.wrap{
+  justify-content:flex-start !important;
+}
+@media(max-width:420px){
+  body{ padding-top:calc(92px + env(safe-area-inset-top)) !important; }
+}
+
 </style>
 
 </head>
