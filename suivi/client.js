@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260618-dispatch-client-tracking-v2
+// ADN66 BUILD 20260620-client-presence-v1
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -69,6 +69,7 @@ const STATE = {
   tPollStatus: null,
   tPollDriver: null,
   tSendClientPos: null,
+  tClientPresence: null,
   tCountdown: null,
   accessRemainingMs: null,
   acceptedPopupHideTimer: null,
@@ -622,6 +623,88 @@ async function apiFetchJson(path, { method = "GET", params = {}, body = null } =
     throw new Error(data.error || data.message || "api_error");
   }
   return data;
+}
+
+// ----------------------------
+// CLIENT PRESENCE HEARTBEAT
+// ----------------------------
+// Envoie au Worker, toutes les 5 secondes, si le client regarde réellement la page.
+// visible = page affichée à l'écran ; focused = fenêtre active.
+// Si le client ferme la page ou verrouille le téléphone, les signaux s'arrêtent naturellement.
+function getClientPresencePayload() {
+  return {
+    requestId: STATE.requestId,
+    clientId: STATE.clientId,
+    visible: document.visibilityState === "visible",
+    focused: document.hasFocus(),
+    ts: Date.now(),
+  };
+}
+
+async function sendClientPresence({ useBeacon = false } = {}) {
+  if (!STATE.requestId || !STATE.clientId) return false;
+
+  const payload = getClientPresencePayload();
+
+  try {
+    if (useBeacon && navigator.sendBeacon) {
+      const url = buildUrl("/client/presence");
+      const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+      return navigator.sendBeacon(url, blob);
+    }
+
+    await apiFetchJson("/client/presence", {
+      method: "POST",
+      body: payload,
+    });
+    return true;
+  } catch (e) {
+    console.log("[client_presence]", e?.message || e);
+    return false;
+  }
+}
+
+function startClientPresenceHeartbeat() {
+  if (STATE.tClientPresence) return;
+
+  sendClientPresence();
+  STATE.tClientPresence = setInterval(sendClientPresence, 5000);
+}
+
+function stopClientPresenceHeartbeat({ sendFinal = false } = {}) {
+  if (STATE.tClientPresence) {
+    clearInterval(STATE.tClientPresence);
+    STATE.tClientPresence = null;
+  }
+
+  if (sendFinal && STATE.requestId && STATE.clientId) {
+    sendClientPresence({ useBeacon: true });
+  }
+}
+
+function bindClientPresenceEvents() {
+  document.addEventListener("visibilitychange", () => {
+    if (!STATE.requestId || !STATE.clientId) return;
+    sendClientPresence();
+  });
+
+  window.addEventListener("focus", () => {
+    if (!STATE.requestId || !STATE.clientId) return;
+    sendClientPresence();
+  });
+
+  window.addEventListener("blur", () => {
+    if (!STATE.requestId || !STATE.clientId) return;
+    sendClientPresence();
+  });
+
+  window.addEventListener("pagehide", () => {
+    stopClientPresenceHeartbeat({ sendFinal: true });
+  });
+
+  window.addEventListener("beforeunload", () => {
+    stopClientPresenceHeartbeat({ sendFinal: true });
+  });
 }
 
 // ----------------------------
@@ -1238,11 +1321,13 @@ function stopAllLoops() {
   stopTimer(STATE.tCountdown);
   stopTimer(STATE.tPollDriver);
   stopTimer(STATE.tSendClientPos);
+  stopClientPresenceHeartbeat({ sendFinal: true });
   stopTimeout(STATE.tPollStatus);
   stopTimeout(STATE.acceptedAutoRecenterTimer);
   STATE.tCountdown = null;
   STATE.tPollDriver = null;
   STATE.tSendClientPos = null;
+  STATE.tClientPresence = null;
   STATE.tPollStatus = null;
   STATE.acceptedAutoRecenterTimer = null;
   STATE.acceptedAutoRecenterArmed = false;
@@ -1380,6 +1465,7 @@ async function pollStatus() {
     STATE.status = status || "pending";
 
     if (status === "pending") {
+      startClientPresenceHeartbeat();
       setBadge("Demande envoyée • en attente");
       setState("En attente de décision");
       setInlineStatus("waiting", "⏳", "En attente d’acceptation du livreur", "Cela peut prendre plusieurs minutes. Vous pouvez quitter cette page et revenir à tout moment : cela n’annule pas le suivi.");
@@ -1390,6 +1476,7 @@ async function pollStatus() {
     }
 
     if (status === "refused") {
+      stopClientPresenceHeartbeat({ sendFinal: true });
       setBadge("Refusé");
       setState("Refusé par le livreur");
       setInlineStatus("bad", "❌", "Demande refusée par le livreur", "Le livreur n’a pas accepté le partage de sa position. Vous pouvez relancer une demande si nécessaire.");
@@ -1403,6 +1490,7 @@ async function pollStatus() {
     }
 
     if (status === "expired") {
+      stopClientPresenceHeartbeat({ sendFinal: true });
       setBadge("Expiré");
       setState("Demande expirée");
       setInlineStatus("waiting", "⏱️", "Demande expirée", "La demande n’a pas été acceptée à temps. Vous pouvez relancer une demande si nécessaire.");
@@ -1416,6 +1504,7 @@ async function pollStatus() {
     }
 
     if (status === "accepted") {
+      startClientPresenceHeartbeat();
       setBadge("Autorisé ✅");
       setState("Suivi actif");
       const assignedName = String(req?.assignedDriverName || req?.decided_by_driver_name || "").trim();
@@ -1472,6 +1561,9 @@ function startAcceptedLoops() {
   // ✅ apply cadence/glide once when accepted loops start
   driverApplyPollGlideDefaults();
 
+  // Présence client : signal toutes les 5 secondes côté Worker.
+  startClientPresenceHeartbeat();
+
   stopTimer(STATE.tSendClientPos);
   STATE.tSendClientPos = setInterval(sendClientPositionUpdate, CONFIG.SEND_CLIENT_POS_MS || 8000);
   sendClientPositionUpdate();
@@ -1501,6 +1593,7 @@ function startAcceptedLoops() {
 
       stopTimer(STATE.tSendClientPos);
       STATE.tSendClientPos = null;
+      stopClientPresenceHeartbeat({ sendFinal: true });
       stopTimer(STATE.tPollDriver);
       STATE.tPollDriver = null;
       stopTimer(STATE.tCountdown);
@@ -1610,6 +1703,7 @@ async function handleRequestClick() {
 
     saveSession({ requestId: STATE.requestId, clientId: STATE.clientId, name });
     setRequestedNow();
+    startClientPresenceHeartbeat();
 
     setBadge("Demande envoyée • en attente");
     setState("En attente de décision");
@@ -1651,6 +1745,7 @@ function handleResetClick() {
 // ----------------------------
 function boot() {
   initMap();
+  bindClientPresenceEvents();
 
   removeDuplicatePreRequestInfoPopup();
   setTimeout(removeDuplicatePreRequestInfoPopup, 250);
@@ -1673,6 +1768,7 @@ function boot() {
 
   const hasSession = loadSession();
   if (hasSession) {
+    startClientPresenceHeartbeat();
     setBadge("Reprise du suivi…");
     setState("Reprise");
     disableRequest(true);
