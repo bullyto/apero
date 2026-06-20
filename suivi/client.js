@@ -32,6 +32,7 @@ const els = {
   driverInfo: document.getElementById("driverInfo"),
   driverInfoName: document.getElementById("driverInfoName"),
   driverInfoMeta: document.getElementById("driverInfoMeta"),
+  btnRecenter: document.getElementById("btnRecenter"),
 };
 
 const LS = {
@@ -48,7 +49,11 @@ const STATE = {
   markerClient: null,
   markerDriver: null,
   routeLine: null,
-  clientPos: null, // {lat,lng,acc,ts}
+  clientPos: null, // position GPS réelle envoyée au serveur {lat,lng,acc,ts}
+  clientMapFixedPos: null, // position de départ affichée côté client {lat,lng,acc,ts}
+  acceptedAutoRecenterTimer: null,
+  acceptedAutoRecenterArmed: false,
+  acceptedAutoRecenterDone: false,
   watchId: null,
 
   // ✅ La carte se recentre une seule fois. Après un geste client, on ne force plus la vue.
@@ -721,13 +726,23 @@ function clearRouteLine() {
   STATE.routeLine = null;
 }
 
-function updateClientMarker(lat, lng) {
-  if (!STATE.markerClient) return;
-  STATE.markerClient.setLatLng([lat, lng]);
-  if (STATE.map && !STATE.firstAutoCenterDone && !STATE.mapUserMoved && STATE.status !== "accepted") {
-    STATE.map.setView([lat, lng], Math.max(15, STATE.map.getZoom() || 15));
-    STATE.firstAutoCenterDone = true;
+function setClientMapFixedPosition(lat, lng, acc = null, ts = Date.now()) {
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+
+  // Côté carte client GitHub : on garde la position de départ fixe.
+  // La vraie position GPS continue d'être envoyée au serveur séparément pour le livreur/admin.
+  if (!STATE.clientMapFixedPos) {
+    STATE.clientMapFixedPos = { lat: Number(lat), lng: Number(lng), acc, ts };
+    if (STATE.markerClient) STATE.markerClient.setLatLng([Number(lat), Number(lng)]);
+
+    // Aucun recentrage automatique ici : le seul recentrage automatique autorisé
+    // se fait 3,4 secondes après acceptation du livreur.
   }
+}
+
+function updateClientMarker(lat, lng) {
+  // Compatibilité avec les anciens appels : ne fixe que la première position visible.
+  setClientMapFixedPosition(lat, lng);
 }
 
 function setDriverMarkerImmediate(lat, lng) {
@@ -735,23 +750,62 @@ function setDriverMarkerImmediate(lat, lng) {
   STATE.markerDriver.setLatLng([lat, lng]);
 }
 
-function fitIfBothThrottled(force = false) {
-  if (!STATE.map || !STATE.markerClient || !STATE.markerDriver) return;
+function setRecenterButtonVisible(visible) {
+  if (!els.btnRecenter) return;
+  els.btnRecenter.classList.toggle("isVisible", !!visible);
+}
 
-  // ✅ ADN66: recentrage automatique uniquement au départ.
-  // Dès que le client touche la carte, on ne reprend plus le contrôle de sa vue.
-  if (STATE.mapUserMoved) return;
-  if (STATE.firstAutoCenterDone && !force) return;
+function fitBothPositions({ force = false, manual = false } = {}) {
+  if (!STATE.map || !STATE.markerClient || !STATE.markerDriver) return false;
+
+  if (!force && STATE.mapUserMoved && !manual) return false;
 
   const now = Date.now();
-  if (!force && now - STATE.lastFitMs < 1200) return;
+  if (!force && now - STATE.lastFitMs < 1200) return false;
   STATE.lastFitMs = now;
 
   const a = STATE.markerClient.getLatLng();
   const b = STATE.markerDriver.getLatLng();
+  if (!a || !b) return false;
+
   const bounds = L.latLngBounds([a, b]);
-  STATE.map.fitBounds(bounds.pad(0.25));
-  STATE.firstAutoCenterDone = true;
+  STATE.map.fitBounds(bounds.pad(0.28), { padding: [46, 120], maxZoom: 15 });
+  return true;
+}
+
+function fitIfBothThrottled(force = false) {
+  // Ancienne fonction conservée pour compatibilité, mais l'automatique est volontairement limité.
+  return fitBothPositions({ force, manual: false });
+}
+
+function attemptAcceptedAutoRecenter() {
+  if (!STATE.acceptedAutoRecenterArmed || STATE.acceptedAutoRecenterDone) return;
+  if (!STATE.driver?.hasFirstFix) return;
+
+  const ok = fitBothPositions({ force: true, manual: false });
+  if (ok) {
+    STATE.acceptedAutoRecenterDone = true;
+    STATE.acceptedAutoRecenterArmed = false;
+  }
+}
+
+function scheduleAcceptedAutoRecenter() {
+  if (STATE.acceptedAutoRecenterTimer) clearTimeout(STATE.acceptedAutoRecenterTimer);
+
+  STATE.acceptedAutoRecenterDone = false;
+  STATE.acceptedAutoRecenterArmed = false;
+
+  // Un seul recentrage automatique : 3,4 secondes après acceptation du livreur.
+  STATE.acceptedAutoRecenterTimer = setTimeout(() => {
+    STATE.acceptedAutoRecenterTimer = null;
+    STATE.acceptedAutoRecenterArmed = true;
+    attemptAcceptedAutoRecenter();
+  }, 3400);
+}
+
+function handleRecenterClick() {
+  STATE.mapUserMoved = true;
+  fitBothPositions({ force: true, manual: true });
 }
 
 // ----------------------------
@@ -852,7 +906,7 @@ function driverAddPoint(lat, lng, tsServerMs) {
     d.disp = { lat, lng };
     d.lastDispMs = Date.now();
     setDriverMarkerImmediate(lat, lng);
-    fitIfBothThrottled(true);
+    attemptAcceptedAutoRecenter();
   }
 }
 
@@ -967,8 +1021,8 @@ function driverStartLoop() {
 
     setDriverMarkerImmediate(newLat, newLng);
 
-    // fit rarely
-    fitIfBothThrottled(false);
+    // Pas de recentrage automatique en boucle côté client.
+    attemptAcceptedAutoRecenter();
   };
 
   d.raf = requestAnimationFrame(tick);
@@ -1029,7 +1083,7 @@ function onGeoOk(pos) {
   const ts = pos.timestamp || Date.now();
 
   STATE.clientPos = { lat, lng, acc, ts };
-  updateClientMarker(lat, lng);
+  setClientMapFixedPosition(lat, lng, acc, ts);
 
   setGeo(`✅ Position partagée (±${Math.round(acc)}m)`);
 
@@ -1185,10 +1239,14 @@ function stopAllLoops() {
   stopTimer(STATE.tPollDriver);
   stopTimer(STATE.tSendClientPos);
   stopTimeout(STATE.tPollStatus);
+  stopTimeout(STATE.acceptedAutoRecenterTimer);
   STATE.tCountdown = null;
   STATE.tPollDriver = null;
   STATE.tSendClientPos = null;
   STATE.tPollStatus = null;
+  STATE.acceptedAutoRecenterTimer = null;
+  STATE.acceptedAutoRecenterArmed = false;
+  STATE.acceptedAutoRecenterDone = false;
   driverStopLoop();
 }
 
@@ -1201,6 +1259,13 @@ function resetFlow({ keepName = true } = {}) {
   clearSession();
   STATE.status = "idle";
   STATE.accessRemainingMs = null;
+  STATE.clientMapFixedPos = null;
+  STATE.firstAutoCenterDone = false;
+  STATE.mapUserMoved = false;
+  setRecenterButtonVisible(false);
+  if (STATE.clientPos) {
+    setClientMapFixedPosition(STATE.clientPos.lat, STATE.clientPos.lng, STATE.clientPos.acc, STATE.clientPos.ts);
+  }
 
   setBadge("Prêt : demande de suivi");
   setState("—");
@@ -1262,7 +1327,7 @@ async function pollDriverPosition() {
     }
 
     if (data?.client && Number.isFinite(Number(data.client.lat)) && Number.isFinite(Number(data.client.lng))) {
-      updateClientMarker(Number(data.client.lat), Number(data.client.lng));
+      setClientMapFixedPosition(Number(data.client.lat), Number(data.client.lng));
     }
 
     if (data && data.driver && Number.isFinite(Number(data.driver.lat)) && Number.isFinite(Number(data.driver.lng))) {
@@ -1379,6 +1444,9 @@ async function pollStatus() {
         clearTimeout(STATE.acceptedPopupHideTimer);
         STATE.acceptedPopupHideTimer = null;
       }
+
+      scheduleAcceptedAutoRecenter();
+      setRecenterButtonVisible(true);
 
       STATE.acceptedPopupHideTimer = setTimeout(() => {
         STATE.acceptedPopupHideTimer = null;
@@ -1595,6 +1663,7 @@ function boot() {
 
   if (els.btnRequest) els.btnRequest.addEventListener("click", handleRequestClick);
   if (els.btnReset) els.btnReset.addEventListener("click", handleResetClick);
+  if (els.btnRecenter) els.btnRecenter.addEventListener("click", handleRecenterClick);
 
   // ✅ apply cadence/glide at boot too (safe)
   driverApplyPollGlideDefaults();

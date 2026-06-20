@@ -566,6 +566,42 @@
       text-overflow:ellipsis;
     }
 
+
+    /* ===== BOUTON RECENTRAGE CARTE CLIENT ===== */
+    .clientRecenterBtn{
+      position:fixed;
+      left:50%;
+      bottom:calc(72px + env(safe-area-inset-bottom));
+      z-index:9996;
+      transform:translateX(-50%);
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:12px 18px;
+      border-radius:999px;
+      background:#fff;
+      color:#0b1c2d;
+      border:2px solid rgba(93,183,238,.85);
+      box-shadow:0 14px 30px rgba(0,0,0,.26), 0 0 0 4px rgba(93,183,238,.18);
+      font-size:14px;
+      font-weight:950;
+      letter-spacing:.1px;
+      white-space:nowrap;
+      backdrop-filter:saturate(140%) blur(10px);
+      -webkit-backdrop-filter:saturate(140%) blur(10px);
+    }
+
+    .clientRecenterBtn.isVisible{
+      display:inline-flex;
+    }
+
+    .clientRecenterBtn:active{
+      transform:translateX(-50%) translateY(1px);
+    }
+
     @media (max-width:390px){
       .driverInfoCard{ top:70px; padding:10px 12px; }
       .driverInfoIcon{ width:34px; height:34px; font-size:18px; }
@@ -589,6 +625,10 @@
       <span class="driverInfoMeta" id="driverInfoMeta">Trajet en cours de calcul…</span>
     </span>
   </div>
+
+  <!-- BOUTON RECENTRAGE CARTE -->
+  <button class="clientRecenterBtn" id="btnRecenter" type="button" aria-label="Recentrer la carte sur les deux positions">🎯 Recentrer</button>
+
 
   <!-- TOP BAR (statut + timer + retour) -->
   <header class="clientTopbar" aria-label="Bandeau suivi">
@@ -715,7 +755,7 @@
   <div class="clientBottombar">L’abus d’alcool est dangereux pour la santé. À consommer avec modération.</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="./client.js?v=20260618-dispatch-client-tracking-v2"></script>
+  <script type="module" src="./client.js?v=20260620-recentrer-client-v1"></script>
 
   <script>
     document.getElementById("btnBack").addEventListener("click", () => {
