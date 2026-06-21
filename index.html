@@ -797,6 +797,105 @@
     background: transparent;
   }
 
+
+    /* ✅ Pop-up choix Google Play / iPhone */
+    .storeChoiceOverlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(11,28,45,.58);
+      backdrop-filter:blur(7px);
+      -webkit-backdrop-filter:blur(7px);
+      z-index:10000;
+    }
+    .storeChoiceOverlay.open{display:flex;}
+    .storeChoiceCard{
+      width:min(520px,94vw);
+      background:#fff;
+      color:#0b1c2d;
+      border-radius:24px;
+      padding:20px;
+      box-shadow:0 24px 70px rgba(0,0,0,.32);
+      border:1px solid rgba(11,28,45,.10);
+      text-align:center;
+      position:relative;
+    }
+    .storeChoiceClose{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:38px;
+      height:38px;
+      border:0;
+      border-radius:14px;
+      background:rgba(11,28,45,.08);
+      color:#0b1c2d;
+      font-size:22px;
+      font-weight:950;
+      cursor:pointer;
+      line-height:1;
+    }
+    .storeChoiceIcon{
+      width:54px;
+      height:54px;
+      margin:4px auto 10px;
+      border-radius:18px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(93,183,238,.16);
+      color:#0b1c2d;
+      font-size:28px;
+      font-weight:950;
+    }
+    .storeChoiceCard h3{
+      margin:0;
+      font-size:22px;
+      line-height:1.18;
+      font-weight:950;
+      color:#0b1c2d;
+    }
+    .storeChoiceCard p{
+      margin:10px 0 16px;
+      color:rgba(11,28,45,.68);
+      font-size:15px;
+      line-height:1.35;
+      font-weight:750;
+    }
+    .storeChoiceActions{
+      display:grid;
+      gap:10px;
+    }
+    .storeChoiceBtn{
+      width:100%;
+      min-height:54px;
+      border:0;
+      border-radius:16px;
+      padding:13px 16px;
+      font-size:16px;
+      font-weight:950;
+      cursor:pointer;
+    }
+    .storeChoiceBtn.primary{
+      background:#5db7ee;
+      color:#fff;
+      box-shadow:0 10px 22px rgba(93,183,238,.28);
+    }
+    .storeChoiceBtn.dark{
+      background:#0b1c2d;
+      color:#fff;
+      box-shadow:0 10px 22px rgba(11,28,45,.18);
+    }
+    .storeChoiceSmall{
+      margin-top:10px;
+      font-size:12px;
+      font-weight:750;
+      color:rgba(11,28,45,.52);
+    }
+
 </style>
 
   <link rel="preconnect" href="https://bullyto.github.io" crossorigin>
@@ -994,6 +1093,26 @@
         <button class="copyBtn" id="copyLinkBtn" style="display:none">Copier le lien</button>
         <button class="okBtn" style="margin:0 auto;display:block;text-align:center;" id="closeHelp">OK</button>
       </div></div>
+    </div>
+  </div>
+
+
+
+  <!-- ✅ Pop-up choix Google Play / iPhone -->
+  <div class="storeChoiceOverlay" id="storeChoiceModal" role="dialog" aria-modal="true" aria-labelledby="storeChoiceTitle">
+    <div class="storeChoiceCard">
+      <button class="storeChoiceClose" id="storeChoiceClose" type="button" aria-label="Fermer">×</button>
+      <div class="storeChoiceIcon">📱</div>
+      <h3 id="storeChoiceTitle">Vous avez un iPhone ?</h3>
+      <p>
+        Sur iPhone, l'installation ne se fait pas par Google Play.<br>
+        Cliquez sur <b>“J’ai un iPhone”</b> pour voir le tutoriel. Sinon, continuez vers Google Play.
+      </p>
+      <div class="storeChoiceActions">
+        <button class="storeChoiceBtn primary" id="storeChoiceIphone" type="button">J’ai un iPhone</button>
+        <button class="storeChoiceBtn dark" id="storeChoiceContinue" type="button">Continuer vers Google Play</button>
+      </div>
+      <div class="storeChoiceSmall">APÉRO DE NUIT 66® — Installation officielle</div>
     </div>
   </div>
 
@@ -1623,26 +1742,52 @@
       }
     });
 
-    // Click "Télécharger l’app" (Play Store)
-    document.getElementById("installBtn").addEventListener("click", async () => {
-      const run = () => {
-        // tracking "Télécharger l’app"
-        fireTrack(TRACK.appClick);
+    // Click "Disponible sur Google Play" → choix Android / iPhone
+    const storeChoiceModal = document.getElementById("storeChoiceModal");
+    const storeChoiceClose = document.getElementById("storeChoiceClose");
+    const storeChoiceIphone = document.getElementById("storeChoiceIphone");
+    const storeChoiceContinue = document.getElementById("storeChoiceContinue");
+    const IPHONE_INSTALL_URL = "https://www.aperos.net/installer-iphone";
 
-        // ✅ Désormais: redirection Play Store (sans casser le reste)
-        try {
-          window.location.href = PLAY_STORE_URL;
-        } catch(e) {
-          window.open(PLAY_STORE_URL, "_blank", "noopener");
-        }
-      };
-
-      if (typeof requireMajorThen === "function"){
-        requireMajorThen(() => { run(); });
-      } else {
-        run();
+    function openStoreChoiceModal(){
+      if (storeChoiceModal) storeChoiceModal.classList.add("open");
+    }
+    function closeStoreChoiceModal(){
+      if (storeChoiceModal) storeChoiceModal.classList.remove("open");
+    }
+    function goPlayStore(){
+      fireTrack(TRACK.appClick);
+      try {
+        window.location.href = PLAY_STORE_URL;
+      } catch(e) {
+        window.open(PLAY_STORE_URL, "_blank", "noopener");
       }
+    }
+    function goIphoneTutorial(){
+      try {
+        window.location.href = IPHONE_INSTALL_URL;
+      } catch(e) {
+        window.open(IPHONE_INSTALL_URL, "_blank", "noopener");
+      }
+    }
+
+    const installBtnEl = document.getElementById("installBtn");
+    if (installBtnEl){
+      installBtnEl.addEventListener("click", async () => {
+        const run = () => openStoreChoiceModal();
+        if (typeof requireMajorThen === "function"){
+          requireMajorThen(() => { run(); });
+        } else {
+          run();
+        }
+      });
+    }
+    if (storeChoiceClose) storeChoiceClose.addEventListener("click", closeStoreChoiceModal);
+    if (storeChoiceModal) storeChoiceModal.addEventListener("click", (e) => {
+      if (e.target === storeChoiceModal) closeStoreChoiceModal();
     });
+    if (storeChoiceIphone) storeChoiceIphone.addEventListener("click", goIphoneTutorial);
+    if (storeChoiceContinue) storeChoiceContinue.addEventListener("click", goPlayStore);
 // ✅ ACTION PRINCIPALE: COMMANDE EN LIGNE
     async function requestPushBeforeOrder(){
       try{
