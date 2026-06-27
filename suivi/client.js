@@ -881,10 +881,10 @@ function updateRouteLine(route) {
   const latlngs = decodeGooglePolyline(route.encodedPolyline);
   if (!latlngs.length) return false;
 
-  if (!routeEndsNearFixedClient(latlngs)) {
-    console.log("[route_client_fixed] route ignored: destination is not the fixed client start position");
-    return false;
-  }
+  // ✅ ADN66 FIX 20260627 v2 : on ne bloque plus le tracé si son arrivée
+  // n'est pas exactement sur la position client fixe affichée.
+  // Le marqueur client reste fixe visuellement, mais le tracé renvoyé par le Worker
+  // est accepté pour éviter le blocage "Trajet en cours de calcul…".
 
   if (!STATE.routeLine) {
     STATE.routeLine = L.polyline(latlngs, {
@@ -1069,13 +1069,24 @@ function updateLocalRouteMeta() {
 
 function shouldRequestRouteNow() {
   if (STATE.routeRecalcInFlight) return false;
-  if (!getFixedClientDestination()) return false;
+  if (STATE.status !== "accepted") return false;
 
   const now = Date.now();
+
+  // Premier tracé : on demande immédiatement.
+  if (!STATE.routeLine) return true;
+
+  // Sécurité anti-spam API : jamais plus d'une demande toutes les 6 secondes.
   if (now - STATE.routeLastRequestMs < 6000) return false;
 
-  // Premier tracé ou nouveau tracé après 15 secondes hors route.
-  return !STATE.routeLine || STATE.routeNeedsRecalc;
+  // ✅ ADN66 FIX 20260627 v2 : recalcul régulier.
+  // Avant, le tracé restait trop fixe et pouvait bloquer l'affichage côté client.
+  if (now - STATE.routeLastRequestMs >= 15000) return true;
+
+  // Recalcul aussi si le livreur est détecté hors tracé.
+  if (STATE.routeNeedsRecalc) return true;
+
+  return false;
 }
 
 function buildTrackingParams({ withRoute = false } = {}) {
@@ -1802,9 +1813,10 @@ async function pollDriverPosition() {
 
   try {
     // Nouveau Worker: renvoie uniquement le livreur attribué.
-    // Le tracé complet n'est demandé que si nécessaire :
+    // Le tracé complet est demandé intelligemment :
     // - premier tracé
-    // - ou livreur hors tracé pendant 15 secondes.
+    // - recalcul régulier toutes les ~15 secondes
+    // - ou livreur hors tracé.
     let data = null;
     try {
       data = await apiFetchJson("/client/tracking", {
