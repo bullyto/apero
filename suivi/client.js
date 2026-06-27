@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260627-client-reload-cache-fix-v1
+// ADN66 BUILD 20260620-client-presence-v1
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -42,11 +42,6 @@ const LS = {
   requestId: (CONFIG.LS_PREFIX || "adn66_track_") + "requestId",
   clientId: (CONFIG.LS_PREFIX || "adn66_track_") + "clientId",
   lastRequestMs: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRequestMs",
-
-  // ✅ ADN66 FIX 20260627 : restauration après fermeture/réouverture de la page client
-  clientMapFixedPos: (CONFIG.LS_PREFIX || "adn66_track_") + "clientMapFixedPos",
-  lastRoute: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRoute",
-  lastDriverPos: (CONFIG.LS_PREFIX || "adn66_track_") + "lastDriverPos",
 };
 
 const STATE = {
@@ -54,16 +49,6 @@ const STATE = {
   markerClient: null,
   markerDriver: null,
   routeLine: null,
-  routeLatLngs: [],
-  routeCumulativeM: [],
-  routeMeta: null,
-  routeOffSinceMs: 0,
-  routeNeedsRecalc: false,
-  routeRecalcInFlight: false,
-  routeLastRequestMs: 0,
-  routeOffThresholdM: 80,
-  routeOffRecalcDelayMs: 15000,
-  currentDriverName: "",
   clientPos: null, // position GPS réelle envoyée au serveur {lat,lng,acc,ts}
   clientMapFixedPos: null, // position de départ affichée côté client {lat,lng,acc,ts}
   acceptedAutoRecenterTimer: null,
@@ -85,7 +70,6 @@ const STATE = {
   tPollDriver: null,
   tSendClientPos: null,
   tClientPresence: null,
-  tRouteLocalMeta: null,
   tCountdown: null,
   accessRemainingMs: null,
   acceptedPopupHideTimer: null,
@@ -562,39 +546,6 @@ function lsDel(k) {
   } catch {}
 }
 
-function lsGetJson(k, def = null) {
-  try {
-    const raw = localStorage.getItem(k);
-    if (!raw) return def;
-    return JSON.parse(raw);
-  } catch {
-    return def;
-  }
-}
-
-function lsSetJson(k, v) {
-  try {
-    localStorage.setItem(k, JSON.stringify(v));
-  } catch {}
-}
-
-function clearTrackingCache() {
-  lsDel(LS.clientMapFixedPos);
-  lsDel(LS.lastRoute);
-  lsDel(LS.lastDriverPos);
-}
-
-function sameTrackingSession(cache = {}) {
-  const rid = String(cache.requestId || "");
-  const cid = String(cache.clientId || "");
-
-  // Compatibilité : les anciennes sauvegardes sans session sont acceptées seulement
-  // si une session locale existe. Les nouvelles sauvegardes sont liées requestId/clientId.
-  if (!rid && !cid) return !!(STATE.requestId && STATE.clientId);
-
-  return rid === String(STATE.requestId || "") && cid === String(STATE.clientId || "");
-}
-
 // ----------------------------
 // PHONE helpers (FR)
 // ----------------------------
@@ -833,58 +784,10 @@ function decodeGooglePolyline(encoded) {
   return points;
 }
 
-function buildRouteCumulativeMeters(latlngs) {
-  const cumulative = [0];
-  let total = 0;
-
-  for (let i = 1; i < latlngs.length; i++) {
-    total += approxMeters(latlngs[i - 1][0], latlngs[i - 1][1], latlngs[i][0], latlngs[i][1]);
-    cumulative.push(total);
-  }
-
-  return cumulative;
-}
-
-function getFixedClientDestination() {
-  if (STATE.clientMapFixedPos && Number.isFinite(Number(STATE.clientMapFixedPos.lat)) && Number.isFinite(Number(STATE.clientMapFixedPos.lng))) {
-    return {
-      lat: Number(STATE.clientMapFixedPos.lat),
-      lng: Number(STATE.clientMapFixedPos.lng),
-    };
-  }
-
-  if (STATE.markerClient) {
-    const p = STATE.markerClient.getLatLng();
-    if (p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng))) {
-      return { lat: Number(p.lat), lng: Number(p.lng) };
-    }
-  }
-
-  return null;
-}
-
-function routeEndsNearFixedClient(latlngs) {
-  const fixed = getFixedClientDestination();
-  if (!fixed || !Array.isArray(latlngs) || !latlngs.length) return true;
-
-  const last = latlngs[latlngs.length - 1];
-  const d = approxMeters(Number(last[0]), Number(last[1]), fixed.lat, fixed.lng);
-
-  // Sécurité : côté client, on refuse un tracé qui finit loin de la position de départ fixe.
-  // Cela évite qu'un tracé renvoyé par le Worker vers la position live du client remplace
-  // le tracé affiché vers le point posé au lancement de la session.
-  return d <= 150;
-}
-
 function updateRouteLine(route) {
-  if (!STATE.map || !route?.encodedPolyline) return false;
+  if (!STATE.map || !route?.encodedPolyline) return;
   const latlngs = decodeGooglePolyline(route.encodedPolyline);
-  if (!latlngs.length) return false;
-
-  // ✅ ADN66 FIX 20260627 v2 : on ne bloque plus le tracé si son arrivée
-  // n'est pas exactement sur la position client fixe affichée.
-  // Le marqueur client reste fixe visuellement, mais le tracé renvoyé par le Worker
-  // est accepté pour éviter le blocage "Trajet en cours de calcul…".
+  if (!latlngs.length) return;
 
   if (!STATE.routeLine) {
     STATE.routeLine = L.polyline(latlngs, {
@@ -897,34 +800,6 @@ function updateRouteLine(route) {
   } else {
     STATE.routeLine.setLatLngs(latlngs);
   }
-
-  STATE.routeLatLngs = latlngs;
-  STATE.routeCumulativeM = buildRouteCumulativeMeters(latlngs);
-  STATE.routeMeta = {
-    durationText: route.durationText || "",
-    distanceText: route.distanceText || "",
-    durationSeconds: Number(route.durationSeconds ?? route.duration_sec ?? route.duration ?? 0) || 0,
-    distanceMeters: Number(route.distanceMeters ?? route.distance_m ?? route.distance ?? 0) || 0,
-    updatedAtMs: Date.now(),
-  };
-  STATE.routeOffSinceMs = 0;
-  STATE.routeNeedsRecalc = false;
-  STATE.routeLastRequestMs = Date.now();
-
-  updateLocalRouteMeta();
-
-  // ✅ ADN66 FIX 20260627 : garde le dernier tracé pour éviter
-  // "Trajet en cours de calcul…" après fermeture/réouverture de la page.
-  if (STATE.requestId && STATE.clientId) {
-    lsSetJson(LS.lastRoute, {
-      requestId: STATE.requestId,
-      clientId: STATE.clientId,
-      route,
-      savedAt: Date.now(),
-    });
-  }
-
-  return true;
 }
 
 function clearRouteLine() {
@@ -932,187 +807,6 @@ function clearRouteLine() {
     STATE.map.removeLayer(STATE.routeLine);
   }
   STATE.routeLine = null;
-  STATE.routeLatLngs = [];
-  STATE.routeCumulativeM = [];
-  STATE.routeMeta = null;
-  STATE.routeOffSinceMs = 0;
-  STATE.routeNeedsRecalc = false;
-  STATE.routeRecalcInFlight = false;
-}
-
-function toXYMeters(lat, lng, refLat) {
-  const R = 6371000;
-  const rad = Math.PI / 180;
-  return {
-    x: Number(lng) * rad * R * Math.cos(Number(refLat) * rad),
-    y: Number(lat) * rad * R,
-  };
-}
-
-function nearestOnSegmentMeters(point, a, b) {
-  const refLat = point.lat;
-  const p = toXYMeters(point.lat, point.lng, refLat);
-  const p1 = toXYMeters(a[0], a[1], refLat);
-  const p2 = toXYMeters(b[0], b[1], refLat);
-
-  const vx = p2.x - p1.x;
-  const vy = p2.y - p1.y;
-  const wx = p.x - p1.x;
-  const wy = p.y - p1.y;
-  const len2 = vx * vx + vy * vy;
-
-  let t = len2 <= 0 ? 0 : (wx * vx + wy * vy) / len2;
-  t = clamp(t, 0, 1);
-
-  const projX = p1.x + t * vx;
-  const projY = p1.y + t * vy;
-  const dx = p.x - projX;
-  const dy = p.y - projY;
-
-  return {
-    distanceM: Math.sqrt(dx * dx + dy * dy),
-    t,
-  };
-}
-
-function getRouteProgressForDriver() {
-  if (!STATE.markerDriver || !STATE.routeLatLngs || STATE.routeLatLngs.length < 2) return null;
-
-  const driver = STATE.markerDriver.getLatLng();
-  if (!driver) return null;
-
-  let best = null;
-  const totalM = STATE.routeCumulativeM[STATE.routeCumulativeM.length - 1] || 0;
-
-  for (let i = 0; i < STATE.routeLatLngs.length - 1; i++) {
-    const a = STATE.routeLatLngs[i];
-    const b = STATE.routeLatLngs[i + 1];
-    const segM = Math.max(0, (STATE.routeCumulativeM[i + 1] || 0) - (STATE.routeCumulativeM[i] || 0));
-    const near = nearestOnSegmentMeters({ lat: driver.lat, lng: driver.lng }, a, b);
-    const alongM = (STATE.routeCumulativeM[i] || 0) + segM * near.t;
-
-    if (!best || near.distanceM < best.offDistanceM) {
-      best = {
-        offDistanceM: near.distanceM,
-        alongM,
-        remainingM: Math.max(0, totalM - alongM),
-      };
-    }
-  }
-
-  return best;
-}
-
-function formatDistanceMeters(m) {
-  const n = Math.max(0, Number(m || 0));
-  if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(".", ",")} km`;
-  return `${Math.round(n / 10) * 10} m`;
-}
-
-function formatDurationSeconds(sec) {
-  const s = Math.max(0, Math.round(Number(sec || 0)));
-  const min = Math.max(1, Math.round(s / 60));
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  const r = min % 60;
-  return r ? `${h} h ${r} min` : `${h} h`;
-}
-
-function estimateRemainingSeconds(remainingM) {
-  const meta = STATE.routeMeta || {};
-  const totalDistance = Number(meta.distanceMeters || 0);
-  const totalDuration = Number(meta.durationSeconds || 0);
-
-  if (totalDistance > 0 && totalDuration > 0) {
-    return (Math.max(0, remainingM) / totalDistance) * totalDuration;
-  }
-
-  // Fallback prudent : environ 25 km/h en ville.
-  return Math.max(60, Math.max(0, remainingM) / 6.95);
-}
-
-function updateLocalRouteMeta() {
-  if (STATE.status !== "accepted") return;
-  if (!STATE.routeLine || !STATE.routeLatLngs.length) return;
-
-  const progress = getRouteProgressForDriver();
-  if (!progress) return;
-
-  const now = Date.now();
-  const isOffRoute = progress.offDistanceM > STATE.routeOffThresholdM;
-
-  if (isOffRoute) {
-    if (!STATE.routeOffSinceMs) STATE.routeOffSinceMs = now;
-
-    if (now - STATE.routeOffSinceMs >= STATE.routeOffRecalcDelayMs) {
-      STATE.routeNeedsRecalc = true;
-    }
-
-    // Option A validée : tant que les 15 secondes hors tracé ne sont pas passées,
-    // on garde le dernier tracé/délai/distance affiché.
-    return;
-  }
-
-  STATE.routeOffSinceMs = 0;
-  STATE.routeNeedsRecalc = false;
-
-  const distanceText = formatDistanceMeters(progress.remainingM);
-  const durationText = formatDurationSeconds(estimateRemainingSeconds(progress.remainingM));
-  const name = STATE.currentDriverName || "Votre livreur";
-
-  setDriverInfo({
-    visible: true,
-    name: `Votre livreur : ${name}`,
-    meta: `Trajet estimé : ${durationText} • ${distanceText}`,
-  });
-}
-
-function shouldRequestRouteNow() {
-  if (STATE.routeRecalcInFlight) return false;
-  if (STATE.status !== "accepted") return false;
-
-  const now = Date.now();
-
-  // Premier tracé : on demande immédiatement.
-  if (!STATE.routeLine) return true;
-
-  // Sécurité anti-spam API : jamais plus d'une demande toutes les 6 secondes.
-  if (now - STATE.routeLastRequestMs < 6000) return false;
-
-  // ✅ ADN66 FIX 20260627 v2 : recalcul régulier.
-  // Avant, le tracé restait trop fixe et pouvait bloquer l'affichage côté client.
-  if (now - STATE.routeLastRequestMs >= 15000) return true;
-
-  // Recalcul aussi si le livreur est détecté hors tracé.
-  if (STATE.routeNeedsRecalc) return true;
-
-  return false;
-}
-
-function buildTrackingParams({ withRoute = false } = {}) {
-  const params = {
-    clientId: STATE.clientId,
-    requestId: STATE.requestId,
-  };
-
-  if (withRoute) {
-    params.route = "1";
-
-    const fixed = getFixedClientDestination();
-    if (fixed) {
-      // Ces paramètres sont volontairement redondants pour rester compatibles
-      // avec un Worker qui accepterait l'un ou l'autre nom côté route.
-      params.targetLat = fixed.lat;
-      params.targetLng = fixed.lng;
-      params.destLat = fixed.lat;
-      params.destLng = fixed.lng;
-      params.clientStartLat = fixed.lat;
-      params.clientStartLng = fixed.lng;
-      params.routeMode = "client_start_fixed";
-    }
-  }
-
-  return params;
 }
 
 function setClientMapFixedPosition(lat, lng, acc = null, ts = Date.now()) {
@@ -1122,16 +816,6 @@ function setClientMapFixedPosition(lat, lng, acc = null, ts = Date.now()) {
   // La vraie position GPS continue d'être envoyée au serveur séparément pour le livreur/admin.
   if (!STATE.clientMapFixedPos) {
     STATE.clientMapFixedPos = { lat: Number(lat), lng: Number(lng), acc, ts };
-
-    // ✅ ADN66 FIX 20260627 : sauvegarde pour restaurer la destination
-    // après fermeture/réouverture de la page client.
-    lsSetJson(LS.clientMapFixedPos, {
-      requestId: STATE.requestId || "",
-      clientId: STATE.clientId || "",
-      ...STATE.clientMapFixedPos,
-      savedAt: Date.now(),
-    });
-
     if (STATE.markerClient) STATE.markerClient.setLatLng([Number(lat), Number(lng)]);
 
     // Aucun recentrage automatique ici : le seul recentrage automatique autorisé
@@ -1257,52 +941,55 @@ function driverAddPoint(lat, lng, tsServerMs) {
   const d = STATE.driver;
   const rxMs = Date.now();
 
-  // ✅ ADN66 FIX 20260627 v3 — priorité au live réel.
-  // Ancienne logique: certains points pouvaient être ignorés si le timestamp serveur
-  // ne progressait pas assez ou si le calcul de vitesse semblait trop élevé.
-  // Résultat visible: véhicule bloqué côté client même quand l'app driver bouge.
-  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
-  lat = Number(lat);
-  lng = Number(lng);
+  // compute rx interval
+  if (d.lastRxMs) {
+    const dt = rxMs - d.lastRxMs;
+    if (dt > 0 && dt < 30000) {
+      d.rxIntervals.push(dt);
+      if (d.rxIntervals.length > d.rxIntervalsMax) d.rxIntervals.shift();
+    }
+  }
+  d.lastRxMs = rxMs;
 
-  const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
-  let cleanTs = Number(tsServerMs);
-  if (!Number.isFinite(cleanTs) || cleanTs <= 0) cleanTs = rxMs;
-  if (last && cleanTs <= Number(last.tsServerMs || 0)) cleanTs = rxMs;
-  if (last && cleanTs <= Number(last.tsServerMs || 0)) cleanTs = Number(last.tsServerMs || rxMs) + 1;
-
-  // Calcul indicatif seulement : on n'ignore plus la position API.
-  if (last) {
-    const dt = Math.max(1, cleanTs - Number(last.tsServerMs || 0));
-    d.vel = {
-      vLat: (lat - last.lat) / dt,
-      vLng: (lng - last.lng) / dt,
-    };
-    d.lastVelFrom = { lat, lng, tsMs: cleanTs };
+  // adaptive delay: based on avg rx interval
+  if (d.rxIntervals.length >= 3) {
+    const avg = d.rxIntervals.reduce((s, v) => s + v, 0) / d.rxIntervals.length;
+    // base = 0.7 * avg, clamped to [2.0s, 2.6s]
+    const target = clamp(Math.round(avg * 0.7), d.delayMin, d.delayMax);
+    // smooth change (avoid jitter)
+    d.delayMs = Math.round(d.delayMs * 0.8 + target * 0.2);
   }
 
-  d.lastRxMs = rxMs;
-  d.hasFirstFix = true;
-  d.disp = { lat, lng };
-  d.lastDispMs = rxMs;
+  // de-dup / sanity
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-  d.buf.push({ lat, lng, tsServerMs: cleanTs, rxMs });
+  const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
+  if (last) {
+    const dist = approxMeters(last.lat, last.lng, lat, lng);
+    // ignore absurd jumps unless time is huge
+    const dt = Math.max(1, tsServerMs - last.tsServerMs);
+    const speed = dist / (dt / 1000); // m/s
+    if (speed > d.maxSpeedMps * 2) {
+      // too crazy -> ignore this sample
+      return;
+    }
+    // update velocity estimate (per ms)
+    const vLat = (lat - last.lat) / dt;
+    const vLng = (lng - last.lng) / dt;
+    d.vel = { vLat, vLng };
+    d.lastVelFrom = { lat, lng, tsMs: tsServerMs };
+  }
+
+  d.buf.push({ lat, lng, tsServerMs, rxMs });
   if (d.buf.length > d.maxBuf) d.buf.shift();
 
-  // ✅ Le marqueur est placé immédiatement à chaque réponse API.
-  // Le lissage ne peut donc plus bloquer le véhicule sur l'ancien point.
-  setDriverMarkerImmediate(lat, lng);
-  attemptAcceptedAutoRecenter();
-
-  if (STATE.requestId && STATE.clientId) {
-    lsSetJson(LS.lastDriverPos, {
-      requestId: STATE.requestId,
-      clientId: STATE.clientId,
-      lat,
-      lng,
-      tsServerMs: cleanTs,
-      savedAt: rxMs,
-    });
+  // if first fix, set immediately and fit once
+  if (!d.hasFirstFix) {
+    d.hasFirstFix = true;
+    d.disp = { lat, lng };
+    d.lastDispMs = Date.now();
+    setDriverMarkerImmediate(lat, lng);
+    attemptAcceptedAutoRecenter();
   }
 }
 
@@ -1610,17 +1297,6 @@ function saveSession({ requestId, clientId, name }) {
   lsSet(LS.requestId, requestId);
   lsSet(LS.clientId, clientId);
   lsSet(LS.name, name);
-
-  // Si la position fixe a été posée avant la création de session,
-  // on la rattache maintenant au requestId/clientId.
-  if (STATE.clientMapFixedPos) {
-    lsSetJson(LS.clientMapFixedPos, {
-      requestId,
-      clientId,
-      ...STATE.clientMapFixedPos,
-      savedAt: Date.now(),
-    });
-  }
 }
 
 function clearSession() {
@@ -1645,14 +1321,12 @@ function stopAllLoops() {
   stopTimer(STATE.tCountdown);
   stopTimer(STATE.tPollDriver);
   stopTimer(STATE.tSendClientPos);
-  stopTimer(STATE.tRouteLocalMeta);
   stopClientPresenceHeartbeat({ sendFinal: true });
   stopTimeout(STATE.tPollStatus);
   stopTimeout(STATE.acceptedAutoRecenterTimer);
   STATE.tCountdown = null;
   STATE.tPollDriver = null;
   STATE.tSendClientPos = null;
-  STATE.tRouteLocalMeta = null;
   STATE.tClientPresence = null;
   STATE.tPollStatus = null;
   STATE.acceptedAutoRecenterTimer = null;
@@ -1668,11 +1342,9 @@ function resetFlow({ keepName = true } = {}) {
   }
   stopAllLoops();
   clearSession();
-  clearTrackingCache();
   STATE.status = "idle";
   STATE.accessRemainingMs = null;
   STATE.clientMapFixedPos = null;
-  clearRouteLine();
   STATE.firstAutoCenterDone = false;
   STATE.mapUserMoved = false;
   setRecenterButtonVisible(false);
@@ -1690,75 +1362,6 @@ function resetFlow({ keepName = true } = {}) {
   if (!keepName && els.name) {
     els.name.value = "";
     lsDel(LS.name);
-  }
-}
-
-// ----------------------------
-// ADN66 FIX 20260627 : restauration cache suivi client
-// ----------------------------
-function restoreClientTrackingCache() {
-  if (!STATE.requestId || !STATE.clientId) return;
-
-  const maxAgeMs = 30 * 60 * 1000;
-  const nowMs = Date.now();
-
-  const fixed = lsGetJson(LS.clientMapFixedPos, null);
-  if (
-    fixed &&
-    sameTrackingSession(fixed) &&
-    nowMs - Number(fixed.savedAt || fixed.ts || 0) < maxAgeMs &&
-    Number.isFinite(Number(fixed.lat)) &&
-    Number.isFinite(Number(fixed.lng))
-  ) {
-    STATE.clientMapFixedPos = {
-      lat: Number(fixed.lat),
-      lng: Number(fixed.lng),
-      acc: fixed.acc ?? null,
-      ts: fixed.ts || nowMs,
-    };
-
-    if (STATE.markerClient) {
-      STATE.markerClient.setLatLng([STATE.clientMapFixedPos.lat, STATE.clientMapFixedPos.lng]);
-    }
-  }
-
-  const lastDriver = lsGetJson(LS.lastDriverPos, null);
-  if (
-    lastDriver &&
-    sameTrackingSession(lastDriver) &&
-    nowMs - Number(lastDriver.savedAt || 0) < maxAgeMs &&
-    Number.isFinite(Number(lastDriver.lat)) &&
-    Number.isFinite(Number(lastDriver.lng))
-  ) {
-    const lat = Number(lastDriver.lat);
-    const lng = Number(lastDriver.lng);
-
-    setDriverMarkerImmediate(lat, lng);
-    STATE.driver.hasFirstFix = true;
-    STATE.driver.disp = { lat, lng };
-    STATE.driver.lastDispMs = nowMs;
-
-    // On remet aussi un point dans le buffer pour que le lissage reparte proprement.
-    STATE.driver.buf = [{
-      lat,
-      lng,
-      tsServerMs: Number(lastDriver.tsServerMs || nowMs),
-      rxMs: nowMs,
-    }];
-  }
-
-  const cachedRoute = lsGetJson(LS.lastRoute, null);
-  if (
-    cachedRoute &&
-    sameTrackingSession(cachedRoute) &&
-    cachedRoute.route &&
-    nowMs - Number(cachedRoute.savedAt || 0) < maxAgeMs
-  ) {
-    updateRouteLine(cachedRoute.route);
-  }
-
-  if (STATE.markerClient && STATE.markerDriver && STATE.driver.hasFirstFix) {
-    setRecenterButtonVisible(true);
   }
 }
 
@@ -1792,35 +1395,23 @@ async function sendClientPositionUpdate() {
 async function pollDriverPosition() {
   if (!STATE.clientId && !STATE.requestId) return;
 
-  const withRoute = shouldRequestRouteNow();
-  if (withRoute) STATE.routeRecalcInFlight = true;
-
   try {
-    // Nouveau Worker: renvoie uniquement le livreur attribué.
-    // Le tracé complet est demandé intelligemment :
-    // - premier tracé
-    // - recalcul régulier toutes les ~15 secondes
-    // - ou livreur hors tracé.
+    // Nouveau Worker: renvoie uniquement le livreur attribué + trajet livreur → client.
     let data = null;
     try {
       data = await apiFetchJson("/client/tracking", {
         method: "GET",
-        params: buildTrackingParams({ withRoute }),
+        params: { clientId: STATE.clientId, requestId: STATE.requestId, route: "1" },
       });
     } catch (trackingErr) {
       // Compatibilité ancien Worker si /client/tracking n'est pas encore publié.
-      const params = buildTrackingParams({ withRoute });
-      delete params.requestId;
       data = await apiFetchJson("/client/driver-position", {
         method: "GET",
-        params,
+        params: { clientId: STATE.clientId, route: "1" },
       });
     }
 
     if (data?.client && Number.isFinite(Number(data.client.lat)) && Number.isFinite(Number(data.client.lng))) {
-      // Côté client GitHub, cela ne fixe que la première position visible.
-      // Les mises à jour suivantes restent envoyées au serveur, mais ne déplacent pas
-      // la destination affichée de la carte client.
       setClientMapFixedPosition(Number(data.client.lat), Number(data.client.lng));
     }
 
@@ -1828,44 +1419,24 @@ async function pollDriverPosition() {
       const lat = Number(data.driver.lat);
       const lng = Number(data.driver.lng);
       const driverName = String(data.driver.driverName || data.request?.assignedDriverName || "Votre livreur");
-      STATE.currentDriverName = driverName;
 
       // Use server timestamp if present, else now
       const tsServerMs = data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now();
 
-      // ✅ ADN66 v3 : on force la position live immédiatement à chaque poll.
-      // Si le véhicule ne bouge toujours pas avec cette version, c'est que l'API renvoie
-      // les mêmes lat/lng au client. Dans ce cas le problème ne peut pas venir du tracé.
       driverAddPoint(lat, lng, tsServerMs);
-      // Le loop reste actif pour compatibilité, mais le point live est déjà appliqué.
       driverStartLoop();
 
-      let routeUpdated = false;
-      if (data.route?.encodedPolyline) {
-        routeUpdated = updateRouteLine(data.route);
-      }
+      if (data.route?.encodedPolyline) updateRouteLine(data.route);
 
-      if (withRoute) {
-        STATE.routeRecalcInFlight = false;
-        // Si le Worker n'a pas renvoyé de tracé exploitable, on retentera plus tard
-        // sans harceler l'API à chaque poll.
-        STATE.routeLastRequestMs = Date.now();
-      }
-
-      if (!STATE.routeLine) {
-        const metaParts = [];
-        if (data.route?.durationText && routeUpdated) metaParts.push(data.route.durationText);
-        if (data.route?.distanceText && routeUpdated) metaParts.push(data.route.distanceText);
-        setDriverInfo({
-          visible: true,
-          name: `Votre livreur : ${driverName}`,
-          meta: metaParts.length ? `Trajet estimé : ${metaParts.join(" • ")}` : "Trajet en cours de calcul…",
-        });
-      } else {
-        updateLocalRouteMeta();
-      }
+      const metaParts = [];
+      if (data.route?.durationText) metaParts.push(data.route.durationText);
+      if (data.route?.distanceText) metaParts.push(data.route.distanceText);
+      setDriverInfo({
+        visible: true,
+        name: `Votre livreur : ${driverName}`,
+        meta: metaParts.length ? `Trajet estimé : ${metaParts.join(" • ")}` : "Trajet en cours de calcul…",
+      });
     } else {
-      if (withRoute) STATE.routeRecalcInFlight = false;
       setDriverInfo({ visible: true, name: "Livreur attribué", meta: "Position du livreur en attente…" });
     }
 
@@ -1873,7 +1444,6 @@ async function pollDriverPosition() {
       STATE.accessRemainingMs = data.remainingMs;
     }
   } catch (e) {
-    if (withRoute) STATE.routeRecalcInFlight = false;
     console.log("[driver_tracking]", e?.message || e);
     // Ne pas terminer l'accès sur une erreur de position.
   }
@@ -2002,11 +1572,6 @@ function startAcceptedLoops() {
   STATE.tPollDriver = setInterval(pollDriverPosition, CONFIG.POLL_DRIVER_MS || 3000);
   pollDriverPosition();
 
-  // Distance/délai côté client : mise à jour locale toutes les 1 seconde
-  // sur le tracé déjà affiché, sans recalcul API.
-  stopTimer(STATE.tRouteLocalMeta);
-  STATE.tRouteLocalMeta = setInterval(updateLocalRouteMeta, 1000);
-
   // start smoothing loop now (even before first driver point)
   driverStartLoop();
 
@@ -2029,8 +1594,6 @@ function startAcceptedLoops() {
       stopTimer(STATE.tSendClientPos);
       STATE.tSendClientPos = null;
       stopClientPresenceHeartbeat({ sendFinal: true });
-      stopTimer(STATE.tRouteLocalMeta);
-      STATE.tRouteLocalMeta = null;
       stopTimer(STATE.tPollDriver);
       STATE.tPollDriver = null;
       stopTimer(STATE.tCountdown);
@@ -2205,7 +1768,6 @@ function boot() {
 
   const hasSession = loadSession();
   if (hasSession) {
-    restoreClientTrackingCache();
     startClientPresenceHeartbeat();
     setBadge("Reprise du suivi…");
     setState("Reprise");
