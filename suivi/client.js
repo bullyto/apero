@@ -1257,68 +1257,52 @@ function driverAddPoint(lat, lng, tsServerMs) {
   const d = STATE.driver;
   const rxMs = Date.now();
 
-  // compute rx interval
-  if (d.lastRxMs) {
-    const dt = rxMs - d.lastRxMs;
-    if (dt > 0 && dt < 30000) {
-      d.rxIntervals.push(dt);
-      if (d.rxIntervals.length > d.rxIntervalsMax) d.rxIntervals.shift();
-    }
+  // ✅ ADN66 FIX 20260627 v3 — priorité au live réel.
+  // Ancienne logique: certains points pouvaient être ignorés si le timestamp serveur
+  // ne progressait pas assez ou si le calcul de vitesse semblait trop élevé.
+  // Résultat visible: véhicule bloqué côté client même quand l'app driver bouge.
+  if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return;
+  lat = Number(lat);
+  lng = Number(lng);
+
+  const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
+  let cleanTs = Number(tsServerMs);
+  if (!Number.isFinite(cleanTs) || cleanTs <= 0) cleanTs = rxMs;
+  if (last && cleanTs <= Number(last.tsServerMs || 0)) cleanTs = rxMs;
+  if (last && cleanTs <= Number(last.tsServerMs || 0)) cleanTs = Number(last.tsServerMs || rxMs) + 1;
+
+  // Calcul indicatif seulement : on n'ignore plus la position API.
+  if (last) {
+    const dt = Math.max(1, cleanTs - Number(last.tsServerMs || 0));
+    d.vel = {
+      vLat: (lat - last.lat) / dt,
+      vLng: (lng - last.lng) / dt,
+    };
+    d.lastVelFrom = { lat, lng, tsMs: cleanTs };
   }
+
   d.lastRxMs = rxMs;
+  d.hasFirstFix = true;
+  d.disp = { lat, lng };
+  d.lastDispMs = rxMs;
 
-  // adaptive delay: based on avg rx interval
-  if (d.rxIntervals.length >= 3) {
-    const avg = d.rxIntervals.reduce((s, v) => s + v, 0) / d.rxIntervals.length;
-    // base = 0.7 * avg, clamped to [2.0s, 2.6s]
-    const target = clamp(Math.round(avg * 0.7), d.delayMin, d.delayMax);
-    // smooth change (avoid jitter)
-    d.delayMs = Math.round(d.delayMs * 0.8 + target * 0.2);
-  }
+  d.buf.push({ lat, lng, tsServerMs: cleanTs, rxMs });
+  if (d.buf.length > d.maxBuf) d.buf.shift();
 
-  // de-dup / sanity
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  // ✅ Le marqueur est placé immédiatement à chaque réponse API.
+  // Le lissage ne peut donc plus bloquer le véhicule sur l'ancien point.
+  setDriverMarkerImmediate(lat, lng);
+  attemptAcceptedAutoRecenter();
 
-  // ✅ ADN66 FIX 20260627 : garde la dernière vraie position livreur
-  // pour ne pas réafficher le véhicule au point initial après réouverture.
   if (STATE.requestId && STATE.clientId) {
     lsSetJson(LS.lastDriverPos, {
       requestId: STATE.requestId,
       clientId: STATE.clientId,
       lat,
       lng,
-      tsServerMs: tsServerMs || Date.now(),
-      savedAt: Date.now(),
+      tsServerMs: cleanTs,
+      savedAt: rxMs,
     });
-  }
-
-  const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
-  if (last) {
-    const dist = approxMeters(last.lat, last.lng, lat, lng);
-    // ignore absurd jumps unless time is huge
-    const dt = Math.max(1, tsServerMs - last.tsServerMs);
-    const speed = dist / (dt / 1000); // m/s
-    if (speed > d.maxSpeedMps * 2) {
-      // too crazy -> ignore this sample
-      return;
-    }
-    // update velocity estimate (per ms)
-    const vLat = (lat - last.lat) / dt;
-    const vLng = (lng - last.lng) / dt;
-    d.vel = { vLat, vLng };
-    d.lastVelFrom = { lat, lng, tsMs: tsServerMs };
-  }
-
-  d.buf.push({ lat, lng, tsServerMs, rxMs });
-  if (d.buf.length > d.maxBuf) d.buf.shift();
-
-  // if first fix, set immediately and fit once
-  if (!d.hasFirstFix) {
-    d.hasFirstFix = true;
-    d.disp = { lat, lng };
-    d.lastDispMs = Date.now();
-    setDriverMarkerImmediate(lat, lng);
-    attemptAcceptedAutoRecenter();
   }
 }
 
@@ -1849,7 +1833,11 @@ async function pollDriverPosition() {
       // Use server timestamp if present, else now
       const tsServerMs = data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now();
 
+      // ✅ ADN66 v3 : on force la position live immédiatement à chaque poll.
+      // Si le véhicule ne bouge toujours pas avec cette version, c'est que l'API renvoie
+      // les mêmes lat/lng au client. Dans ce cas le problème ne peut pas venir du tracé.
       driverAddPoint(lat, lng, tsServerMs);
+      // Le loop reste actif pour compatibilité, mais le point live est déjà appliqué.
       driverStartLoop();
 
       let routeUpdated = false;
