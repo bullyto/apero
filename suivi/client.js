@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260620-client-presence-route-v2
+// ADN66 BUILD 20260627-client-reload-cache-fix-v1
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -42,6 +42,11 @@ const LS = {
   requestId: (CONFIG.LS_PREFIX || "adn66_track_") + "requestId",
   clientId: (CONFIG.LS_PREFIX || "adn66_track_") + "clientId",
   lastRequestMs: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRequestMs",
+
+  // ✅ ADN66 FIX 20260627 : restauration après fermeture/réouverture de la page client
+  clientMapFixedPos: (CONFIG.LS_PREFIX || "adn66_track_") + "clientMapFixedPos",
+  lastRoute: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRoute",
+  lastDriverPos: (CONFIG.LS_PREFIX || "adn66_track_") + "lastDriverPos",
 };
 
 const STATE = {
@@ -557,6 +562,39 @@ function lsDel(k) {
   } catch {}
 }
 
+function lsGetJson(k, def = null) {
+  try {
+    const raw = localStorage.getItem(k);
+    if (!raw) return def;
+    return JSON.parse(raw);
+  } catch {
+    return def;
+  }
+}
+
+function lsSetJson(k, v) {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch {}
+}
+
+function clearTrackingCache() {
+  lsDel(LS.clientMapFixedPos);
+  lsDel(LS.lastRoute);
+  lsDel(LS.lastDriverPos);
+}
+
+function sameTrackingSession(cache = {}) {
+  const rid = String(cache.requestId || "");
+  const cid = String(cache.clientId || "");
+
+  // Compatibilité : les anciennes sauvegardes sans session sont acceptées seulement
+  // si une session locale existe. Les nouvelles sauvegardes sont liées requestId/clientId.
+  if (!rid && !cid) return !!(STATE.requestId && STATE.clientId);
+
+  return rid === String(STATE.requestId || "") && cid === String(STATE.clientId || "");
+}
+
 // ----------------------------
 // PHONE helpers (FR)
 // ----------------------------
@@ -874,6 +912,18 @@ function updateRouteLine(route) {
   STATE.routeLastRequestMs = Date.now();
 
   updateLocalRouteMeta();
+
+  // ✅ ADN66 FIX 20260627 : garde le dernier tracé pour éviter
+  // "Trajet en cours de calcul…" après fermeture/réouverture de la page.
+  if (STATE.requestId && STATE.clientId) {
+    lsSetJson(LS.lastRoute, {
+      requestId: STATE.requestId,
+      clientId: STATE.clientId,
+      route,
+      savedAt: Date.now(),
+    });
+  }
+
   return true;
 }
 
@@ -1061,6 +1111,16 @@ function setClientMapFixedPosition(lat, lng, acc = null, ts = Date.now()) {
   // La vraie position GPS continue d'être envoyée au serveur séparément pour le livreur/admin.
   if (!STATE.clientMapFixedPos) {
     STATE.clientMapFixedPos = { lat: Number(lat), lng: Number(lng), acc, ts };
+
+    // ✅ ADN66 FIX 20260627 : sauvegarde pour restaurer la destination
+    // après fermeture/réouverture de la page client.
+    lsSetJson(LS.clientMapFixedPos, {
+      requestId: STATE.requestId || "",
+      clientId: STATE.clientId || "",
+      ...STATE.clientMapFixedPos,
+      savedAt: Date.now(),
+    });
+
     if (STATE.markerClient) STATE.markerClient.setLatLng([Number(lat), Number(lng)]);
 
     // Aucun recentrage automatique ici : le seul recentrage automatique autorisé
@@ -1207,6 +1267,19 @@ function driverAddPoint(lat, lng, tsServerMs) {
 
   // de-dup / sanity
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+  // ✅ ADN66 FIX 20260627 : garde la dernière vraie position livreur
+  // pour ne pas réafficher le véhicule au point initial après réouverture.
+  if (STATE.requestId && STATE.clientId) {
+    lsSetJson(LS.lastDriverPos, {
+      requestId: STATE.requestId,
+      clientId: STATE.clientId,
+      lat,
+      lng,
+      tsServerMs: tsServerMs || Date.now(),
+      savedAt: Date.now(),
+    });
+  }
 
   const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
   if (last) {
@@ -1542,6 +1615,17 @@ function saveSession({ requestId, clientId, name }) {
   lsSet(LS.requestId, requestId);
   lsSet(LS.clientId, clientId);
   lsSet(LS.name, name);
+
+  // Si la position fixe a été posée avant la création de session,
+  // on la rattache maintenant au requestId/clientId.
+  if (STATE.clientMapFixedPos) {
+    lsSetJson(LS.clientMapFixedPos, {
+      requestId,
+      clientId,
+      ...STATE.clientMapFixedPos,
+      savedAt: Date.now(),
+    });
+  }
 }
 
 function clearSession() {
@@ -1589,6 +1673,7 @@ function resetFlow({ keepName = true } = {}) {
   }
   stopAllLoops();
   clearSession();
+  clearTrackingCache();
   STATE.status = "idle";
   STATE.accessRemainingMs = null;
   STATE.clientMapFixedPos = null;
@@ -1610,6 +1695,75 @@ function resetFlow({ keepName = true } = {}) {
   if (!keepName && els.name) {
     els.name.value = "";
     lsDel(LS.name);
+  }
+}
+
+// ----------------------------
+// ADN66 FIX 20260627 : restauration cache suivi client
+// ----------------------------
+function restoreClientTrackingCache() {
+  if (!STATE.requestId || !STATE.clientId) return;
+
+  const maxAgeMs = 30 * 60 * 1000;
+  const nowMs = Date.now();
+
+  const fixed = lsGetJson(LS.clientMapFixedPos, null);
+  if (
+    fixed &&
+    sameTrackingSession(fixed) &&
+    nowMs - Number(fixed.savedAt || fixed.ts || 0) < maxAgeMs &&
+    Number.isFinite(Number(fixed.lat)) &&
+    Number.isFinite(Number(fixed.lng))
+  ) {
+    STATE.clientMapFixedPos = {
+      lat: Number(fixed.lat),
+      lng: Number(fixed.lng),
+      acc: fixed.acc ?? null,
+      ts: fixed.ts || nowMs,
+    };
+
+    if (STATE.markerClient) {
+      STATE.markerClient.setLatLng([STATE.clientMapFixedPos.lat, STATE.clientMapFixedPos.lng]);
+    }
+  }
+
+  const lastDriver = lsGetJson(LS.lastDriverPos, null);
+  if (
+    lastDriver &&
+    sameTrackingSession(lastDriver) &&
+    nowMs - Number(lastDriver.savedAt || 0) < maxAgeMs &&
+    Number.isFinite(Number(lastDriver.lat)) &&
+    Number.isFinite(Number(lastDriver.lng))
+  ) {
+    const lat = Number(lastDriver.lat);
+    const lng = Number(lastDriver.lng);
+
+    setDriverMarkerImmediate(lat, lng);
+    STATE.driver.hasFirstFix = true;
+    STATE.driver.disp = { lat, lng };
+    STATE.driver.lastDispMs = nowMs;
+
+    // On remet aussi un point dans le buffer pour que le lissage reparte proprement.
+    STATE.driver.buf = [{
+      lat,
+      lng,
+      tsServerMs: Number(lastDriver.tsServerMs || nowMs),
+      rxMs: nowMs,
+    }];
+  }
+
+  const cachedRoute = lsGetJson(LS.lastRoute, null);
+  if (
+    cachedRoute &&
+    sameTrackingSession(cachedRoute) &&
+    cachedRoute.route &&
+    nowMs - Number(cachedRoute.savedAt || 0) < maxAgeMs
+  ) {
+    updateRouteLine(cachedRoute.route);
+  }
+
+  if (STATE.markerClient && STATE.markerDriver && STATE.driver.hasFirstFix) {
+    setRecenterButtonVisible(true);
   }
 }
 
@@ -2051,6 +2205,7 @@ function boot() {
 
   const hasSession = loadSession();
   if (hasSession) {
+    restoreClientTrackingCache();
     startClientPresenceHeartbeat();
     setBadge("Reprise du suivi…");
     setState("Reprise");
