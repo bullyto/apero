@@ -1,4 +1,4 @@
-// ADN66 BUILD 20261002-tracking-fix-v1
+// ADN66 BUILD 20261002-client-route-progress-v2
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -32,6 +32,10 @@ const els = {
   driverInfo: document.getElementById("driverInfo"),
   driverInfoName: document.getElementById("driverInfoName"),
   driverInfoMeta: document.getElementById("driverInfoMeta"),
+  driverRouteProgress: document.getElementById("driverRouteProgress"),
+  driverRouteDistance: document.getElementById("driverRouteDistance"),
+  driverRouteFill: document.getElementById("driverRouteFill"),
+  driverRouteCar: document.getElementById("driverRouteCar"),
   btnRecenter: document.getElementById("btnRecenter"),
 };
 
@@ -73,7 +77,11 @@ const STATE = {
   routeBusy: false,
   routeCheckedAt: 0,
   routeMeta: "Estimation du trajet en attente…",
+  routeInitialDistanceMeters: null,
+  routeRemainingDistanceMeters: null,
+  routeProgressPct: 0,
   lastDriverName: "Votre livreur",
+  lastDriverGpsTsMs: 0,
   tSendClientPos: null,
   tClientPresence: null,
   tCountdown: null,
@@ -168,6 +176,70 @@ function setDriverInfo({ visible = false, name = "", meta = "" } = {}) {
   els.driverInfo.style.display = visible ? "flex" : "none";
   if (els.driverInfoName) els.driverInfoName.textContent = name || "Livreur attribué";
   if (els.driverInfoMeta) els.driverInfoMeta.textContent = meta || "Position en attente…";
+  if (!visible) setRouteProgress({ visible: false });
+}
+
+function formatRemainingDistance(meters) {
+  const m = Number(meters);
+  if (!Number.isFinite(m) || m < 0) return "— km restants";
+  if (m < 1000) return `${Math.max(0, Math.round(m / 10) * 10)} m restants`;
+  const km = m / 1000;
+  return `${km.toFixed(km < 10 ? 1 : 0).replace(".", ",")} km restants`;
+}
+
+function setRouteProgress({ visible = false, distanceMeters = null, progressPct = null } = {}) {
+  if (!els.driverRouteProgress) return;
+  els.driverRouteProgress.classList.toggle("isVisible", !!visible);
+  if (!visible) return;
+
+  const pct = clamp(Number(progressPct) || 0, 0, 100);
+  if (els.driverRouteDistance) els.driverRouteDistance.textContent = formatRemainingDistance(distanceMeters);
+  if (els.driverRouteFill) els.driverRouteFill.style.width = `${pct}%`;
+  if (els.driverRouteCar) els.driverRouteCar.style.left = `${pct}%`;
+}
+
+function resetRouteProgress() {
+  STATE.routeInitialDistanceMeters = null;
+  STATE.routeRemainingDistanceMeters = null;
+  STATE.routeProgressPct = 0;
+  setRouteProgress({ visible: false });
+}
+
+function applyRouteProgress(route) {
+  const remaining = Number(route?.distanceMeters);
+  if (!Number.isFinite(remaining) || remaining < 0) {
+    setRouteProgress({ visible: false });
+    return;
+  }
+
+  if (!Number.isFinite(STATE.routeInitialDistanceMeters) || STATE.routeInitialDistanceMeters <= 0) {
+    STATE.routeInitialDistanceMeters = Math.max(remaining, 1);
+  } else if (remaining > STATE.routeInitialDistanceMeters) {
+    // Le premier calcul peut arriver après un détour ou une imprécision GPS :
+    // on agrandit la référence plutôt que d'afficher une progression négative.
+    STATE.routeInitialDistanceMeters = remaining;
+  }
+
+  STATE.routeRemainingDistanceMeters = remaining;
+  const rawPct = ((STATE.routeInitialDistanceMeters - remaining) / STATE.routeInitialDistanceMeters) * 100;
+  // Visuellement, on évite que la voiture recule à cause des petites variations de routage/GPS.
+  STATE.routeProgressPct = Math.max(STATE.routeProgressPct || 0, clamp(rawPct, 0, 100));
+  if (remaining <= 30) STATE.routeProgressPct = 100;
+
+  setRouteProgress({
+    visible: true,
+    distanceMeters: remaining,
+    progressPct: STATE.routeProgressPct,
+  });
+}
+
+function driverGpsIsStale() {
+  return Number.isFinite(STATE.lastDriverGpsTsMs) && STATE.lastDriverGpsTsMs > 0 && Date.now() - STATE.lastDriverGpsTsMs > 45000;
+}
+
+function refreshDriverInfoDisplay() {
+  const meta = driverGpsIsStale() ? "Dernière position connue — GPS non actualisé" : STATE.routeMeta;
+  setDriverInfo({ visible: true, name: `Votre livreur : ${STATE.lastDriverName}`, meta });
 }
 
 // ----------------------------
@@ -804,9 +876,9 @@ function updateRouteLine(route) {
 
   if (!STATE.routeLine) {
     STATE.routeLine = L.polyline(latlngs, {
-      color: "#5db7ee",
-      weight: 5,
-      opacity: 0.88,
+      color: "#168eea",
+      weight: 6,
+      opacity: 0.96,
       lineCap: "round",
       lineJoin: "round",
     }).addTo(STATE.map);
@@ -1133,6 +1205,8 @@ function driverStopLoop() {
   STATE.routeBusy = false;
   STATE.routeCheckedAt = 0;
   STATE.routeMeta = "Estimation du trajet en attente…";
+  STATE.lastDriverGpsTsMs = 0;
+  resetRouteProgress();
   if (STATE.map && STATE.markerDriver) STATE.map.removeLayer(STATE.markerDriver);
   const d = STATE.driver;
   if (d.raf) cancelAnimationFrame(d.raf);
@@ -1435,7 +1509,7 @@ async function fetchTracking(route) {
 }
 
 async function refreshTrackingRoute(epoch) {
-  if (STATE.routeBusy || Date.now() - STATE.routeCheckedAt < 15000) return;
+  if (STATE.routeBusy || Date.now() - STATE.routeCheckedAt < 12000) return;
   STATE.routeBusy = true;
   STATE.routeCheckedAt = Date.now();
   try {
@@ -1443,17 +1517,30 @@ async function refreshTrackingRoute(epoch) {
     if (epoch !== STATE.trackingEpoch || STATE.status !== "accepted") return;
     if (data?.route) {
       updateRouteLine(data.route);
-      const parts = [data.route.durationText, data.route.distanceText].filter(Boolean);
-      STATE.routeMeta = parts.length ? `Trajet estimé : ${parts.join(" • ")}` : "Estimation indisponible";
+      applyRouteProgress(data.route);
+
+      const duration = String(data.route.durationText || "").trim();
+      const distance = String(data.route.distanceText || "").trim();
+      STATE.routeMeta = duration
+        ? `Arrivée estimée dans ${duration}${distance ? ` • ${distance}` : ""}`
+        : (distance ? `Distance restante : ${distance}` : "Trajet calculé");
+
+      // Important : le calcul est asynchrone. On rafraîchit la carte d'information
+      // immédiatement au retour du routage au lieu d'attendre le prochain poll GPS.
+      refreshDriverInfoDisplay();
     } else {
       clearRouteLine();
+      setRouteProgress({ visible: false });
       STATE.routeMeta = "Estimation du trajet indisponible";
+      refreshDriverInfoDisplay();
       if (data?.routeError) console.warn("[tracking_route]", data.routeError);
     }
   } catch (error) {
     if (epoch !== STATE.trackingEpoch) return;
     clearRouteLine();
+    setRouteProgress({ visible: false });
     STATE.routeMeta = "Estimation du trajet indisponible";
+    refreshDriverInfoDisplay();
     console.warn("[tracking_route]", error?.message || error);
   } finally {
     if (epoch === STATE.trackingEpoch) STATE.routeBusy = false;
@@ -1475,12 +1562,11 @@ async function pollDriverPosition() {
       const driver = data.driver;
       const ts = Number(driver.ts);
       const tsMs = ts > 0 && ts < 1e12 ? ts * 1000 : ts;
+      STATE.lastDriverGpsTsMs = Number.isFinite(tsMs) && tsMs > 0 ? tsMs : Date.now();
       STATE.lastDriverName = String(driver.driverName || data.request?.assignedDriverName || "Votre livreur");
-      driverAddPoint(Number(driver.lat), Number(driver.lng), Number.isFinite(tsMs) && tsMs > 0 ? tsMs : Date.now());
+      driverAddPoint(Number(driver.lat), Number(driver.lng), STATE.lastDriverGpsTsMs);
       driverStartLoop();
-      const stale = Number.isFinite(tsMs) && tsMs > 0 && Date.now() - tsMs > 45000;
-      setDriverInfo({ visible: true, name: `Votre livreur : ${STATE.lastDriverName}`,
-        meta: stale ? "Dernière position connue — GPS non actualisé" : STATE.routeMeta });
+      refreshDriverInfoDisplay();
       void refreshTrackingRoute(epoch);
     } else {
       if (STATE.map && STATE.markerDriver) STATE.map.removeLayer(STATE.markerDriver);
@@ -1490,6 +1576,7 @@ async function pollDriverPosition() {
       STATE.driver.buf = [];
       STATE.driver.hasFirstFix = false;
       clearRouteLine();
+      setRouteProgress({ visible: false });
       setDriverInfo({ visible: true, name: "Livreur attribué", meta: "Position GPS du livreur non reçue" });
     }
     if (typeof data?.remainingMs === "number") STATE.accessRemainingMs = data.remainingMs;

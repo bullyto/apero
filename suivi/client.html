@@ -566,6 +566,65 @@
       text-overflow:ellipsis;
     }
 
+    /* ===== PROGRESSION LIVREUR → CLIENT ===== */
+    .driverRouteProgress{
+      display:none;
+      margin-top:10px;
+      width:100%;
+    }
+
+    .driverRouteProgress.isVisible{ display:block; }
+
+    .driverRouteLabels{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:5px;
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.15px;
+      opacity:.68;
+    }
+
+    .driverRouteDistance{
+      color:#0b1c2d;
+      opacity:1;
+      white-space:nowrap;
+    }
+
+    .driverRouteTrack{
+      position:relative;
+      height:9px;
+      margin:0 12px;
+      border-radius:999px;
+      background:rgba(11,28,45,.12);
+      box-shadow:inset 0 1px 3px rgba(0,0,0,.14);
+      overflow:visible;
+    }
+
+    .driverRouteFill{
+      position:absolute;
+      inset:0 auto 0 0;
+      width:0%;
+      border-radius:999px;
+      background:#5db7ee;
+      box-shadow:0 0 10px rgba(93,183,238,.45);
+      transition:width .9s ease;
+    }
+
+    .driverRouteCar{
+      position:absolute;
+      left:0%;
+      top:50%;
+      transform:translate(-50%,-52%);
+      font-size:19px;
+      line-height:1;
+      filter:drop-shadow(0 2px 3px rgba(0,0,0,.24));
+      transition:left .9s ease;
+      z-index:2;
+    }
+
 
     /* ===== BOUTON RECENTRAGE CARTE CLIENT ===== */
     .clientRecenterBtn{
@@ -623,6 +682,17 @@
     <span class="driverInfoText">
       <strong class="driverInfoName" id="driverInfoName">Votre livreur</strong>
       <span class="driverInfoMeta" id="driverInfoMeta">Trajet en cours de calcul…</span>
+      <span class="driverRouteProgress" id="driverRouteProgress" aria-label="Progression de la livraison">
+        <span class="driverRouteLabels">
+          <span>Départ</span>
+          <span class="driverRouteDistance" id="driverRouteDistance">— km restants</span>
+          <span>Arrivée</span>
+        </span>
+        <span class="driverRouteTrack">
+          <span class="driverRouteFill" id="driverRouteFill"></span>
+          <span class="driverRouteCar" id="driverRouteCar" aria-hidden="true">🚗</span>
+        </span>
+      </span>
     </span>
   </div>
 
