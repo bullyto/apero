@@ -1,4 +1,4 @@
-// ADN66 BUILD 20260620-client-presence-v1
+// ADN66 BUILD 20261002-tracking-fix-v1
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -68,6 +68,12 @@ const STATE = {
   // timers
   tPollStatus: null,
   tPollDriver: null,
+  trackingEpoch: 0,
+  positionBusy: false,
+  routeBusy: false,
+  routeCheckedAt: 0,
+  routeMeta: "Estimation du trajet en attente…",
+  lastDriverName: "Votre livreur",
   tSendClientPos: null,
   tClientPresence: null,
   tCountdown: null,
@@ -607,6 +613,10 @@ async function apiFetchJson(path, { method = "GET", params = {}, body = null } =
     init.body = JSON.stringify(body);
   }
 
+  const controller = new AbortController();
+  init.signal = controller.signal;
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
   const resp = await fetch(url, init);
   let data = null;
   try {
@@ -617,12 +627,15 @@ async function apiFetchJson(path, { method = "GET", params = {}, body = null } =
 
   if (!resp.ok) {
     const msg = (data && (data.error || data.message)) || `HTTP ${resp.status}`;
-    throw new Error(msg);
+    const error = new Error(msg);
+    error.status = resp.status;
+    throw error;
   }
   if (data && data.ok === false) {
     throw new Error(data.error || data.message || "api_error");
   }
   return data;
+  } finally { clearTimeout(timeout); }
 }
 
 // ----------------------------
@@ -733,7 +746,7 @@ function initMap() {
   const markerClient = L.marker([42.6887, 2.8948], { icon: ICON_CLIENT }).addTo(map);
   markerClient.bindPopup("Vous");
 
-  const markerDriver = L.marker([42.6887, 2.8948], { icon: ICON_DRIVER }).addTo(map);
+  const markerDriver = L.marker([42.6887, 2.8948], { icon: ICON_DRIVER });
   markerDriver.bindPopup("Livreur");
 
   map.on("dragstart zoomstart", () => {
@@ -831,6 +844,7 @@ function updateClientMarker(lat, lng) {
 function setDriverMarkerImmediate(lat, lng) {
   if (!STATE.markerDriver) return;
   STATE.markerDriver.setLatLng([lat, lng]);
+  if (STATE.map && !STATE.map.hasLayer(STATE.markerDriver)) STATE.markerDriver.addTo(STATE.map);
 }
 
 function setRecenterButtonVisible(visible) {
@@ -839,7 +853,7 @@ function setRecenterButtonVisible(visible) {
 }
 
 function fitBothPositions({ force = false, manual = false } = {}) {
-  if (!STATE.map || !STATE.markerClient || !STATE.markerDriver) return false;
+  if (!STATE.map || !STATE.markerClient || !STATE.markerDriver || !STATE.driver.hasFirstFix) return false;
 
   if (!force && STATE.mapUserMoved && !manual) return false;
 
@@ -964,6 +978,7 @@ function driverAddPoint(lat, lng, tsServerMs) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
   const last = d.buf.length ? d.buf[d.buf.length - 1] : null;
+  if (last && tsServerMs <= last.tsServerMs) return;
   if (last) {
     const dist = approxMeters(last.lat, last.lng, lat, lng);
     // ignore absurd jumps unless time is huge
@@ -1005,6 +1020,7 @@ function driverSampleAtTime(renderServerMs) {
   const buf = d.buf;
 
   if (buf.length === 0) return null;
+  if (renderServerMs <= buf[0].tsServerMs) return { lat: buf[0].lat, lng: buf[0].lng, mode: "waiting" };
   if (buf.length === 1) return { lat: buf[0].lat, lng: buf[0].lng, mode: "single" };
 
   // find segment [i, i+1] that contains render time
@@ -1112,6 +1128,12 @@ function driverStartLoop() {
 }
 
 function driverStopLoop() {
+  STATE.trackingEpoch++;
+  STATE.positionBusy = false;
+  STATE.routeBusy = false;
+  STATE.routeCheckedAt = 0;
+  STATE.routeMeta = "Estimation du trajet en attente…";
+  if (STATE.map && STATE.markerDriver) STATE.map.removeLayer(STATE.markerDriver);
   const d = STATE.driver;
   if (d.raf) cancelAnimationFrame(d.raf);
   d.raf = 0;
@@ -1392,60 +1414,92 @@ async function sendClientPositionUpdate() {
   }
 }
 
-async function pollDriverPosition() {
-  if (!STATE.clientId && !STATE.requestId) return;
+function validTrackingPosition(p) {
+  return p && p.lat != null && p.lng != null && String(p.lat).trim() !== "" && String(p.lng).trim() !== "" &&
+    Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) &&
+    Math.abs(Number(p.lat)) <= 90 && Math.abs(Number(p.lng)) <= 180;
+}
 
+async function fetchTracking(route) {
   try {
-    // Nouveau Worker: renvoie uniquement le livreur attribué + trajet livreur → client.
-    let data = null;
-    try {
-      data = await apiFetchJson("/client/tracking", {
-        method: "GET",
-        params: { clientId: STATE.clientId, requestId: STATE.requestId, route: "1" },
-      });
-    } catch (trackingErr) {
-      // Compatibilité ancien Worker si /client/tracking n'est pas encore publié.
-      data = await apiFetchJson("/client/driver-position", {
-        method: "GET",
-        params: { clientId: STATE.clientId, route: "1" },
-      });
-    }
+    return await apiFetchJson("/client/tracking", {
+      params: { clientId: STATE.clientId, requestId: STATE.requestId, route: route ? "1" : "0" },
+    });
+  } catch (error) {
+    // Compatibilité uniquement si la route HTTP manque : ne pas masquer un refus d'accès.
+    if (error.status !== 404 && error.status !== 405) throw error;
+    return apiFetchJson("/client/driver-position", {
+      params: { clientId: STATE.clientId, route: route ? "1" : "0" },
+    });
+  }
+}
 
-    if (data?.client && Number.isFinite(Number(data.client.lat)) && Number.isFinite(Number(data.client.lng))) {
+async function refreshTrackingRoute(epoch) {
+  if (STATE.routeBusy || Date.now() - STATE.routeCheckedAt < 15000) return;
+  STATE.routeBusy = true;
+  STATE.routeCheckedAt = Date.now();
+  try {
+    const data = await fetchTracking(true);
+    if (epoch !== STATE.trackingEpoch || STATE.status !== "accepted") return;
+    if (data?.route) {
+      updateRouteLine(data.route);
+      const parts = [data.route.durationText, data.route.distanceText].filter(Boolean);
+      STATE.routeMeta = parts.length ? `Trajet estimé : ${parts.join(" • ")}` : "Estimation indisponible";
+    } else {
+      clearRouteLine();
+      STATE.routeMeta = "Estimation du trajet indisponible";
+      if (data?.routeError) console.warn("[tracking_route]", data.routeError);
+    }
+  } catch (error) {
+    if (epoch !== STATE.trackingEpoch) return;
+    clearRouteLine();
+    STATE.routeMeta = "Estimation du trajet indisponible";
+    console.warn("[tracking_route]", error?.message || error);
+  } finally {
+    if (epoch === STATE.trackingEpoch) STATE.routeBusy = false;
+  }
+}
+
+async function pollDriverPosition() {
+  if ((!STATE.clientId && !STATE.requestId) || STATE.positionBusy || STATE.status !== "accepted") return;
+  const epoch = STATE.trackingEpoch;
+  STATE.positionBusy = true;
+  try {
+    // Le GPS n'attend jamais le service d'itinéraires.
+    const data = await fetchTracking(false);
+    if (epoch !== STATE.trackingEpoch || STATE.status !== "accepted") return;
+    if (validTrackingPosition(data?.client)) {
       setClientMapFixedPosition(Number(data.client.lat), Number(data.client.lng));
     }
-
-    if (data && data.driver && Number.isFinite(Number(data.driver.lat)) && Number.isFinite(Number(data.driver.lng))) {
-      const lat = Number(data.driver.lat);
-      const lng = Number(data.driver.lng);
-      const driverName = String(data.driver.driverName || data.request?.assignedDriverName || "Votre livreur");
-
-      // Use server timestamp if present, else now
-      const tsServerMs = data.driver.ts && Number.isFinite(Number(data.driver.ts)) ? Number(data.driver.ts) : Date.now();
-
-      driverAddPoint(lat, lng, tsServerMs);
+    if (validTrackingPosition(data?.driver)) {
+      const driver = data.driver;
+      const ts = Number(driver.ts);
+      const tsMs = ts > 0 && ts < 1e12 ? ts * 1000 : ts;
+      STATE.lastDriverName = String(driver.driverName || data.request?.assignedDriverName || "Votre livreur");
+      driverAddPoint(Number(driver.lat), Number(driver.lng), Number.isFinite(tsMs) && tsMs > 0 ? tsMs : Date.now());
       driverStartLoop();
-
-      if (data.route?.encodedPolyline) updateRouteLine(data.route);
-
-      const metaParts = [];
-      if (data.route?.durationText) metaParts.push(data.route.durationText);
-      if (data.route?.distanceText) metaParts.push(data.route.distanceText);
-      setDriverInfo({
-        visible: true,
-        name: `Votre livreur : ${driverName}`,
-        meta: metaParts.length ? `Trajet estimé : ${metaParts.join(" • ")}` : "Trajet en cours de calcul…",
-      });
+      const stale = Number.isFinite(tsMs) && tsMs > 0 && Date.now() - tsMs > 45000;
+      setDriverInfo({ visible: true, name: `Votre livreur : ${STATE.lastDriverName}`,
+        meta: stale ? "Dernière position connue — GPS non actualisé" : STATE.routeMeta });
+      void refreshTrackingRoute(epoch);
     } else {
-      setDriverInfo({ visible: true, name: "Livreur attribué", meta: "Position du livreur en attente…" });
+      if (STATE.map && STATE.markerDriver) STATE.map.removeLayer(STATE.markerDriver);
+      // Stopper l'animation pour ne pas réafficher l'ancienne position.
+      if (STATE.driver.raf) cancelAnimationFrame(STATE.driver.raf);
+      STATE.driver.raf = 0;
+      STATE.driver.buf = [];
+      STATE.driver.hasFirstFix = false;
+      clearRouteLine();
+      setDriverInfo({ visible: true, name: "Livreur attribué", meta: "Position GPS du livreur non reçue" });
     }
-
-    if (typeof data.remainingMs === "number") {
-      STATE.accessRemainingMs = data.remainingMs;
-    }
-  } catch (e) {
-    console.log("[driver_tracking]", e?.message || e);
-    // Ne pas terminer l'accès sur une erreur de position.
+    if (typeof data?.remainingMs === "number") STATE.accessRemainingMs = data.remainingMs;
+  } catch (error) {
+    if (epoch !== STATE.trackingEpoch) return;
+    console.warn("[driver_tracking]", error?.message || error);
+    const message = error?.name === "AbortError" ? "Délai de réponse dépassé" : String(error?.message || "Erreur réseau");
+    setDriverInfo({ visible: true, name: "Suivi momentanément indisponible", meta: message });
+  } finally {
+    if (epoch === STATE.trackingEpoch) STATE.positionBusy = false;
   }
 }
 
