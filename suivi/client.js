@@ -1,4 +1,4 @@
-// ADN66 BUILD 20261002-client-route-progress-v2
+// ADN66 BUILD 20261002-client-route-arrow-village-v3
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -33,8 +33,9 @@ const els = {
   driverInfoName: document.getElementById("driverInfoName"),
   driverInfoMeta: document.getElementById("driverInfoMeta"),
   driverRouteProgress: document.getElementById("driverRouteProgress"),
-  driverRouteDistance: document.getElementById("driverRouteDistance"),
   driverRouteFill: document.getElementById("driverRouteFill"),
+  driverVillage: document.getElementById("driverVillage"),
+  driverVillageName: document.getElementById("driverVillageName"),
   driverRouteCar: document.getElementById("driverRouteCar"),
   btnRecenter: document.getElementById("btnRecenter"),
 };
@@ -80,6 +81,11 @@ const STATE = {
   routeInitialDistanceMeters: null,
   routeRemainingDistanceMeters: null,
   routeProgressPct: 0,
+  driverVillageName: "",
+  villageBusy: false,
+  villageCheckedAt: 0,
+  villageLastLat: null,
+  villageLastLng: null,
   lastDriverName: "Votre livreur",
   lastDriverGpsTsMs: 0,
   tSendClientPos: null,
@@ -179,23 +185,20 @@ function setDriverInfo({ visible = false, name = "", meta = "" } = {}) {
   if (!visible) setRouteProgress({ visible: false });
 }
 
-function formatRemainingDistance(meters) {
-  const m = Number(meters);
-  if (!Number.isFinite(m) || m < 0) return "— km restants";
-  if (m < 1000) return `${Math.max(0, Math.round(m / 10) * 10)} m restants`;
-  const km = m / 1000;
-  return `${km.toFixed(km < 10 ? 1 : 0).replace(".", ",")} km restants`;
+function setDriverVillage(name = "") {
+  const value = String(name || "").trim();
+  STATE.driverVillageName = value;
+  if (els.driverVillageName) els.driverVillageName.textContent = value || "—";
+  if (els.driverVillage) els.driverVillage.classList.toggle("isVisible", !!value);
 }
 
-function setRouteProgress({ visible = false, distanceMeters = null, progressPct = null } = {}) {
+function setRouteProgress({ visible = false, progressPct = null } = {}) {
   if (!els.driverRouteProgress) return;
   els.driverRouteProgress.classList.toggle("isVisible", !!visible);
   if (!visible) return;
-
   const pct = clamp(Number(progressPct) || 0, 0, 100);
-  if (els.driverRouteDistance) els.driverRouteDistance.textContent = formatRemainingDistance(distanceMeters);
   if (els.driverRouteFill) els.driverRouteFill.style.width = `${pct}%`;
-  if (els.driverRouteCar) els.driverRouteCar.style.left = `${pct}%`;
+  if (els.driverRouteCar) els.driverRouteCar.style.left = `calc(4px + (100% - 22px) * ${pct / 100})`;
 }
 
 function resetRouteProgress() {
@@ -211,26 +214,41 @@ function applyRouteProgress(route) {
     setRouteProgress({ visible: false });
     return;
   }
-
   if (!Number.isFinite(STATE.routeInitialDistanceMeters) || STATE.routeInitialDistanceMeters <= 0) {
     STATE.routeInitialDistanceMeters = Math.max(remaining, 1);
   } else if (remaining > STATE.routeInitialDistanceMeters) {
-    // Le premier calcul peut arriver après un détour ou une imprécision GPS :
-    // on agrandit la référence plutôt que d'afficher une progression négative.
     STATE.routeInitialDistanceMeters = remaining;
   }
-
   STATE.routeRemainingDistanceMeters = remaining;
   const rawPct = ((STATE.routeInitialDistanceMeters - remaining) / STATE.routeInitialDistanceMeters) * 100;
-  // Visuellement, on évite que la voiture recule à cause des petites variations de routage/GPS.
   STATE.routeProgressPct = Math.max(STATE.routeProgressPct || 0, clamp(rawPct, 0, 100));
   if (remaining <= 30) STATE.routeProgressPct = 100;
+  setRouteProgress({ visible: true, progressPct: STATE.routeProgressPct });
+}
 
-  setRouteProgress({
-    visible: true,
-    distanceMeters: remaining,
-    progressPct: STATE.routeProgressPct,
-  });
+async function refreshDriverVillage(lat, lng, { force = false } = {}) {
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (!Number.isFinite(nLat) || !Number.isFinite(nLng) || STATE.villageBusy) return;
+  const nowMs = Date.now();
+  const moved = Number.isFinite(STATE.villageLastLat) && Number.isFinite(STATE.villageLastLng)
+    ? approxMeters(STATE.villageLastLat, STATE.villageLastLng, nLat, nLng)
+    : Infinity;
+  if (!force && nowMs - STATE.villageCheckedAt < 25000 && moved < 700) return;
+  STATE.villageBusy = true;
+  try {
+    const data = await apiFetchJson("/client/reverse-geocode", { method: "GET", params: { lat: nLat, lng: nLng } });
+    const village = String(data?.village || data?.locality || "").trim();
+    if (village) setDriverVillage(village);
+    STATE.villageCheckedAt = Date.now();
+    STATE.villageLastLat = nLat;
+    STATE.villageLastLng = nLng;
+  } catch (error) {
+    console.warn("[driver_village]", error?.message || error);
+    STATE.villageCheckedAt = Date.now();
+  } finally {
+    STATE.villageBusy = false;
+  }
 }
 
 function driverGpsIsStale() {
@@ -1206,6 +1224,11 @@ function driverStopLoop() {
   STATE.routeCheckedAt = 0;
   STATE.routeMeta = "Estimation du trajet en attente…";
   STATE.lastDriverGpsTsMs = 0;
+  STATE.villageBusy = false;
+  STATE.villageCheckedAt = 0;
+  STATE.villageLastLat = null;
+  STATE.villageLastLng = null;
+  setDriverVillage("");
   resetRouteProgress();
   if (STATE.map && STATE.markerDriver) STATE.map.removeLayer(STATE.markerDriver);
   const d = STATE.driver;
@@ -1520,10 +1543,7 @@ async function refreshTrackingRoute(epoch) {
       applyRouteProgress(data.route);
 
       const duration = String(data.route.durationText || "").trim();
-      const distance = String(data.route.distanceText || "").trim();
-      STATE.routeMeta = duration
-        ? `Arrivée estimée dans ${duration}${distance ? ` • ${distance}` : ""}`
-        : (distance ? `Distance restante : ${distance}` : "Trajet calculé");
+      STATE.routeMeta = duration ? `Arrivée estimée dans ${duration}` : "Trajet calculé";
 
       // Important : le calcul est asynchrone. On rafraîchit la carte d'information
       // immédiatement au retour du routage au lieu d'attendre le prochain poll GPS.
@@ -1566,6 +1586,7 @@ async function pollDriverPosition() {
       STATE.lastDriverName = String(driver.driverName || data.request?.assignedDriverName || "Votre livreur");
       driverAddPoint(Number(driver.lat), Number(driver.lng), STATE.lastDriverGpsTsMs);
       driverStartLoop();
+      void refreshDriverVillage(Number(driver.lat), Number(driver.lng));
       refreshDriverInfoDisplay();
       void refreshTrackingRoute(epoch);
     } else {
