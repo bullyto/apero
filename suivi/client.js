@@ -1,4 +1,4 @@
-// ADN66 BUILD 20261002-client-route-arrow-village-v3
+// ADN66 BUILD 20261004-client-route-km-cache-v4
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -34,6 +34,7 @@ const els = {
   driverInfoMeta: document.getElementById("driverInfoMeta"),
   driverRouteProgress: document.getElementById("driverRouteProgress"),
   driverRouteFill: document.getElementById("driverRouteFill"),
+  driverRouteDistance: document.getElementById("driverRouteDistance"),
   driverVillage: document.getElementById("driverVillage"),
   driverVillageName: document.getElementById("driverVillageName"),
   driverRouteCar: document.getElementById("driverRouteCar"),
@@ -47,6 +48,7 @@ const LS = {
   requestId: (CONFIG.LS_PREFIX || "adn66_track_") + "requestId",
   clientId: (CONFIG.LS_PREFIX || "adn66_track_") + "clientId",
   lastRequestMs: (CONFIG.LS_PREFIX || "adn66_track_") + "lastRequestMs",
+  routeProgress: (CONFIG.LS_PREFIX || "adn66_track_") + "routeProgress",
 };
 
 const STATE = {
@@ -192,38 +194,140 @@ function setDriverVillage(name = "") {
   if (els.driverVillage) els.driverVillage.classList.toggle("isVisible", !!value);
 }
 
-function setRouteProgress({ visible = false, progressPct = null } = {}) {
+function formatRemainingKm(meters) {
+  const m = Number(meters);
+  if (!Number.isFinite(m) || m < 0) return "— km restant";
+  if (m <= 30) return "0 km restant";
+
+  const km = m / 1000;
+  // Une décimale suffit pour une lecture immédiate sur mobile.
+  // En dessous de 100 m, on garde 0,1 km au lieu d'afficher 0,0 km.
+  const rounded = Math.max(0.1, Math.round(km * 10) / 10);
+  const text = rounded.toLocaleString("fr-FR", {
+    minimumFractionDigits: rounded < 1 ? 1 : 0,
+    maximumFractionDigits: 1,
+  });
+  return `${text} km restant${rounded > 1 ? "s" : ""}`;
+}
+
+function setRouteDistanceLabel(remainingMeters = null) {
+  if (!els.driverRouteDistance) return;
+  els.driverRouteDistance.textContent = formatRemainingKm(remainingMeters);
+}
+
+function setRouteProgress({ visible = false, progressPct = null, remainingMeters = null } = {}) {
   if (!els.driverRouteProgress) return;
   els.driverRouteProgress.classList.toggle("isVisible", !!visible);
   if (!visible) return;
+
   const pct = clamp(Number(progressPct) || 0, 0, 100);
   if (els.driverRouteFill) els.driverRouteFill.style.width = `${pct}%`;
   if (els.driverRouteCar) els.driverRouteCar.style.left = `calc(4px + (100% - 22px) * ${pct / 100})`;
+  setRouteDistanceLabel(remainingMeters);
 }
 
-function resetRouteProgress() {
+function saveRouteProgressCache() {
+  if (!STATE.requestId) return;
+  if (!Number.isFinite(STATE.routeInitialDistanceMeters) || STATE.routeInitialDistanceMeters <= 0) return;
+  if (!Number.isFinite(STATE.routeRemainingDistanceMeters) || STATE.routeRemainingDistanceMeters < 0) return;
+
+  try {
+    lsSet(LS.routeProgress, JSON.stringify({
+      requestId: STATE.requestId,
+      initialDistanceMeters: STATE.routeInitialDistanceMeters,
+      remainingDistanceMeters: STATE.routeRemainingDistanceMeters,
+      progressPct: clamp(Number(STATE.routeProgressPct) || 0, 0, 100),
+      savedAt: Date.now(),
+    }));
+  } catch (_) {}
+}
+
+function clearRouteProgressCache() {
+  lsDel(LS.routeProgress);
+}
+
+function restoreRouteProgressCache(requestId) {
+  const rid = String(requestId || "").trim();
+  if (!rid) return false;
+
+  try {
+    const raw = lsGet(LS.routeProgress, "");
+    if (!raw) return false;
+    const cached = JSON.parse(raw);
+
+    // Sécurité anti-vieux cache : uniquement la même demande et maximum 24 h.
+    if (String(cached?.requestId || "") !== rid) return false;
+    const ageMs = Date.now() - Number(cached?.savedAt || 0);
+    if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > 24 * 60 * 60 * 1000) {
+      clearRouteProgressCache();
+      return false;
+    }
+
+    const initial = Number(cached?.initialDistanceMeters);
+    const remaining = Number(cached?.remainingDistanceMeters);
+    const progress = Number(cached?.progressPct);
+    if (!Number.isFinite(initial) || initial <= 0 || !Number.isFinite(remaining) || remaining < 0) {
+      clearRouteProgressCache();
+      return false;
+    }
+
+    STATE.routeInitialDistanceMeters = initial;
+    STATE.routeRemainingDistanceMeters = remaining;
+    STATE.routeProgressPct = Number.isFinite(progress)
+      ? clamp(progress, 0, 100)
+      : clamp(((initial - remaining) / initial) * 100, 0, 100);
+
+    setRouteProgress({
+      visible: true,
+      progressPct: STATE.routeProgressPct,
+      remainingMeters: STATE.routeRemainingDistanceMeters,
+    });
+    return true;
+  } catch (_) {
+    clearRouteProgressCache();
+    return false;
+  }
+}
+
+function resetRouteProgress({ clearCache = false } = {}) {
   STATE.routeInitialDistanceMeters = null;
   STATE.routeRemainingDistanceMeters = null;
   STATE.routeProgressPct = 0;
+  setRouteDistanceLabel(null);
   setRouteProgress({ visible: false });
+  if (clearCache) clearRouteProgressCache();
 }
 
 function applyRouteProgress(route) {
   const remaining = Number(route?.distanceMeters);
   if (!Number.isFinite(remaining) || remaining < 0) {
+    // On ne détruit pas le cache sur une panne temporaire de routage.
     setRouteProgress({ visible: false });
     return;
   }
+
+  // IMPORTANT : la distance de départ est figée au premier calcul valide.
+  // Elle ne doit jamais être remplacée par une distance plus grande à cause
+  // d'un détour, d'un recalcul d'itinéraire ou d'une imprécision GPS.
   if (!Number.isFinite(STATE.routeInitialDistanceMeters) || STATE.routeInitialDistanceMeters <= 0) {
     STATE.routeInitialDistanceMeters = Math.max(remaining, 1);
-  } else if (remaining > STATE.routeInitialDistanceMeters) {
-    STATE.routeInitialDistanceMeters = remaining;
   }
+
   STATE.routeRemainingDistanceMeters = remaining;
+
+  // Progression réellement fondée sur les kilomètres :
+  // 0 % = distance de départ, 100 % = arrivée.
+  // Si le livreur s'éloigne, la barre peut reculer : c'est volontaire et exact.
   const rawPct = ((STATE.routeInitialDistanceMeters - remaining) / STATE.routeInitialDistanceMeters) * 100;
-  STATE.routeProgressPct = Math.max(STATE.routeProgressPct || 0, clamp(rawPct, 0, 100));
+  STATE.routeProgressPct = clamp(rawPct, 0, 100);
   if (remaining <= 30) STATE.routeProgressPct = 100;
-  setRouteProgress({ visible: true, progressPct: STATE.routeProgressPct });
+
+  setRouteProgress({
+    visible: true,
+    progressPct: STATE.routeProgressPct,
+    remainingMeters: remaining,
+  });
+  saveRouteProgressCache();
 }
 
 async function refreshDriverVillage(lat, lng, { force = false } = {}) {
@@ -1407,6 +1511,7 @@ function loadSession() {
     STATE.requestId = requestId;
     STATE.clientId = clientId;
     STATE.status = "pending";
+    restoreRouteProgressCache(requestId);
     return true;
   }
   return false;
@@ -1419,6 +1524,7 @@ function saveSession({ requestId, clientId, name }) {
 }
 
 function clearSession() {
+  clearRouteProgressCache();
   lsDel(LS.requestId);
   lsDel(LS.clientId);
   STATE.requestId = "";
@@ -1645,6 +1751,7 @@ async function pollStatus() {
       setCountdown("—");
       setDriverInfo({ visible: false });
       clearRouteLine();
+      resetRouteProgress({ clearCache: true });
 
       disableRequest(false);
       showReset(true);
@@ -1659,6 +1766,7 @@ async function pollStatus() {
       setCountdown("—");
       setDriverInfo({ visible: false });
       clearRouteLine();
+      resetRouteProgress({ clearCache: true });
 
       disableRequest(false);
       showReset(true);
@@ -1837,6 +1945,9 @@ async function handleRequestClick() {
   }
 
   try {
+    // Une nouvelle demande doit repartir de sa propre distance initiale.
+    resetRouteProgress({ clearCache: true });
+
     disableRequest(true);
     showReset(false);
     setBadge("Envoi de la demande…");
