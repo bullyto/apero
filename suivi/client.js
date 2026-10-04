@@ -1,4 +1,4 @@
-// ADN66 BUILD 20261004-client-route-km-cache-v4
+// ADN66 BUILD 20261004-client-route-km-cache-v6
 // PATH: maps/client.js
 // /maps/client.js
 import { CONFIG } from "./config.js";
@@ -195,6 +195,7 @@ function setDriverVillage(name = "") {
 }
 
 function formatRemainingKm(meters) {
+  if (meters == null || String(meters).trim() === "") return "— km restant";
   const m = Number(meters);
   if (!Number.isFinite(m) || m < 0) return "— km restant";
   if (m <= 30) return "0 km restant";
@@ -222,7 +223,12 @@ function setRouteProgress({ visible = false, progressPct = null, remainingMeters
 
   const pct = clamp(Number(progressPct) || 0, 0, 100);
   if (els.driverRouteFill) els.driverRouteFill.style.width = `${pct}%`;
-  if (els.driverRouteCar) els.driverRouteCar.style.left = `calc(4px + (100% - 22px) * ${pct / 100})`;
+  // Même géométrie, sans multiplication CSS (compatibilité Android/WebView).
+  // Départ : 4 px ; arrivée : 100 % - 18 px.
+  if (els.driverRouteCar) {
+    const offsetPx = 4 - 22 * pct / 100;
+    els.driverRouteCar.style.left = `calc(${pct}% ${offsetPx < 0 ? "-" : "+"} ${Math.abs(offsetPx)}px)`;
+  }
   setRouteDistanceLabel(remainingMeters);
 }
 
@@ -234,6 +240,7 @@ function saveRouteProgressCache() {
   try {
     lsSet(LS.routeProgress, JSON.stringify({
       requestId: STATE.requestId,
+      clientId: STATE.clientId,
       initialDistanceMeters: STATE.routeInitialDistanceMeters,
       remainingDistanceMeters: STATE.routeRemainingDistanceMeters,
       progressPct: clamp(Number(STATE.routeProgressPct) || 0, 0, 100),
@@ -257,15 +264,17 @@ function restoreRouteProgressCache(requestId) {
 
     // Sécurité anti-vieux cache : uniquement la même demande et maximum 24 h.
     if (String(cached?.requestId || "") !== rid) return false;
+    // Les anciens caches sans clientId restent compatibles pour la même demande.
+    if (cached?.clientId && String(cached.clientId) !== STATE.clientId) return false;
     const ageMs = Date.now() - Number(cached?.savedAt || 0);
     if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > 24 * 60 * 60 * 1000) {
       clearRouteProgressCache();
       return false;
     }
 
-    const initial = Number(cached?.initialDistanceMeters);
-    const remaining = Number(cached?.remainingDistanceMeters);
-    const progress = Number(cached?.progressPct);
+    const initial = cached?.initialDistanceMeters;
+    const remaining = cached?.remainingDistanceMeters;
+    const progress = cached?.progressPct;
     if (!Number.isFinite(initial) || initial <= 0 || !Number.isFinite(remaining) || remaining < 0) {
       clearRouteProgressCache();
       return false;
@@ -273,9 +282,8 @@ function restoreRouteProgressCache(requestId) {
 
     STATE.routeInitialDistanceMeters = initial;
     STATE.routeRemainingDistanceMeters = remaining;
-    STATE.routeProgressPct = Number.isFinite(progress)
-      ? clamp(progress, 0, 100)
-      : clamp(((initial - remaining) / initial) * 100, 0, 100);
+    const calculatedPct = clamp(((initial - remaining) / initial) * 100, 0, 100);
+    STATE.routeProgressPct = Math.max(calculatedPct, Number.isFinite(progress) ? clamp(progress, 0, 100) : 0);
 
     setRouteProgress({
       visible: true,
@@ -299,7 +307,8 @@ function resetRouteProgress({ clearCache = false } = {}) {
 }
 
 function applyRouteProgress(route) {
-  const remaining = Number(route?.distanceMeters);
+  const distance = route?.distanceMeters;
+  const remaining = distance == null || String(distance).trim() === "" ? NaN : Number(distance);
   if (!Number.isFinite(remaining) || remaining < 0) {
     // On ne détruit pas le cache sur une panne temporaire de routage.
     setRouteProgress({ visible: false });
@@ -310,16 +319,21 @@ function applyRouteProgress(route) {
   // Elle ne doit jamais être remplacée par une distance plus grande à cause
   // d'un détour, d'un recalcul d'itinéraire ou d'une imprécision GPS.
   if (!Number.isFinite(STATE.routeInitialDistanceMeters) || STATE.routeInitialDistanceMeters <= 0) {
-    STATE.routeInitialDistanceMeters = Math.max(remaining, 1);
+    // Un arrêt de l'animation peut vider l'état mémoire sans terminer la livraison.
+    // Restaurer sa référence avant de prendre la distance courante comme départ.
+    if (!restoreRouteProgressCache(STATE.requestId)) {
+      STATE.routeInitialDistanceMeters = Math.max(remaining, 1);
+    }
   }
 
   STATE.routeRemainingDistanceMeters = remaining;
 
   // Progression réellement fondée sur les kilomètres :
   // 0 % = distance de départ, 100 % = arrivée.
-  // Si le livreur s'éloigne, la barre peut reculer : c'est volontaire et exact.
+  // Conserver le maximum atteint : un détour ne remet pas le curseur en arrière.
+  // Le libellé, lui, indique toujours les kilomètres réellement restants.
   const rawPct = ((STATE.routeInitialDistanceMeters - remaining) / STATE.routeInitialDistanceMeters) * 100;
-  STATE.routeProgressPct = clamp(rawPct, 0, 100);
+  STATE.routeProgressPct = Math.max(STATE.routeProgressPct, clamp(rawPct, 0, 100));
   if (remaining <= 30) STATE.routeProgressPct = 100;
 
   setRouteProgress({
