@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1c2d">
 <title>Glaçon Rush — Le parcours de Noël · Apéro de Nuit 66</title>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2.1.0">
 <link rel="icon" type="image/webp" href="assets/game/owl.webp">
 </head>
 <body>
@@ -41,9 +41,9 @@
 <div class="stage"><div class="boost-dock"><button class="boost" id="boostBtn" disabled aria-label="Tir spécial, jauge à zéro pour cent" title="Tir spécial · B"><svg class="boost-ring" viewBox="0 0 60 60" aria-hidden="true"><circle class="ring-track" cx="30" cy="30" r="25"/><circle class="ring-progress" id="boostProgress" cx="30" cy="30" r="25" pathLength="100"/></svg><svg class="bolt-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-bolt"/></svg><span class="boost-label">TIR SPÉCIAL</span><span class="boost-badge" id="boostBadge">×10</span></button></div><canvas id="game" width="420" height="700" role="img" aria-label="Glisse et maintiens pour multiplier les glaçons. L’aspirateur les stocke et le canon les utilise pour casser les bouteilles. Le tir spécial est au milieu à droite et peut être activé avec un deuxième doigt. Achète les améliorations dans l’atelier pour terminer les dix niveaux." aria-describedby="controlsText"></canvas><div id="flash" class="flash"></div></div>
 <div class="controls" aria-hidden="true"><i></i><i></i><i></i></div><p id="controlsText" class="sr-only">Mobile : glisse et maintiens le doigt dans le parcours. Ordinateur : flèches gauche et droite et Espace. Tir spécial : bouton ou B. Pause : P ou Échap.</p>
 <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="panel" id="panel"></div></div><div id="assetLoader" class="asset-loader" role="status" aria-live="polite"><img src="assets/game/owl.webp" alt=""><strong>Préparation de la tournée…</strong><div class="loading-track"><i id="loadingProgress"></i></div><span id="loadingMessage">Les machines se réveillent.</span><button id="loadingRetry" hidden>Réessayer</button></div>
-<div id="upgradeReveal" class="upgrade-reveal" role="dialog" aria-modal="true" aria-labelledby="revealTitle" hidden><div class="reveal-card"><span class="reveal-eyebrow">AMÉLIORATION</span><h2 id="revealTitle"></h2><div id="revealImages" class="reveal-images"></div><p id="revealStat"></p><button id="revealContinue" class="primary" disabled>Continuer</button></div></div><div class="sr-only" id="announce" role="status" aria-live="polite"></div>
+<div id="upgradeReveal" class="upgrade-reveal" role="dialog" aria-modal="true" aria-labelledby="revealTitle" hidden><div class="reveal-card"><div class="reveal-lights" aria-hidden="true"><i class="reveal-aura"></i><i class="reveal-rays"></i><i class="reveal-rings"></i></div><div id="revealSparks" class="reveal-sparks" aria-hidden="true"></div><span class="reveal-eyebrow">NOUVEAU MODÈLE DÉBLOQUÉ</span><h2 id="revealTitle"></h2><div id="revealImages" class="reveal-images"></div><p id="revealStat"></p><button id="revealContinue" class="primary" disabled>Continuer</button></div></div><div class="sr-only" id="announce" role="status" aria-live="polite"></div>
 </main>
-<script src="config.js"></script>
+<script src="config.js?v=2.1.0"></script>
 <script src="assets/manifest.js"></script>
-<script src="game.js"></script>
+<script src="game.js?v=2.1.0"></script>
 </body></html>
